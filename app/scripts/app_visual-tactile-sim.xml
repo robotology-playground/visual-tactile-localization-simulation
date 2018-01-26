@@ -1,0 +1,36 @@
+<application>
+
+  <name>VisualTactileLocalizationSim</name>
+  <description>Gazebo based simulation of visual-tactile localization</description>
+
+  <authors>
+    <author email="nicolapiga@gmcail.com">Nicola Piga</author>
+  </authors>
+
+  <module>
+    <name>gazebo</name>
+    <description>Gazebo simulator with main scenario loaded</description>
+    <node>localhost</node>
+    <!-- Suppose that icub-gazebo and visual-tactile-localization-simulation are available within $ROBOT-CODE -->
+    <environment>GAZEBO_MODEL_PATH=$ENV{ROBOT_CODE}/icub-gazebo:$ENV{ROBOT_CODE}/visual-tactile-localization-simulation/models</environment>
+    <workdir>$ENV{ROBOT_CODE}/visual-tactile-localization-simulation</workdir>
+    <!--Start the simulation paused (-u) and -->        
+    <!--pass the world containing the main scenario to Gazebo -->    
+    <parameters>-u models/scenario/model.sdf</parameters>
+    <dependencies>
+      <!-- Since objects within the main scenario uses GazeboYarpModelPosePublisher -->
+      <!-- that uses a Frame Transform Server it is better to start Gazebo only when -->
+      <!-- the port opened by the yarp::dev::IFrameTransformServer is available -->            
+      <port timeout="5.0">/transformServer/transforms:o</port>
+    </dependencies>
+    
+  </module>
+
+  <module>
+    <name>yarpdev</name>
+    <description>Frame Transform Server</description>
+    <node>localhost</node>
+    <parameters>--device transformServer --ROS::enable_ros_publisher false --ROS::enable_ros_subscriber false</parameters>
+  </module>
+  
+</application>
