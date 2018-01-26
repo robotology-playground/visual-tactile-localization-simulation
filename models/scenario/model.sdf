@@ -1,0 +1,29 @@
+<?xml version="1.0" ?>
+<sdf version="1.5">
+  <world name="default">
+
+    <!-- Global light source -->
+    <include>
+      <uri>model://sun</uri>
+    </include>
+
+    <!-- Ground plane -->
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+
+    <!-- Table -->
+    <include>
+      <uri>model://table_alt</uri>
+      <pose>0 1 0 0 0 0</pose>
+    </include>
+
+    <!-- Bottle -->    
+    <include>
+      <uri>model://mustard</uri>
+      <!-- Put the model frame on top of the table -->
+      <!-- Warning: The z coordinate should be changed if table/model.rsdf changes -->
+      <pose>0.2 0.7 1.03 0 0 0</pose>
+    </include>
+  </world>
+</sdf>

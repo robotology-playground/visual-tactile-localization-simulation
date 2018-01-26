@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<sdf version="1.5">
+  <model name='mustard'>
+    <link name='mustard_root_link'>
+      <!-- The origin of the mesh is at approx 0.0932 from the bottom of the bottle -->
+      <pose>0 0 0.0932 0 0 0</pose>
+      <inertial>
+	<!-- CoM evaluated using Meshlab assuming a homogeneous body-->
+	<!-- expressed w.r.t. the origin of the mesh -->
+	<pose>0.000134 0.000351 -0.013002 0 0 0</pose>	
+        <mass>0.1</mass>
+        <inertia>
+	  <!-- Obtained from Meshlab -->
+          <ixx>0.000260845618915160</ixx>
+          <ixy>0.000017020862308762</ixy>
+          <ixz>0.000001340751043115</ixz>
+          <iyy>0.000250998609179416</iyy>
+          <iyz>0.000002876216968011</iyz>
+          <izz>0.000078655076495132</izz>
+        </inertia>
+      </inertial>
+      <collision name='mustard_collision'>
+        <geometry>
+          <mesh><uri>model://mustard/mustard.stl</uri></mesh>
+        </geometry>
+      </collision>
+      <visual name='mustard_visual'>
+        <geometry>
+          <mesh><uri>model://mustard/mustard.dae</uri></mesh>
+        </geometry>
+        <material>
+	  <script>
+	    <uri>file://media/materials/scripts/gazebo.material</uri>
+	    <name>Gazebo/Orange</name>
+	  </script>
+        </material>
+      </visual>
+    </link>
+    <plugin name="pose_publisher" filename='libgazebo_yarp_modelPosePublisher.so'>
+      <period>0.01</period>
+    </plugin>
+  </model>
+</sdf>
