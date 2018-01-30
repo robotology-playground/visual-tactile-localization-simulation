@@ -23,7 +23,6 @@
       <!-- the port opened by the yarp::dev::IFrameTransformServer is available -->            
       <port timeout="5.0">/transformServer/transforms:o</port>
     </dependencies>
-    
   </module>
 
   <module>
@@ -32,5 +31,10 @@
     <node>localhost</node>
     <parameters>--device transformServer --ROS::enable_ros_publisher false --ROS::enable_ros_subscriber false</parameters>
   </module>
+
+  <connection>
+    <from>/mustard/fakepointcloud:o</from>
+    <to>/mustard/fakepointcloud_viewer:i</to>
+  </connection>
   
 </application>
