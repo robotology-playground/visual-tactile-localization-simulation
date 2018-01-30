@@ -36,6 +36,19 @@
 	  </script>
         </material>
       </visual>
+      <visual name='mustard_estimate'>
+	<plugin name="viewer" filename='libgazebo_yarp_estimateViewer.so'></plugin>
+        <geometry>
+          <mesh><uri>model://mustard/mustard.dae</uri></mesh>
+        </geometry>
+        <material>
+	  <script>
+	    <uri>file://media/materials/scripts/gazebo.material</uri>
+	    <name>Gazebo/Blue</name>
+	  </script>
+        </material>
+	<transparency>0.7</transparency>
+      </visual>
     </link>
     <plugin name="pose_publisher" filename='libgazebo_yarp_modelposepublisher.so'>
       <period>0.01</period>
