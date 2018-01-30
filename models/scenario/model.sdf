@@ -26,10 +26,16 @@
       <pose>0.08 0.3 0.48 0 0 0</pose>
     </include>
 
+    <!-- Observer origin represented as a sphere -->    
+    <include>
+      <uri>model://observer_origin</uri>
+      <pose>0 0.07 0.93 0 0 0</pose>
+    </include>
+    
     <!-- iCub with hands -->    
     <include>
       <uri>model://icub_with_hands</uri>
-      <pose>0 0 0.6 0 0 -1.57</pose>      
+      <pose>0 0 0.6 0 0 -1.57</pose>
     </include>
     
   </world>
