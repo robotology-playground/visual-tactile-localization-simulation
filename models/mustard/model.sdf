@@ -25,6 +25,7 @@
         </geometry>
       </collision>
       <visual name='mustard_visual'>
+	<plugin name="viewer" filename='libgazebo_yarp_fakePointCloudViewer.so'></plugin>
         <geometry>
           <mesh><uri>model://mustard/mustard.dae</uri></mesh>
         </geometry>
@@ -36,8 +37,14 @@
         </material>
       </visual>
     </link>
-    <plugin name="pose_publisher" filename='libgazebo_yarp_modelPosePublisher.so'>
+    <plugin name="pose_publisher" filename='libgazebo_yarp_modelposepublisher.so'>
       <period>0.01</period>
+    </plugin>
+    <plugin name="point_cloud" filename='libgazebo_yarp_fakePointCloud.so'>
+      <period>0.05</period>
+      <observerOrigin>0 0.07 0.95</observerOrigin>
+      <numPoints>100</numPoints>
+      <meshPath>model://mustard/mustard.off</meshPath>
     </plugin>
   </model>
 </sdf>
