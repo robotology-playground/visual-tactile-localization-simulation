@@ -37,6 +37,15 @@
       <uri>model://icub_with_hands</uri>
       <pose>0 0 0.6 0 0 -1.57</pose>
     </include>
+
+    <!-- default camera -->
+    <gui>
+      <camera name='user_camera'>
+        <pose frame=''>-1.14825 1.71337 1.73287 0 0.607643 -0.98299</pose>
+        <view_controller>fps</view_controller>
+        <projection_type>perspective</projection_type>
+      </camera>
+    </gui>
     
   </world>
 </sdf>
