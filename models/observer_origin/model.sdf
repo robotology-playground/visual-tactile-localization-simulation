@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<sdf version="1.5">
+  <model name='observer_origin'>
+    <static>true</static>    
+    <link name='observer_origin_root_link'>
+    <visual name='observer_origin_visual'>
+      <geometry>
+        <sphere>
+          <radius>0.02</radius>
+        </sphere>
+      </geometry>
+      <material>
+        <script>
+          <name>Gazebo/Green</name>
+          <uri>file://media/materials/scripts/gazebo.material</uri>
+        </script>
+      </material>
+    </visual>
+    </link>
+  </model>
+</sdf>
