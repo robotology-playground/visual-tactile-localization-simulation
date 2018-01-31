@@ -75,3 +75,9 @@ To be done
 3. Run all the application `VisualTactileLocalizationSim`
 4. Connect all the ports
 5. ...
+
+To stop the simulation use `Stop all` within yarpmanager and disconnect all the ports. In case Gazebo does not close type
+```
+killall gzserver
+killall gzclient
+```
