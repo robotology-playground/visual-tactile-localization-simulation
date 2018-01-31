@@ -16,8 +16,9 @@
     <environment>GAZEBO_PLUGIN_PATH=$ENV{GAZEBO_PLUGIN_PATH}:$ENV{ROBOT_INSTALL}/lib</environment>
     <workdir>$ENV{ROBOT_CODE}/visual-tactile-localization-simulation</workdir>
     <!--Start the simulation paused (-u) and -->        
-    <!--pass the world containing the main scenario to Gazebo -->    
-    <parameters>-u models/scenario/model.sdf</parameters>
+    <!--pass the world containing the main scenario to Gazebo -->
+    <!--load the GazeboYarpClock plugin -->        
+    <parameters>-u models/scenario/model.sdf -slibgazebo_yarp_clock.so</parameters>
     <dependencies>
       <!-- Since objects within the main scenario uses GazeboYarpModelPosePublisher -->
       <!-- that uses a Frame Transform Server it is better to start Gazebo only when -->
