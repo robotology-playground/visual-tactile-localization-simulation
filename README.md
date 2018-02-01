@@ -38,7 +38,7 @@ make install
 cd $ROBOT_CODE/gazebo-yarp-plugins
 git checkout visual_tactile_loc_plugins
 mkdir build && cd build
-cmake ../
+cmake ../ -DCMAKE_INSTALL_PREFIX=$ROBOT_INSTALL
 make install
 ```
 
