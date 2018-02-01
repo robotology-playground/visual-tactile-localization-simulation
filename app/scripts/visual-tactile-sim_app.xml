@@ -1,0 +1,16 @@
+<application>
+
+  <name>VisualTactileLocalizationSimApplication</name>
+  <description>Main module for Gazebo based simulation of visual-tactile localization</description>
+
+  <authors>
+    <author email="nicolapiga@gmcail.com">Nicola Piga</author>
+  </authors>
+
+  <module>
+    <name>visual-tactile-localization-sim</name>
+    <node>localhost</node>    
+    <environment>YARP_CLOCK=/clock</environment>    
+  </module>
+
+</application>
