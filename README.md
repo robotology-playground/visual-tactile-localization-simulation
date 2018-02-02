@@ -37,6 +37,7 @@ make install
 #### Install visual-tactile-localization-simulation
 ```
 cd $ROBOT_CODE/visual-tactile-localization-simulation
+git checkout feature/rf_module
 mkdir build && cd build
 cmake ../
 make install
