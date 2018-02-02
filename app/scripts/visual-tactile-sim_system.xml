@@ -33,9 +33,6 @@
     <description>Frame Transform Server</description>
     <node>localhost</node>
     <parameters>--device transformServer --ROS::enable_ros_publisher false --ROS::enable_ros_subscriber false</parameters>
-    <dependencies>
-      <port timeout="5.0">/clock</port>
-    </dependencies>
     <environment>YARP_CLOCK=/clock</environment>
   </module>
 
