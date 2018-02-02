@@ -32,23 +32,16 @@
       <pose>0 0.07 0.93 0 0 0</pose>
     </include>
     
-    <!-- iCub with hands and fixed -->    
+    <!-- iCub with hands and fixed  -->
     <model name="iCub_fixed">
       <include>
-	<uri>model://icub_with_hands</uri>
-	<pose>0 0 0.6 0 0 -1.57</pose>      
+    	<uri>model://icub_with_hands</uri>
+    	<pose>0 0 0.6 0 0 -1.57</pose>
       </include>
 
       <joint name="fixed to ground" type="revolute">
-	<parent>world</parent>
-	<child>iCub::root_link</child>
-	<!-- <axis> -->
-        <!--   <limit> -->
-        <!--     <lower>0</lower> -->
-        <!--     <upper>0</upper> -->
-        <!--   </limit> -->
-        <!--   <xyz>0 0 0</xyz> -->
-        <!-- </axis> -->
+    	<parent>world</parent>
+    	<child>iCub::root_link</child>
       </joint>
 
     </model>
