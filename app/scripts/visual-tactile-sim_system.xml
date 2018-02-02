@@ -12,9 +12,7 @@
     <description>Gazebo simulator with main scenario loaded</description>
     <node>localhost</node>
     <!-- Suppose that icub-gazebo and visual-tactile-localization-simulation are available within $ROBOT-CODE -->
-    <environment>GAZEBO_MODEL_PATH=$ENV{GAZEBO_MODEL_PATH}:$ENV{ROBOT_CODE}/icub-gazebo:$ENV{ROBOT_CODE}/visual-tactile-localization-simulation/models</environment>
-    <environment>GAZEBO_PLUGIN_PATH=$ENV{GAZEBO_PLUGIN_PATH}:$ENV{ROBOT_INSTALL}/lib</environment>
-    <environment>YARP_CLOCK=/clock</environment>        
+    <environment>YARP_CLOCK=/clock;GAZEBO_MODEL_PATH=$ENV{GAZEBO_MODEL_PATH}:$ENV{ROBOT_CODE}/icub-gazebo:$ENV{ROBOT_CODE}/visual-tactile-localization-simulation/models;GAZEBO_PLUGIN_PATH=$ENV{GAZEBO_PLUGIN_PATH}:$ENV{ROBOT_INSTALL}/lib</environment>
     <workdir>$ENV{ROBOT_CODE}/visual-tactile-localization-simulation</workdir>
     <!--Start the simulation paused (-u) and -->        
     <!--pass the world containing the main scenario to Gazebo -->
