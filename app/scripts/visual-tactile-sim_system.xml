@@ -14,6 +14,7 @@
     <!-- Suppose that icub-gazebo and visual-tactile-localization-simulation are available within $ROBOT-CODE -->
     <environment>GAZEBO_MODEL_PATH=$ENV{GAZEBO_MODEL_PATH}:$ENV{ROBOT_CODE}/icub-gazebo:$ENV{ROBOT_CODE}/visual-tactile-localization-simulation/models</environment>
     <environment>GAZEBO_PLUGIN_PATH=$ENV{GAZEBO_PLUGIN_PATH}:$ENV{ROBOT_INSTALL}/lib</environment>
+    <environment>YARP_CLOCK=/clock</environment>        
     <workdir>$ENV{ROBOT_CODE}/visual-tactile-localization-simulation</workdir>
     <!--Start the simulation paused (-u) and -->        
     <!--pass the world containing the main scenario to Gazebo -->
@@ -32,6 +33,46 @@
     <description>Frame Transform Server</description>
     <node>localhost</node>
     <parameters>--device transformServer --ROS::enable_ros_publisher false --ROS::enable_ros_subscriber false</parameters>
+    <dependencies>
+      <port timeout="5.0">/clock</port>
+    </dependencies>
+    <environment>YARP_CLOCK=/clock</environment>
+  </module>
+
+  <module>
+    <name>upf-localizer</name>
+    <description>UPF filter</description>
+    <node>localhost</node>
+    <parameters>--context simVisualTactileLocalization</parameters>
+    <dependencies>
+      <port timeout="5.0">/clock</port>
+    </dependencies>
+    <environment>YARP_CLOCK=/clock</environment>
+  </module>
+
+  <module>
+    <name>yarprobotinterface</name>
+    <node>localhost</node>    
+    <parameters>--context simCartesianControl --config no_legs.xml</parameters>
+    <dependencies>
+      <port timeout="5.0">/clock</port>
+      <port timeout="20">/icubSim/torso/state:o</port>
+      <port timeout="20">/icubSim/left_arm/state:o</port>
+      <port timeout="20">/icubSim/right_arm/state:o</port>
+    </dependencies>
+    <environment>YARP_CLOCK=/clock</environment>    
+  </module>
+
+  <module>
+    <name>iKinCartesianSolver</name>
+    <node>localhost</node>    
+    <parameters>--context simCartesianControl --part right_arm</parameters>
+    <dependencies>
+      <port timeout="5.0">/clock</port>      
+      <port timeout="20">/icubSim/torso/state:o</port>
+      <port timeout="20">/icubSim/right_arm/state:o</port>
+    </dependencies>
+    <environment>YARP_CLOCK=/clock</environment>    
   </module>
 
   <connection>
