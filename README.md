@@ -10,6 +10,7 @@ Gazebo based simulation scenario for a visual-tactile localization algorithm.
   - `EstimateViewer` (show the estimated pose as an additional transparent visual element within Gazebo)
 - [Gazebo](http://gazebosim.org/) (tested with version `7.9.0`)
 - [icub-gazebo](https://github.com/robotology/icub-gazebo/)
+- [visual-tactile-localization](https://github.com/robotology-playground/visual-tactile-localization)
 
 ### VCG
 The plugin `FakePointCloud` uses the header-only library [VCG](http://vcg.isti.cnr.it/vcglib/) to sample point clouds.It is provided within the header files of the plugin.
@@ -20,9 +21,17 @@ It is supposed that you have already installed `yarp` using two directories one 
 #### Get the code[WIP]
 ```
 cd $ROBOT_CODE
+git clone https://github.com/robotology-playground/visual-tactile-localization.git
 git clone https://github.com/robotology-playground/visual-tactile-localization-simulation.git
 git clone https://github.com/xEnVrE/gazebo-yarp-plugins.git
 git clone https://github.com/robotology/icub-gazebo.git
+```
+#### Install visual-tactile-localization
+```
+cd $ROBOT_CODE/visual-tactile-localization
+mkdir build && cd build
+cmake ../
+make install
 ```
 
 #### Install visual-tactile-localization-simulation
