@@ -10,7 +10,7 @@
   <module>
     <name>visual-tactile-localization-sim</name>
     <node>localhost</node>    
-    <environment>YARP_CLOCK=/clock</environment>    
+    <environment>YARP_CLOCK=/clock;YARP_FORWARD_LOG_ENABLE=1</environment>
   </module>
 
 </application>
