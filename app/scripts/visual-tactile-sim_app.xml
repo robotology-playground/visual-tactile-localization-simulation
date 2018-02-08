@@ -4,7 +4,7 @@
   <description>Main module for Gazebo based simulation of visual-tactile localization</description>
 
   <authors>
-    <author email="nicolapiga@gmcail.com">Nicola Piga</author>
+    <author email="nicolapiga@gmail.com">Nicola Piga</author>
   </authors>
 
   <module>
