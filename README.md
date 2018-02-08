@@ -34,6 +34,7 @@ mkdir build && cd build
 cmake ../
 make install
 ```
+This package provides a module `upf-localizer` and a context `simVisualTactileLocalization` containg configuration file for the localizer as well as `.OFF` mesh files of the models.
 
 #### Install visual-tactile-localization-simulation
 ```
@@ -42,6 +43,9 @@ mkdir build && cd build
 cmake ../
 make install
 ```
+This package provides a module `visual-tactile-localization-sim` and two applications description `xml`s in ICUBcontrib:
+- `visual-tactile-sim_system.xml` to launch the entire simulation setup; 
+- `visual-tactile-sim_app.xml` to launch the module `visual-tactile-localization-sim` once the setup is online;
 
 #### Install gazebo-yarp-plugins
 ```
@@ -66,28 +70,74 @@ Cloning is sufficient. However there is an open [issue](https://github.com/robot
         ...
 ```
 
-#### Notes about the application description file[WIP]
+### Notes about the application description file[WIP]
 After installation an application description xml file should be available in 
 ```
 $ROBOT_INSTALL/share/ICUBcontrib/applications/app_visual-tactile-sim.xml
 ```
 It consists of the following modules:
-- `yarpdev` it runs an instance of `yarp::dev::FrameTransformServer` without ROS support. The plugin `GazeboYarpModelPosePublisher` uses it to publish the transform between the Gazebo world frame and root link of the object to be localized. The plugin `FakePointCloudViewer` uses it to retrieve the same transform.
-- `gazebo` it runs the Gazebo simulator:
+#### yarpdev
+`yarpdev` runs an instance of `yarp::dev::FrameTransformServer` without ROS support. This device is used by several gazebo plugins and modules within this setup as explained later.
+
+#### gazebo
+`gazebo` runs the Gazebo simulator:
   - with the simulation server `gzserver` paused;
+  - with the plugin [GazeboYarpClock](http://robotology.gitlab.io/docs/gazebo-yarp-plugins/master/classgazebo_1_1GazeboYarpClock.html) required to send the __simulation clock__ over the default port  `/clock`;
   - using [models/scenario/model.sdf](models/scenario/model.sdf) as world; 
   - using `$ROBOT_CODE/visual-tactile-localization-simulation` as working directory
-  - with
+  - with a dependency on the port `/transformServer/transforms:o` opened by `yarpdev` (timeout=5.0s) required because plugin `GazeboYarpModelPosePublisher` uses it to publish transforms (e.g. absolute pose of the object, absolute pose of the iCub root frame attached on the waist), plugin `FakePointCloud` uses it to get the absolute pose of the object and plugin `EstimateViewer` uses it to get the estimated pose published by the module `upf-localizer`. Dependency allow plugins to find the port open when they start;
+- with environment variables
+  ```
+  YARP_CLOCK=/clock
+  ```
+  required since some plugins uses time internally and need to be synchronized with the simulation clock available on port `/clock`;
   ```
   GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:$ROBOT_CODE/icub-gazebo:$ROBOT_CODE/visual-tactile-localization-simulation/models
+  ```
+  required to expose models provided within this package to Gazebo
+  ```
   GAZEBO_PLUGIN_PATH=$GAZEBO_PLUGIN_PATH:$ROBOT_INSTALL/lib
   ```
-  - with a dependency on the port `/transformServer/transforms:o` opened by `yarpdev` (timeout=5.0s)
+  required to expose plugins provided by `gazebo-yarp-plugins` to Gazebo
   
+#### upf-localizer
+`upf-localizer` runs a RFModule that interfaces with the UPF:
+  - with the context `simVisualTactileLocalization`
+  - with a dependency on the port `/transformServer/transforms:o` opened by `yarpdev` (timeout=5.0s) required because the module uses it to publish the estimated pose;
+  - with a dependency on the port `/clock` opened by module `gazebo` due to the plugin `GazeboYarpClock`;
+- with environment variables
+  ```
+  YARP_CLOCK=/clock
+  ```
+  required to synchronize time with the simulation clock available on port `\clock`.
+  
+#### yarprobotinterface
+`yarprobotinterface` starts all the devices required by the robot:
+ - with the context `simCartesianControl`;
+ - with the option `--config no_legs.xml` since only `torso` and `arms` are required;
+ - with a dependency on the ports `/icubSim/torso/state:o`, `/icubSim/left_arm/state:o`, `/icubSim/right_arm/state:o` and `\clock`;
+ - with environment variables
+  ```
+  YARP_CLOCK=/clock
+  ```
+  required to synchronize time with the simulation clock available on port `\clock`.
+  
+#### iKinCartesianSolver
+`iKinCartesianSolver` starts the inverse kinematics online solver:
+ - with the context `simCartesianControl`;
+ - with the option `--part right_arm` since for now only the right arm is used;
+  - with a dependency on the ports `/icubSim/torso/state:o`, `/icubSim/right_arm/state:o` and `\clock`;
+ - with environment variables
+  ```
+  YARP_CLOCK=/clock
+  ```
+  required to synchronize time with the simulation clock available on port `\clock`.
+  
+#### Connections
 Connections provided within the application description are:
 - from `/mustard/fakepointcloud:o` to `/mustard/fakepointcloud_viewer:i` where `/mustard/fakepointcloud:o` is opened by the plugin `FakePointCloud` and `/mustard/fakepointcloud_viewer:i` is opened by the plugin `FakePointCloudViewer`.
 
-#### Add another object to the simulation[WIP]
+### Add another object to the simulation[WIP]
 To be done
 
 ### Run the simulation[WIP]
