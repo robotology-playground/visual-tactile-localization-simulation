@@ -11,6 +11,20 @@
     <name>visual-tactile-localization-sim</name>
     <node>localhost</node>    
     <environment>YARP_CLOCK=/clock;YARP_FORWARD_LOG_ENABLE=1</environment>
+    <dependencies>
+      <port timeout="5.0">/yarplogger</port>      
+      <port timeout="5.0">/clock</port>      
+    </dependencies>
   </module>
+
+  <connection>
+    <from>/mustard/fakepointcloud:o</from>    
+    <to>/vis_tac_localization/pc:i</to>
+  </connection>
+
+  <connection>
+    <from>/vis_tac_localization/filter:o</from>    
+    <to>/upf-localizer:i</to>
+  </connection>
 
 </application>

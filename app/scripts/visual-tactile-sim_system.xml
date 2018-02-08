@@ -48,7 +48,8 @@
     <dependencies>
       <port timeout="5.0">/clock</port>
       <!-- the filter publishes the estimated pose on the transform server -->
-      <port timeout="5.0">/transformServer/transforms:o</port>      
+      <port timeout="5.0">/transformServer/transforms:o</port>
+      <port timeout="5.0">/yarplogger</port>
     </dependencies>
     <environment>YARP_CLOCK=/clock;YARP_FORWARD_LOG_ENABLE=1</environment>
   </module>
@@ -81,16 +82,6 @@
   <connection>
     <from>/mustard/fakepointcloud:o</from>
     <to>/mustard/fakepointcloud_viewer:i</to>
-  </connection>
-
-  <connection>
-    <from>/mustard/fakepointcloud:o</from>    
-    <to>/vis_tac_localization/pc:i</to>
-  </connection>
-
-  <connection>
-    <from>/vis_tac_localization/filter:o</from>    
-    <to>/upf-localizer:i</to>
   </connection>
   
 </application>
