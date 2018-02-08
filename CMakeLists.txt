@@ -31,8 +31,17 @@ include(ICUBcontribHelpers)
 # specify to install in $ICUBcontrib_DIR/bin
 icubcontrib_set_default_prefix()
 
+# set headers and sources
+set(headers
+  ${CMAKE_SOURCE_DIR}/headers/PointCloud.h
+  ${CMAKE_SOURCE_DIR}/headers/filterData.h)
+set(sources
+  ${CMAKE_SOURCE_DIR}/src/filterData.cpp
+  ${CMAKE_SOURCE_DIR}/src/main.cpp)
+
 include_directories(${YARP_INCLUDE_DIRS})
-add_executable(${PROJECT_NAME} ${CMAKE_SOURCE_DIR}/src/main.cpp)
+include_directories(${PROJECT_SOURCE_DIR})
+add_executable(${PROJECT_NAME} ${headers} ${sources})
 target_link_libraries(${PROJECT_NAME} ${YARP_LIBRARIES})
 install(TARGETS ${PROJECT_NAME} DESTINATION bin)
 

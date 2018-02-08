@@ -1,6 +1,6 @@
 /******************************************************************************
  *                                                                            *
- * Copyright (C) 2017 Fondazione Istituto Italiano di Tecnologia (IIT)        *
+ * Copyright (C) 2018 Fondazione Istituto Italiano di Tecnologia (IIT)        *
  * All Rights Reserved.                                                       *
  *                                                                            *
  ******************************************************************************/
@@ -13,89 +13,62 @@
 #include <string>
 
 // yarp
-#include <yarp/os/all.h>
-#include <yarp/dev/all.h>
-#include <yarp/sig/all.h>
+#include <yarp/os/Time.h>
+#include <yarp/os/BufferedPort.h>
+#include <yarp/os/ResourceFinder.h>
+#include <yarp/os/RFModule.h>
+#include <yarp/os/SystemClock.h>
+#include <yarp/sig/Vector.h>
+#include <yarp/sig/Matrix.h>
 #include <yarp/math/Math.h>
+#include <yarp/math/FrameTransform.h>
+#include <yarp/dev/CartesianControl.h>
+#include <yarp/dev/ControlBoardInterfaces.h>
+#include <yarp/dev/IFrameTransform.h>
+#include <yarp/dev/PolyDriver.h>
 
-using namespace std;
-using namespace yarp::os;
-using namespace yarp::dev;
-using namespace yarp::sig;
+#include <cmath>
+
+#include "headers/PointCloud.h"
+#include "headers/filterData.h"
+
 using namespace yarp::math;
 
-class CtrlModule: public RFModule
+class VisTacLocSimModule: public yarp::os::RFModule
 {
 protected:
-    PolyDriver drvArm, drvGaze;
-    ICartesianControl *iarm;
-    IGazeControl      *igaze;
+    // driver and context
+    yarp::dev::PolyDriver drv_arm;
+    yarp::dev::ICartesianControl *iarm;
+    int startup_cart_context_id;    
+    
+    // rpc server
+    yarp::os::RpcServer rpc_port;
 
-    // BufferedPort<ImageOf<PixelRgb> > imgLPortIn,imgRPortIn;
-    // BufferedPort<ImageOf<PixelRgb> > imgLPortOut,imgRPortOut;
-    RpcServer rpcPort;
+    // mutex required to share data between
+    // the RFModule thread and the rpc thread
+    yarp::os::Mutex mutex;
 
-    Mutex mutex;
-    // Vector cogL,cogR;
-    // bool okL,okR;
+    // point cloud port and storage
+    yarp::os::BufferedPort<PointCloud> port_pc;
+    PointCloud pc;
 
-    int startup_gaze_context_id;
-    int startup_cart_context_id;
+    // filter port and storage
+    yarp::os::BufferedPort<yarp::sig::FilterData> port_filter;
 
-    // bool getCOG(ImageOf<PixelRgb> &img, Vector &cog)
-    // {
-    //     int xMean=0;
-    //     int yMean=0;
-    //     int ct=0;
+    // FrameTransformClient to read the pose
+    // of the root link of the robot
+    yarp::dev::PolyDriver drvTransformClient;
+    yarp::dev::IFrameTransform* tfClient;
+    yarp::sig::Matrix inertialToRobot;
 
-    //     for (int x=0; x<img.width(); x++)
-    //     {
-    //         for (int y=0; y<img.height(); y++)
-    //         {
-    //             PixelRgb &pixel=img.pixel(x,y);
-    //             if ((pixel.b>5.0*pixel.r) && (pixel.b>5.0*pixel.g))
-    //             {
-    //                 xMean+=x;
-    //                 yMean+=y;
-    //                 ct++;
-    //             }
-    //         }
-    //     }
-
-    //     if (ct>0)
-    //     {
-    //         cog.resize(2);
-    //         cog[0]=xMean/ct;
-    //         cog[1]=yMean/ct;
-    //         return true;
-    //     }
-    //     else
-    //         return false;
-    // }
-
-    // Vector retrieveTarget3D(const Vector &cogL, const Vector &cogR)
-    // {
-    //     // get the position of the blue ball within the image planes
-    //     Vector px_left(2), px_right(3);
-        
-    //     px_left = cogL;
-    //     px_right = cogR;
-
-    //     // request triangulation to find the cartesian position of the blue ball
-    //     Vector x;
-    //     igaze->triangulate3DPoint(px_left,px_right,x);
-        
-    //     return x;
-    // }
-
-    void fixate(const Vector &x)
-    {
-        // request motion and wait for completion
-        igaze->lookAtFixationPointSync(x);
-        igaze->waitMotionDone();
-    }
-
-    Vector computeHandOrientation()
+    /*
+     * This function evaluates the orientation of the right hand
+     * required during a pushing phase
+     * TODO: rename function
+     * TODO: have a similar function for the left hand
+     */
+    yarp::sig::Vector computeHandOrientation()
     {
         // given the reference frame convention for the hands of iCub
         // it is required to have the x-axis attached to the center of the
@@ -106,7 +79,7 @@ protected:
         // is to compose a rotation of pi about the z-axis and a rotation
         // of -pi/2 about the x-axis (after the first rotation)
 
-        Vector att_z(4), att_x(4);
+        yarp::sig::Vector att_z(4), att_x(4);
         att_z[0] = 0.0;
         att_z[1] = 0.0;
         att_z[2] = 1.0;
@@ -118,137 +91,215 @@ protected:
         att_x[3] = -M_PI/2.0;
 
         // convert to dcm
-        Matrix Rz = yarp::math::axis2dcm(att_z);
-        Matrix Rx = yarp::math::axis2dcm(att_x);
+        yarp::sig::Matrix Rz = yarp::math::axis2dcm(att_z);
+        yarp::sig::Matrix Rx = yarp::math::axis2dcm(att_x);
 
         // compose in current axes
-        Matrix R = Rz*Rx;
+        yarp::sig::Matrix R = Rz*Rx;
 
         // convert back to axis
-        Vector att = yarp::math::dcm2axis(R);
+        yarp::sig::Vector att = yarp::math::dcm2axis(R);
         
         return att;
     }
 
-    void approachTargetWithHand(const Vector &x, const Vector &o)
+    /*
+     * This function return the last point cloud stored in
+     * this->pc taking into account the pose of the root frame
+     * of the robot attached to its waist.
+     * This function is simulation-related and allows to obtain
+     * point clouds expressed with respect to the robot root frame
+     * as happens in the real setup.
+     */
+    bool getPointCloud(std::vector<yarp::sig::Vector> &pc_out)
     {
-        // in order to avoid hitting the ball or the table surface
-        // it is better to move it a little rightward
-        // (i.e. more positive on waist y-axis)
-        // and upward (more positive on waist z-axis)
-        
-        // Vector x_shifted = x;
-        // x_shifted[1] += HAND_APPROACH_Y_TOLERANCE;
-        // x_shifted[2] += HAND_APPROACH_Z_TOLERANCE;
+	mutex.lock();
 
-        // request pose to the cartesian interface
-        iarm->goToPoseSync(x, o);
+	// check if the pointer is valid
+	// and if it contains data
+	if (pc.size() == 0 )
+	{
+	    mutex.unlock();
+	    return false;
+	}
 
-        // wait for motion completion
-        iarm->waitMotionDone();
+	// copy data to pc_out
+	for (size_t i=0; i<pc.size(); i++)
+	{
+	    PointCloudItem item = pc[i];
+	    yarp::sig::Vector point(3, 0.0);
+	    point[0] = item.x;
+	    point[1] = item.y;
+	    point[2] = item.z;
 
+	    pc_out.push_back(point);
+	}
+	
+	mutex.unlock();
+
+	// transform the points taking into account
+	// the root link of the robot
+	for (size_t i=0; i<pc_out.size(); i++)
+	{
+	    yarp::sig::Vector point(4, 0.0);
+	    point.setSubvector(0, pc_out[i]);
+	    point[3] = 1;
+
+	    // transform the point so that
+	    // it is relative to the orign of the robot root frame
+	    // and expressed in the robot root frame
+	    point = SE3inv(inertialToRobot) * point;
+	    
+	    pc_out[i] = point.subVector(0,2);
+	}
+
+	return true;
     }
-
-    void roll(const Vector &x, const Vector &o)
+    
+    /*
+     * This function perform object localization using the last
+     * point cloud available.
+     */
+    bool localizeObject()
     {
-        // desired final pose
-        Vector x_d = x;
-        // use the same z coordinate as in the approach phase
-        // x_d[2] += HAND_APPROACH_Z_TOLERANCE;
+	// process cloud in chuncks of 10 points
+	// TODO: take n_points from config
+	int n_points = 10;
 
-        // final pose in the negative waist y-direction
-        x_d[1] -= 0.01;
+	// get the last point cloud received
+	std::vector<yarp::sig::Vector> pc;
+	if (!getPointCloud(pc))
+	    return false;
 
-        // store the current context because we are going
-        // to change the trajectory time
-        int context_id;
-        iarm->storeContext(&context_id);
+	// process the point cloud
+	for (size_t i=0; i+n_points <= pc.size(); i += n_points)
+	{
+	    // prepare to write
+	    yarp::sig::FilterData &filter_data = port_filter.prepare();
+	    
+	    // clear the storage
+	    filter_data.clear();
 
-        // set trajectory time
-        iarm->setTrajTime(0.3);
+	    // add measures
+	    for (size_t k=0; k<n_points; k++)
+		filter_data.addPoint(pc[i+k]);
+	    
+	    // add zero input
+	    yarp::sig::Vector zero(3, 0.0);
+	    filter_data.addInput(zero);
 
-        // request pose to the cartesian interface
-        iarm->goToPoseSync(x_d, o);
+	    // send data to the filter
+	    port_filter.writeStrict();
 
-        // wait for motion completion
-        iarm->waitMotionDone(0.04);
+	    // wait
+	    yarp::os::Time::delay(0.5);
+	}
 
-        // restore the context
-        iarm->restoreContext(context_id);
-
-    }
-
-    // void look_down()
-    // {
-    //     // consider a fixation point on the table surface
-    //     Vector fp(3,0.0);
-    //     // x-component, look in the forward direction
-    //     fp[0] = -0.30;    
-    //     // y-component is 0, pitch only required 
-    //     // z-component is 0, the table surface is below the waist
-
-    //     // request motion and wait for completion
-    //     igaze->lookAtFixationPointSync(fp);
-    //     igaze->waitMotionDone();
-        
-    // }
-
-    void make_it_roll()//(const Vector &cogL, const Vector &cogR)
-    {
-        // yInfo()<<"detected cogs = ("<<cogL.toString(0,0)<<") ("<<cogR.toString(0,0)<<")";
-
-        // Vector x=retrieveTarget3D(cogL,cogR);
-        // yInfo()<<"retrieved 3D point = ("<<x.toString(3,3)<<")";
-
-        // fixate(x);
-        // yInfo()<<"fixating at ("<<x.toString(3,3)<<")";
-
-        // Vector o=computeHandOrientation();
-        // yInfo()<<"computed orientation = ("<<o.toString(3,3)<<")";
-
-        // yarp::sig::Vector x(3, 0.0);
-        // x[0] = 0.3;
-        // x[1] = 0.3;
-        // x[2] = 0.3;        
-        // approachTargetWithHand(x,o);
-        // yInfo()<<"approached";
-
-        // roll(x,o);
-        // yInfo()<<"roll!";
+	return true;
     }
 
 public:
-    bool configure(ResourceFinder &rf)
+    bool configure(yarp::os::ResourceFinder &rf)
     {
-        Property optArm;
-        optArm.put("device","cartesiancontrollerclient");
-        optArm.put("remote","/icubSim/cartesianController/right_arm");
-        optArm.put("local","/cartesian_client/right_arm");
-
-        // let's give the controller some time to warm up
-        bool ok=false;
-        double t0=Time::now();
-        while (Time::now()-t0<10.0)
+	// open the point cloud port
+	// TODO: take name from config
+	bool ok = port_pc.open("/vis_tac_localization/pc:i");
+	if (!ok)
         {
-            // this might fail if controller
-            // is not connected to solver yet
-            if (drvArm.open(optArm))
-            {
-                ok=true;
-                break;
-            }
-
-            Time::delay(1.0);
-        }
-
-        if (!ok)
-        {
-            yError()<<"Unable to open the Cartesian Controller";
+            yError() << "VisTacLocSimModule: unable to open the point cloud port";
             return false;
         }
 
-        // open the iCartesianControl view
-        drvArm.view(iarm);
+	// open the filter port
+	// TODO: take name from config
+	ok = port_filter.open("/vis_tac_localization/filter:o");
+	if (!ok)
+        {
+            yError() << "VisTacLocSimModule: unable to open the filter port";
+            return false;
+        }
+
+	// prepare properties for the FrameTransformClient
+	yarp::os::Property propTfClient;
+	propTfClient.put("device", "transformClient");
+	propTfClient.put("local", "/vis_tac_localization/transformClient");
+	propTfClient.put("remote", "/transformServer");
+	
+	// try to open the driver
+	ok = drvTransformClient.open(propTfClient);
+	if (!ok)
+	{
+	    yError() << "VisTacLocSimModule: unable to open the FrameTransformClient driver.";
+	    return false;
+	}
+
+	// try to retrieve the view
+	ok = drvTransformClient.view(tfClient);
+	if (!ok || tfClient == 0)
+	{
+	    yError() << "VisTacLocSimModule: unable to retrieve the FrameTransformClient view.";
+	    return false;
+	}
+
+	// get the pose of the root frame of the robot
+	// TODO: get source and target from configuration file
+	inertialToRobot.resize(4,4);
+	std::string source = "/inertial";
+	std::string target = "/iCub/frame";
+
+	ok = false;
+        double t0 = yarp::os::SystemClock::nowSystem();
+        while (yarp::os::SystemClock::nowSystem() - t0 < 10.0)
+        {
+            // this might fail if the gazebo pluging
+	    // publishing the pose is not started yet
+            if (tfClient->getTransform(target, source, inertialToRobot))
+            {
+                ok = true;
+                break;
+            }
+	    yarp::os::SystemClock::delaySystem(1.0);
+        }
+        if (!ok)
+	{
+            yError() << "VisTacLocSimModule: unable to get the pose of the root link of the robot";
+            return false;
+	}
+	
+	// prepare properties for the CartesianController
+        yarp::os::Property prop_arm;
+        prop_arm.put("device", "cartesiancontrollerclient");
+        prop_arm.put("remote", "/icubSim/cartesianController/right_arm");
+        prop_arm.put("local", "/cartesian_client/right_arm");
+
+        // let's give the controller some time to warm up
+	// here use real time and not simulation time
+	ok = false;
+        t0 = yarp::os::SystemClock::nowSystem();
+        while (yarp::os::SystemClock::nowSystem() - t0 < 10.0)
+        {
+            // this might fail if controller
+            // is not connected to solver yet
+            if (drv_arm.open(prop_arm))
+            {
+                ok = true;
+                break;
+            }
+	    yarp::os::SystemClock::delaySystem(1.0);	    
+        }
+        if (!ok)
+        {
+            yError() << "Unable to open the Cartesian Controller driver.";
+            return false;
+        }
+
+	// try to retrieve the view	
+        drv_arm.view(iarm);
+	if (!ok || iarm == 0)
+	{
+	    yError() << "Unable to retrieve the CartesianController view.";
+	    return false;
+	}
 
         // store the current context so that
         // it can be restored when the modules closes
@@ -258,7 +309,7 @@ public:
         iarm->setTrajTime(1.0);
 
         // use also the torso
-        Vector newDoF, curDoF;
+        yarp::sig::Vector newDoF, curDoF;
         iarm->getDOF(curDoF);
         newDoF = curDoF;
 
@@ -266,125 +317,51 @@ public:
         newDoF[1] = 1;
         newDoF[2] = 1;
 
-        iarm->setDOF(newDoF,curDoF);
+        iarm->setDOF(newDoF, curDoF);
 
-        // configure options for drvGaze
-        // Property optGaze;
-        // optGaze.put("device", "gazecontrollerclient");
-        // optGaze.put("remote", "/iKinGazeCtrl");
-        // optGaze.put("local", "/tracker/gaze");
-
-        // open the driver
-        // if (!drvGaze.open(optGaze))
-        // {
-        //     yError()<<"Unable to open the Gaze Controller";
-        //     return false;
-        // }
-
-        // open the iGazeController view
-        // drvGaze.view(igaze);
-
-        // store the current context so that
-        // it can be restored when the modules closes
-        // igaze->storeContext(&startup_gaze_context_id);
-
-        // set trajectory time
-        // igaze->setNeckTrajTime(1.0);
-
-        // imgLPortIn.open("/imgL:i");
-        // imgRPortIn.open("/imgR:i");
-
-        // imgLPortOut.open("/imgL:o");
-        // imgRPortOut.open("/imgR:o");
-
-        // set default values for okL and okR
-        // okL = okR = false;
-
-        rpcPort.open("/service");
-        attach(rpcPort);
+	// open the rpc server
+	// TODO: take name from config
+        rpc_port.open("/service");
+        attach(rpc_port);
 
         return true;
     }
 
     bool interruptModule()
     {
-        // imgLPortIn.interrupt();
-        // imgRPortIn.interrupt();
         return true;
     }
 
     bool close()
     {
-        // stop the gaze controller for safety reason
-        // igaze->stopControl();
-
-        // restore the gaze controller context
-        // igaze->restoreContext(startup_gaze_context_id);
-
         // stop the cartesian controller for safety reason
         iarm->stopControl();
 
         // restore the cartesian controller context
         iarm->restoreContext(startup_cart_context_id);
 
-        drvArm.close();
-        // drvGaze.close();
-        // imgLPortIn.close();
-        // imgRPortIn.close();
-        // imgLPortOut.close();
-        // imgRPortOut.close();
-        rpcPort.close();
+        drv_arm.close();
+        rpc_port.close();
         return true;
     }
 
-    bool respond(const Bottle &command, Bottle &reply)
+    bool respond(const yarp::os::Bottle &command, yarp::os::Bottle &reply)
     {
-        string cmd=command.get(0).asString();
-        if (cmd=="help")
+        std::string cmd = command.get(0).asString();
+        if (cmd == "help")
         {
-            reply.addVocab(Vocab::encode("many"));
+            reply.addVocab(yarp::os::Vocab::encode("many"));
             reply.addString("Available commands:");
-            reply.addString("- test");
-            reply.addString("- quit");
+            reply.addString("- localize");
+            reply.addString("- quit");	    
         }
-        else if (cmd=="look_down")
-        {
-            // look_down();
-            // // we assume the robot is not moving now
-            // reply.addString("ack");
-            // reply.addString("Yep! I'm looking down now!");
-        }
-        else if (cmd=="test")
-        {
-	    Vector o = computeHandOrientation();
-	    Vector x(3, 0.0);
-	    x[0] = -0.38;
-	    x[1] = 0.152;
-	    x[2] = -0.046;
-	    approachTargetWithHand(x, o);
-	    
-            // go only if the ball has been detected
-            // bool go=false;
-            // mutex.lock();
-            // go = okL && okR;
-            // Vector cogL = this->cogL;
-            // Vector cogR = this->cogR;
-            // mutex.unlock();
-
-            // if (go)
-            // {
-            // make_it_roll(cogL,cogR);
-                // we assume the robot is not moving now
-                // reply.addString("ack");
-                // reply.addString("Yeah! I've made it roll like a charm!");
-            // }
-            // else
-            // {
-            //     reply.addString("nack");
-            //     reply.addString("I don't see any object!");
-            // }
-            reply.addString("ok!");	    
-        }
+	else if (cmd == "localize")
+	{
+	    if (localizeObject())
+		reply.addString("Localization using vision done.");
+	    else
+		reply.addString("Localization using vision failed.");		
+	}
         else
             // the father class already handles the "quit" command
             return RFModule::respond(command,reply);
@@ -394,42 +371,24 @@ public:
 
     double getPeriod()
     {
-        // return 0.0;     // sync upon incoming images
-        return 1.0;
+        return 0.01;
     }
 
     bool updateModule()
     {
 	if(isStopping())
 	    return false;
-        // // get fresh images
-        // ImageOf<PixelRgb> *imgL=imgLPortIn.read();
-        // ImageOf<PixelRgb> *imgR=imgRPortIn.read();
 
-        // // interrupt sequence detected
-        // if ((imgL==NULL) || (imgR==NULL))
-        //     return false;
+	mutex.lock();
 
-        // // compute the center-of-mass of pixels of our color
-        // mutex.lock();
-        // okL=getCOG(*imgL,cogL);
-        // okR=getCOG(*imgR,cogR);
-        // mutex.unlock();
+	// read from the point cloud port
+	PointCloud *new_pc = port_pc.read(false);
 
-        // PixelRgb color;
-        // color.r=255; color.g=0; color.b=0;
-
-        // if (okL)
-        //     draw::addCircle(*imgL,color,(int)cogL[0],(int)cogL[1],5);
-
-        // if (okR)
-        //     draw::addCircle(*imgR,color,(int)cogR[0],(int)cogR[1],5);
-
-        // imgLPortOut.prepare()=*imgL;
-        // imgRPortOut.prepare()=*imgR;
-
-        // imgLPortOut.write();
-        // imgRPortOut.write();
+	// store a copy if new data available
+	if (new_pc != NULL)
+	    pc = *new_pc;
+	
+	mutex.unlock();
 
         return true;
     }
@@ -437,15 +396,15 @@ public:
 
 int main()
 {
-    Network yarp;
+    yarp::os::Network yarp;
     if (!yarp.checkNetwork())
     {
         yError()<<"YARP doesn't seem to be available";
         return 1;
     }
 
-    CtrlModule mod;
-    ResourceFinder rf;
+    VisTacLocSimModule mod;
+    yarp::os::ResourceFinder rf;
     return mod.runModule(rf);
 }
 
