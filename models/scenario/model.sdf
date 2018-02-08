@@ -33,7 +33,7 @@
     </include>
     
     <!-- iCub with hands and fixed  -->
-    <model name="iCub_fixed">
+    <model name="iCub">
       <include>
     	<uri>model://icub_with_hands</uri>
     	<pose>0 0 0.6 0 0 -1.57</pose>
@@ -50,7 +50,10 @@
           <xyz>0 0 1</xyz>
         </axis>
       </joint>
-
+      
+      <plugin name="pose_publisher" filename='libgazebo_yarp_modelposepublisher.so'>
+	<period>0.01</period>
+      </plugin>
     </model>
 
     <!-- default camera -->
