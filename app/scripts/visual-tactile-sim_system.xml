@@ -8,6 +8,12 @@
   </authors>
 
   <module>
+      <name>yarplogger</name>
+      <parameters>--start --no_stop</parameters>
+      <node>localhost</node>
+  </module>
+
+  <module>
     <name>gazebo</name>
     <description>Gazebo simulator with main scenario loaded</description>
     <node>localhost</node>
@@ -44,7 +50,7 @@
       <!-- the filter publishes the estimated pose on the transform server -->
       <port timeout="5.0">/transformServer/transforms:o</port>      
     </dependencies>
-    <environment>YARP_CLOCK=/clock</environment>
+    <environment>YARP_CLOCK=/clock;YARP_FORWARD_LOG_ENABLE=1</environment>
   </module>
 
   <module>
@@ -75,6 +81,16 @@
   <connection>
     <from>/mustard/fakepointcloud:o</from>
     <to>/mustard/fakepointcloud_viewer:i</to>
+  </connection>
+
+  <connection>
+    <from>/mustard/fakepointcloud:o</from>    
+    <to>/vis_tac_localization/pc:i</to>
+  </connection>
+
+  <connection>
+    <from>/vis_tac_localization/filter:o</from>    
+    <to>/upf-localizer:i</to>
   </connection>
   
 </application>
