@@ -144,7 +144,8 @@ The application description xml `visual-tactile-sim_app.xml` contains the main m
 ## Connections
 Connections provided within the application description are:
 - from `/mustard/fakepointcloud:o` to `/mustard/fakepointcloud_viewer:i` where `/mustard/fakepointcloud:o` is opened by the plugin `FakePointCloud` and `/mustard/fakepointcloud_viewer:i` is opened by the plugin `FakePointCloudViewer`;
-- from `/mustard/fakepointcloud:o` to `/mustard/fakepointcloud_viewer:i` where `/mustard/fakepointcloud:o` is opened by the plugin `FakePointCloud` and `/vis_tac_localization/pc:i` is opened by the module `visual-tactile-localization-sim`;         - from `/vis_tac_localization/filter:o` to `/upf-localizer:i` where `/vis_tac_localization/filter:o` is opened by the module `visual-tactile-localization-sim` and `/upf-localizer:i` is opened by the module `upf-localizer`.                                                                                               
+- from `/mustard/fakepointcloud:o` to `/mustard/fakepointcloud_viewer:i` where `/mustard/fakepointcloud:o` is opened by the plugin `FakePointCloud` and `/vis_tac_localization/pc:i` is opened by the module `visual-tactile-localization-sim`;
+- from `/vis_tac_localization/filter:o` to `/upf-localizer:i` where `/vis_tac_localization/filter:o` is opened by the module `visual-tactile-localization-sim` and `/upf-localizer:i` is opened by the module `upf-localizer`.                                                                                               
 ## Add another object to the simulation[WIP]
 To be done
 
