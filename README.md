@@ -15,10 +15,10 @@ Gazebo based simulation scenario for a visual-tactile localization algorithm.
 ### VCG
 The plugin `FakePointCloud` uses the header-only library [VCG](http://vcg.isti.cnr.it/vcglib/) to sample point clouds.It is provided within the header files of the plugin.
 
-### Configure the environment
+## Configure the environment
 It is supposed that you have already installed `yarp` using two directories one for code, i.e. `$ROBOT_CODE`, and one for installed stuff, i.e. `$ROBOT-INSTALL` (this is not strictly required but it helps in setting the environment variables required for Gazebo within yarpmanager). Also it is supposed that `Gazebo 7` has already been installed.
 
-#### Get the code[WIP]
+### Get the code[WIP]
 ```
 cd $ROBOT_CODE
 git clone https://github.com/robotology-playground/visual-tactile-localization.git
@@ -26,7 +26,7 @@ git clone https://github.com/robotology-playground/visual-tactile-localization-s
 git clone https://github.com/xEnVrE/gazebo-yarp-plugins.git
 git clone https://github.com/robotology/icub-gazebo.git
 ```
-#### Install visual-tactile-localization
+### Install visual-tactile-localization
 ```
 cd $ROBOT_CODE/visual-tactile-localization
 git checkout feature/rf_module
@@ -36,7 +36,7 @@ make install
 ```
 This package provides a module `upf-localizer` and a context `simVisualTactileLocalization` containg configuration file for the localizer as well as `.OFF` mesh files of the models.
 
-#### Install visual-tactile-localization-simulation
+### Install visual-tactile-localization-simulation
 ```
 cd $ROBOT_CODE/visual-tactile-localization-simulation
 mkdir build && cd build
@@ -47,7 +47,7 @@ This package provides a module `visual-tactile-localization-sim` and two applica
 - `visual-tactile-sim_system.xml` to launch the entire simulation setup; 
 - `visual-tactile-sim_app.xml` to launch the module `visual-tactile-localization-sim` once the setup is online;
 
-#### Install gazebo-yarp-plugins
+### Install gazebo-yarp-plugins
 ```
 cd $ROBOT_CODE/gazebo-yarp-plugins
 git checkout visual_tactile_loc_plugins
@@ -56,7 +56,7 @@ cmake ../ -DCMAKE_INSTALL_PREFIX=$ROBOT_INSTALL
 make install
 ```
 
-#### Install icub-gazebo
+### Install icub-gazebo
 Cloning is sufficient. However there is an open [issue](https://github.com/robotology/QA/issues/115) that prevents from using Gazebo with the YARP Cartesian Interface if low level velocity control is used which is the default in the `simCartesianControl` context. To switch to low level position control, which is working, the option `PositionControl` has to be modified in the files `$ROBOT_INSTALL/share/iCub/contexts/simCartesianControl/cartesian/{left,right}_arm_cartesian.xml`
 ```
 <devices robot="icubSim" build="0">
@@ -69,12 +69,12 @@ Cloning is sufficient. However there is an open [issue](https://github.com/robot
         </group>
         ...
 ```
-### Application description files `visual-tactile-sim_system.xml`[WIP]
+## Application description files `visual-tactile-sim_system.xml`[WIP]
 The application description xml `visual-tactile-sim_system.xml` consists of the following modules:
-#### yarpdev
+### yarpdev
 `yarpdev` runs an instance of `yarp::dev::FrameTransformServer` without ROS support. This device is used by several gazebo plugins and modules within this setup as explained later.
 
-#### gazebo
+### gazebo
 `gazebo` runs the Gazebo simulator:
   - with the simulation server `gzserver` paused;
   - with the plugin [GazeboYarpClock](http://robotology.gitlab.io/docs/gazebo-yarp-plugins/master/classgazebo_1_1GazeboYarpClock.html) required to send the __simulation clock__ over the default port  `/clock`;
@@ -95,7 +95,7 @@ The application description xml `visual-tactile-sim_system.xml` consists of the 
   ```
   required to expose plugins provided by `gazebo-yarp-plugins` to Gazebo
   
-#### upf-localizer
+### upf-localizer
 `upf-localizer` runs a RFModule that interfaces with the UPF:
   - with the context `simVisualTactileLocalization`
   - with a dependency on the port `/transformServer/transforms:o` opened by `yarpdev` (timeout=5.0s) required because the module uses it to publish the estimated pose;
@@ -108,8 +108,7 @@ The application description xml `visual-tactile-sim_system.xml` consists of the 
   ```
   YARP_FORWARD_LOG_ENABLE=1
   ```
-  
-#### yarprobotinterface
+### yarprobotinterface
 `yarprobotinterface` starts all the devices required by the robot:
  - with the context `simCartesianControl`;
  - with the option `--config no_legs.xml` since only `torso` and `arms` are required;
@@ -120,7 +119,7 @@ The application description xml `visual-tactile-sim_system.xml` consists of the 
   ```
   required to synchronize time with the simulation clock available on port `\clock`.
   
-#### iKinCartesianSolver
+### iKinCartesianSolver
 `iKinCartesianSolver` starts the inverse kinematics online solver:
  - with the context `simCartesianControl`;
  - with the option `--part right_arm` since for now only the right arm is used;
@@ -131,7 +130,7 @@ The application description xml `visual-tactile-sim_system.xml` consists of the 
   ```
   required to synchronize time with the simulation clock available on port `\clock`.
 
-### Application description files `visual-tactile-sim_app.xml`[WIP]
+## Application description files `visual-tactile-sim_app.xml`[WIP]
 The application description xml `visual-tactile-sim_app.xml` contains the main module `visual-tactile-localization-sim`
 - with a dependency on the ports `/clock` and `/yarplogger`;
 - with environment variables
@@ -142,15 +141,14 @@ The application description xml `visual-tactile-sim_app.xml` contains the main m
   ```
   YARP_FORWARD_LOG_ENABLE=1
   ```
-  
-#### Connections
+## Connections
 Connections provided within the application description are:
 - from `/mustard/fakepointcloud:o` to `/mustard/fakepointcloud_viewer:i` where `/mustard/fakepointcloud:o` is opened by the plugin `FakePointCloud` and `/mustard/fakepointcloud_viewer:i` is opened by the plugin `FakePointCloudViewer`;
 - from `/mustard/fakepointcloud:o` to `/mustard/fakepointcloud_viewer:i` where `/mustard/fakepointcloud:o` is opened by the plugin `FakePointCloud` and `/vis_tac_localization/pc:i` is opened by the module `visual-tactile-localization-sim`;         - from `/vis_tac_localization/filter:o` to `/upf-localizer:i` where `/vis_tac_localization/filter:o` is opened by the module `visual-tactile-localization-sim` and `/upf-localizer:i` is opened by the module `upf-localizer`.                                                                                               
-### Add another object to the simulation[WIP]
+## Add another object to the simulation[WIP]
 To be done
 
-### Run the simulation[WIP - for now vision only]
+## Run the simulation[WIP - for now vision only]
 1. Run `yarpserver`
 2. Run `yarpmanager`
 3. `Run all` the application `VisualTactileLocalizationSim`
@@ -161,7 +159,7 @@ To be done
 The module `visual-tactile-localization-sim` opens a RPC port `/service` where the following commands can be issued[WIP]
 - `localize` perform localization using visual information. A transparent mesh, generated by the plugin `EstimateViewer`, is superimposed on the mesh of the object to be localized and show the current estimate produced by the UPF filter.
 
-### How to stop the simulation
+## How to stop the simulation
 Since most of the modules in the system uses `/clock` as internal clock it is important to stop them before stopping the module `gazebo`. 
 In case Gazebo does not close type
 ```
