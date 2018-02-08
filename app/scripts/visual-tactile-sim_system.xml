@@ -41,6 +41,8 @@
     <parameters>--context simVisualTactileLocalization</parameters>
     <dependencies>
       <port timeout="5.0">/clock</port>
+      <!-- the filter publishes the estimated pose on the transform server -->
+      <port timeout="5.0">/transformServer/transforms:o</port>      
     </dependencies>
     <environment>YARP_CLOCK=/clock</environment>
   </module>
