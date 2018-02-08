@@ -69,8 +69,7 @@ Cloning is sufficient. However there is an open [issue](https://github.com/robot
         </group>
         ...
 ```
-
-### Notes about the application description files[WIP]
+### Application description files `visual-tactile-sim_system.xml`[WIP]
 The application description xml `visual-tactile-sim_system.xml` consists of the following modules:
 #### yarpdev
 `yarpdev` runs an instance of `yarp::dev::FrameTransformServer` without ROS support. This device is used by several gazebo plugins and modules within this setup as explained later.
@@ -132,6 +131,7 @@ The application description xml `visual-tactile-sim_system.xml` consists of the 
   ```
   required to synchronize time with the simulation clock available on port `\clock`.
 
+### Application description files `visual-tactile-sim_app.xml`[WIP]
 The application description xml `visual-tactile-sim_app.xml` contains the main module `visual-tactile-localization-sim`
 - with a dependency on the ports `/clock` and `/yarplogger`;
 - with environment variables
