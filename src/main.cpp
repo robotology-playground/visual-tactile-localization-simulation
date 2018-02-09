@@ -340,8 +340,15 @@ public:
         // restore the cartesian controller context
         iarm->restoreContext(startup_cart_context_id);
 
+	// close drivers
         drv_arm.close();
+	drvTransformClient.close();
+
+	// close ports
         rpc_port.close();
+	port_pc.close();
+	port_filter.close();
+	
         return true;
     }
 
