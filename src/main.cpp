@@ -53,14 +53,21 @@ protected:
     yarp::os::BufferedPort<PointCloud> port_pc;
     PointCloud pc;
 
-    // filter port and storage
+    // filter port
     yarp::os::BufferedPort<yarp::sig::FilterData> port_filter;
 
-    // FrameTransformClient to read the pose
-    // of the root link of the robot
+    // FrameTransformClient to read the
+    // published poses 
+    // 
     yarp::dev::PolyDriver drv_transform_client;
     yarp::dev::IFrameTransform* tf_client;
-    yarp::sig::Matrix inertialToRobot;
+
+    // transformation from inertial to
+    // the root link of the robot 
+    yarp::sig::Matrix inertial_to_robot;
+
+    // last estimate from the filter
+    yarp::sig::Matrix estimate;
 
     /*
      * This function evaluates the orientation of the right hand
@@ -148,7 +155,7 @@ protected:
 	    // transform the point so that
 	    // it is relative to the orign of the robot root frame
 	    // and expressed in the robot root frame
-	    point = SE3inv(inertialToRobot) * point;
+	    point = SE3inv(inertial_to_robot) * point;
 	    
 	    pc_out[i] = point.subVector(0,2);
 	}
@@ -243,7 +250,7 @@ public:
 
 	// get the pose of the root frame of the robot
 	// TODO: get source and target from configuration file
-	inertialToRobot.resize(4,4);
+	inertial_to_robot.resize(4,4);
 	std::string source = "/inertial";
 	std::string target = "/iCub/frame";
 
@@ -253,7 +260,7 @@ public:
         {
             // this might fail if the gazebo pluging
 	    // publishing the pose is not started yet
-            if (tf_client->getTransform(target, source, inertialToRobot))
+            if (tf_client->getTransform(target, source, inertial_to_robot))
             {
                 ok = true;
                 break;
