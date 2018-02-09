@@ -1,0 +1,92 @@
+<?xml version="1.0"?>
+<%
+# YCB mustard table with arbitrary mass.
+
+# Mass
+m = 0.5
+
+# Inertia matrix
+ixx = 0.00260845618915160 * m
+ixy = 0.00017020862308762 * m
+ixz = 0.00001340751043115 * m
+iyy = 0.00250998609179416 * m
+iyz = 0.00002876216968011 * m
+izz = 0.00078655076495132 * m
+
+# Friction coefficients
+mu = 0.6
+mu2 = 0.6
+%>
+
+<sdf version="1.5">
+  <model name='mustard'>
+    <link name='mustard_root_link'>
+      <!-- The origin of the mesh is at approx 0.0932 from the bottom of the bottle -->
+      <pose>0 0 0.0932 0 0 0</pose>
+      <inertial>
+	<!-- CoM evaluated using Meshlab assuming a homogeneous body-->
+	<!-- expressed w.r.t. the origin of the mesh -->
+	<pose>0.000134 0.000351 -0.013002 0 0 0</pose>	
+        <mass><%= m %></mass>
+        <inertia>
+	  <!-- Obtained from Meshlab -->
+          <ixx><%= ixx %></ixx>
+          <ixy><%= ixy %></ixy>
+          <ixz><%= ixz %></ixz>
+          <iyy><%= iyy %></iyy>
+          <iyz><%= iyz %></iyz>
+          <izz><%= izz %></izz>
+        </inertia>
+      </inertial>
+      <collision name='mustard_collision'>
+        <geometry>
+          <mesh><uri>model://mustard/mustard.stl</uri></mesh>
+        </geometry>
+      </collision>
+      <visual name='mustard_visual'>
+	<!-- <plugin name="viewer" filename='libgazebo_yarp_fakePointCloudViewer.so'></plugin> -->
+        <geometry>
+          <mesh><uri>model://mustard/mustard.dae</uri></mesh>
+        </geometry>
+        <material>
+	  <script>
+	    <uri>file://media/materials/scripts/gazebo.material</uri>
+	    <name>Gazebo/Orange</name>
+	  </script>
+        </material>
+      </visual>
+    </link>
+    <link name="mustard_estimate_link">
+      <pose>0.2 0 0.0932 0 0 0</pose>      
+      <gravity>false</gravity>
+      <kinematic>true</kinematic>
+      <visual name='mustard_estimate_visual'>
+	<plugin name="viewer" filename='libgazebo_yarp_estimateViewer.so'></plugin>
+        <geometry>
+          <mesh><uri>model://mustard/mustard.dae</uri></mesh>
+        </geometry>
+        <material>
+	  <script>
+	    <uri>file://media/materials/scripts/gazebo.material</uri>
+	    <name>Gazebo/Blue</name>
+	  </script>
+        </material>
+	<transparency>0.7</transparency>
+      </visual>
+    </link>
+    <joint name="fixed_estimate" type="fixed">
+      <parent>world</parent>
+      <child>mustard_estimate_link</child>
+    </joint>
+    <plugin name="pose_publisher" filename='libgazebo_yarp_modelposepublisher.so'>
+      <period>0.01</period>
+    </plugin>
+    <plugin name="point_cloud" filename='libgazebo_yarp_fakePointCloud.so'>
+      <period>0.05</period>
+      <observerOrigin>0 0.07 0.93</observerOrigin>
+      <numPoints>100</numPoints>
+      <meshPath>model://mustard/mustard.off</meshPath>
+      <showPointCloud>true</showPointCloud>
+    </plugin>
+  </model>
+</sdf>
