@@ -25,7 +25,7 @@
         </geometry>
       </collision>
       <visual name='mustard_visual'>
-	<plugin name="viewer" filename='libgazebo_yarp_fakePointCloudViewer.so'></plugin>
+	<!-- <plugin name="viewer" filename='libgazebo_yarp_fakePointCloudViewer.so'></plugin> -->
         <geometry>
           <mesh><uri>model://mustard/mustard.dae</uri></mesh>
         </geometry>
@@ -36,7 +36,12 @@
 	  </script>
         </material>
       </visual>
-      <visual name='mustard_estimate'>
+    </link>
+    <link name="mustard_estimate_link">
+      <pose>0.2 0 0.0932 0 0 0</pose>      
+      <gravity>false</gravity>
+      <kinematic>true</kinematic>
+      <visual name='mustard_estimate_visual'>
 	<plugin name="viewer" filename='libgazebo_yarp_estimateViewer.so'></plugin>
         <geometry>
           <mesh><uri>model://mustard/mustard.dae</uri></mesh>
@@ -50,6 +55,10 @@
 	<transparency>0.7</transparency>
       </visual>
     </link>
+    <joint name="fixed_estimate" type="fixed">
+      <parent>world</parent>
+      <child>mustard_estimate_link</child>
+    </joint>
     <plugin name="pose_publisher" filename='libgazebo_yarp_modelposepublisher.so'>
       <period>0.01</period>
     </plugin>
@@ -58,6 +67,7 @@
       <observerOrigin>0 0.07 0.93</observerOrigin>
       <numPoints>100</numPoints>
       <meshPath>model://mustard/mustard.off</meshPath>
+      <showPointCloud>true</showPointCloud>
     </plugin>
   </model>
 </sdf>
