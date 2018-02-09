@@ -58,8 +58,8 @@ protected:
 
     // FrameTransformClient to read the pose
     // of the root link of the robot
-    yarp::dev::PolyDriver drvTransformClient;
-    yarp::dev::IFrameTransform* tfClient;
+    yarp::dev::PolyDriver drv_transform_client;
+    yarp::dev::IFrameTransform* tf_client;
     yarp::sig::Matrix inertialToRobot;
 
     /*
@@ -226,7 +226,7 @@ public:
 	propTfClient.put("remote", "/transformServer");
 	
 	// try to open the driver
-	ok = drvTransformClient.open(propTfClient);
+	ok = drv_transform_client.open(propTfClient);
 	if (!ok)
 	{
 	    yError() << "VisTacLocSimModule: unable to open the FrameTransformClient driver.";
@@ -234,8 +234,8 @@ public:
 	}
 
 	// try to retrieve the view
-	ok = drvTransformClient.view(tfClient);
-	if (!ok || tfClient == 0)
+	ok = drv_transform_client.view(tf_client);
+	if (!ok || tf_client == 0)
 	{
 	    yError() << "VisTacLocSimModule: unable to retrieve the FrameTransformClient view.";
 	    return false;
@@ -253,7 +253,7 @@ public:
         {
             // this might fail if the gazebo pluging
 	    // publishing the pose is not started yet
-            if (tfClient->getTransform(target, source, inertialToRobot))
+            if (tf_client->getTransform(target, source, inertialToRobot))
             {
                 ok = true;
                 break;
@@ -342,7 +342,7 @@ public:
 
 	// close drivers
         drv_arm.close();
-	drvTransformClient.close();
+	drv_transform_client.close();
 
 	// close ports
         rpc_port.close();
