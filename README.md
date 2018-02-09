@@ -6,7 +6,7 @@ Gazebo based simulation scenario for a visual-tactile localization algorithm.
 - [gazebo-yarp-plugins (forked)](https://github.com/xEnVrE/gazebo-yarp-plugins/) including:
   - `GazeboYarpModelPosePublisher` (publish pose of a model using [yarp::dev::FrameTransformServer](http://www.yarp.it/classyarp_1_1dev_1_1FrameTransformServer.html))
   - `FakePointCloud` (send on a port a fake point cloud given the mesh of a model and the origin of a observer)
-  - `FakePointCloudViewer` (show the fake point cloud within Gazebo)
+  - `FakePointCloudViewer` (show the fake point cloud within Gazebo using straight lines from the center of the object to the surface of it - this is required only if Gazebo < 8 is used. Conversely the plugin `FakePointCloud` also implements a viewer using the [gazebo visualization markers](https://bitbucket.org/osrf/gazebo/pull-requests/2541/markers-take-2/diff).)
   - `EstimateViewer` (show the estimated pose as an additional transparent visual element within Gazebo)
 - [Gazebo](http://gazebosim.org/) (tested with version `7.9.0`)
 - [icub-gazebo](https://github.com/robotology/icub-gazebo/)
