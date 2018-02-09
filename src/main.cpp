@@ -68,6 +68,10 @@ protected:
 
     // last estimate from the filter
     yarp::sig::Matrix estimate;
+    bool is_estimate_available;
+
+    // fixed hand orientation
+    yarp::sig::Vector hand_orientation;
 
     /*
      * This function evaluates the orientation of the right hand
@@ -75,7 +79,7 @@ protected:
      * TODO: rename function
      * TODO: have a similar function for the left hand
      */
-    yarp::sig::Vector computeHandOrientation()
+    void computeHandOrientation(yarp::sig::Vector& orientation)
     {
         // given the reference frame convention for the hands of iCub
         // it is required to have the x-axis attached to the center of the
@@ -86,28 +90,31 @@ protected:
         // is to compose a rotation of pi about the z-axis and a rotation
         // of -pi/2 about the x-axis (after the first rotation)
 
-        yarp::sig::Vector att_z(4), att_x(4);
-        att_z[0] = 0.0;
-        att_z[1] = 0.0;
-        att_z[2] = 1.0;
-        att_z[3] = +M_PI;
+        yarp::sig::Vector axis_angle(4);
+	yarp::sig::Matrix dcm;
+	
+        axis_angle[0] = 0.0;
+        axis_angle[1] = 0.0;
+        axis_angle[2] = 1.0;
+        axis_angle[3] = +M_PI;
+        dcm = yarp::math::axis2dcm(axis_angle);
+	
+        axis_angle[0] = 1.0;
+        axis_angle[1] = 0.0;
+        axis_angle[2] = 0.0;
+        axis_angle[3] = -M_PI/2.0;
+	dcm = dcm * yarp::math::axis2dcm(axis_angle);
 
-        att_x[0] = 1.0;
-        att_x[1] = 0.0;
-        att_x[2] = 0.0;
-        att_x[3] = -M_PI/2.0;
-
-        // convert to dcm
-        yarp::sig::Matrix Rz = yarp::math::axis2dcm(att_z);
-        yarp::sig::Matrix Rx = yarp::math::axis2dcm(att_x);
-
-        // compose in current axes
-        yarp::sig::Matrix R = Rz*Rx;
+	// add also a slight rotation about the the y-axis
+	// (after the second rotation)
+        axis_angle[0] = 0.0;
+        axis_angle[1] = 1.0;
+        axis_angle[2] = 0.0;
+        axis_angle[3] = -15 * M_PI/180;
+	dcm = dcm * yarp::math::axis2dcm(axis_angle);
 
         // convert back to axis
-        yarp::sig::Vector att = yarp::math::dcm2axis(R);
-        
-        return att;
+        orientation = yarp::math::dcm2axis(dcm);
     }
 
     /*
@@ -199,8 +206,64 @@ protected:
 	    port_filter.writeStrict();
 
 	    // wait
-	    yarp::os::Time::delay(0.5);
+	    yarp::os::Time::delay(0.1);
 	}
+
+	return true;
+    }
+
+    /*
+     * This function moves the right hand near the
+     * localized object and then pushes left.
+     * TODO: handle push direction
+     */
+    bool pushObject()
+    {
+	if (!is_estimate_available)
+	    return false;
+	
+	mutex.lock();
+
+	// copy the current estimate of the object
+	yarp::sig::Matrix estimate = this->estimate;
+	
+	mutex.unlock();
+
+	// extract positional part of the estimate
+	yarp::sig::Vector pos(3, 0.0);
+	for (size_t i=0; i<3; i++)
+	    pos[i] = estimate[i][3];
+
+	// approach object using a shifted position
+	pos[0] += 0.06;	
+	pos[1] += 0.06;
+	pos[2] -= 0.01;
+
+        // request pose to the cartesian interface
+        iarm->goToPoseSync(pos, hand_orientation);
+
+        // wait for motion completion
+        iarm->waitMotionDone(0.04, 3.0);
+
+        // final pose in the negative waist y-direction
+        pos[1] -= 0.2;
+
+        // store the current context because we are going
+        // to change the trajectory time
+        int context_id;
+        iarm->storeContext(&context_id);
+
+        // set trajectory time
+        iarm->setTrajTime(3.0);
+
+        // request pose to the cartesian interface
+        iarm->goToPoseSync(pos, hand_orientation);
+
+        // wait for motion completion
+        iarm->waitMotionDone(0.04, 3.0);
+
+        // restore the context
+        iarm->restoreContext(context_id);
 
 	return true;
     }
@@ -331,6 +394,12 @@ public:
         rpc_port.open("/service");
         attach(rpc_port);
 
+	// set default value of flag
+	is_estimate_available = false;
+
+	// compute orientation of right hand once for all
+	computeHandOrientation(hand_orientation);
+
         return true;
     }
 
@@ -367,6 +436,7 @@ public:
             reply.addVocab(yarp::os::Vocab::encode("many"));
             reply.addString("Available commands:");
             reply.addString("- localize");
+	    reply.addString("- push");
             reply.addString("- quit");	    
         }
 	else if (cmd == "localize")
@@ -375,6 +445,13 @@ public:
 		reply.addString("Localization using vision done.");
 	    else
 		reply.addString("Localization using vision failed.");		
+	}
+	else if (cmd == "push")
+	{	
+	    if (pushObject())
+		reply.addString("Pushing done.");
+	    else
+		reply.addString("Pushing failed.");		
 	}
         else
             // the father class already handles the "quit" command
@@ -397,10 +474,15 @@ public:
 
 	// read from the point cloud port
 	PointCloud *new_pc = port_pc.read(false);
-
 	// store a copy if new data available
 	if (new_pc != NULL)
 	    pc = *new_pc;
+
+	// get current estimate from the filter
+	// TODO: get source and target from configuration file
+	std::string source = "/iCub/frame";
+	std::string target = "/mustard/estimate/frame";
+	is_estimate_available = tf_client->getTransform(target, source, estimate);
 	
 	mutex.unlock();
 
