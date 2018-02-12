@@ -11,8 +11,8 @@ surf_h  = 0.03
 surf_z0 = leg_h + surf_h*0.5
 
 # Friction coefficients
-mu = 0.6
-mu2 = 0.6
+mu = 0.1
+mu2 = 0.1
 %>
 <sdf version="1.5">
   <model name="table_alt">
