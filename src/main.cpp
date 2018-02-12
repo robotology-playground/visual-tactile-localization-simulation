@@ -12,20 +12,30 @@
 // std
 #include <string>
 
-// yarp
+// yarp os
 #include <yarp/os/Time.h>
 #include <yarp/os/BufferedPort.h>
 #include <yarp/os/ResourceFinder.h>
 #include <yarp/os/RFModule.h>
 #include <yarp/os/SystemClock.h>
+
+// yarp sig
 #include <yarp/sig/Vector.h>
 #include <yarp/sig/Matrix.h>
+
+// yarp math
 #include <yarp/math/Math.h>
 #include <yarp/math/FrameTransform.h>
+
+// yarp dev
+#include <yarp/dev/IEncoders.h>
 #include <yarp/dev/CartesianControl.h>
 #include <yarp/dev/ControlBoardInterfaces.h>
 #include <yarp/dev/IFrameTransform.h>
 #include <yarp/dev/PolyDriver.h>
+
+// icub-main
+#include <iCub/iKin/iKinFwd.h>
 
 #include <cmath>
 
@@ -38,8 +48,10 @@ class VisTacLocSimModule: public yarp::os::RFModule
 {
 protected:
     // driver and context
-    yarp::dev::PolyDriver drv_arm;
+    yarp::dev::PolyDriver drv_arm_cart;
+    yarp::dev::PolyDriver drv_arm_enc;    
     yarp::dev::ICartesianControl *iarm;
+    yarp::dev::IEncoders *ienc;
     int startup_cart_context_id;    
     
     // rpc server
@@ -213,6 +225,45 @@ protected:
     }
 
     /*
+     * This function attach a tip to the end effector
+     * so that the reference for the cartesian controller
+     * can be specified with respect to that tip
+     */
+    bool attachTipFrame(const std::string& finger_name)
+    {
+	bool ok;
+	
+	// get current value of encoders
+	int nEncs;
+	ok = ienc->getAxes(&nEncs);
+	if(!ok)
+	    return false;
+	
+	yarp::sig::Vector encs(nEncs);
+	ok = ienc->getEncoders(encs.data());
+	if(!ok)
+	    return false;
+
+	// get the transformation between the standard
+	// effector and the desired finger
+	yarp::sig::Vector joints;
+	iCub::iKin::iCubFinger finger(finger_name);
+	ok = finger.getChainJoints(encs,joints);
+	if (!ok)
+	    return false;
+	yarp::sig::Matrix tip_frame = finger.getH((M_PI/180.0)*joints);
+
+	// attach the tip
+	yarp::sig::Vector tip_x = tip_frame.getCol(3);
+	yarp::sig::Vector tip_o = yarp::math::dcm2axis(tip_frame);
+	ok = iarm->attachTipFrame(tip_x,tip_o);
+	if(!ok)
+	    return false;
+
+	return true;
+    }
+
+    /*
      * This function moves the right hand near the
      * localized object and then pushes left.
      * TODO: handle push direction
@@ -234,10 +285,12 @@ protected:
 	for (size_t i=0; i<3; i++)
 	    pos[i] = estimate[i][3];
 
+	// change effector to the middle finger
+	if(!attachTipFrame("right_middle"))
+	    return false;
+
 	// approach object using a shifted position
-	pos[0] += 0.06;	
-	pos[1] += 0.06;
-	pos[2] -= 0.01;
+	pos[1] += 0.04;
 
         // request pose to the cartesian interface
         iarm->goToPoseSync(pos, hand_orientation);
@@ -264,6 +317,9 @@ protected:
 
         // restore the context
         iarm->restoreContext(context_id);
+
+	// detach tip frame
+	iarm->removeTipFrame(); 
 
 	return true;
     }
@@ -335,6 +391,26 @@ public:
             yError() << "VisTacLocSimModule: unable to get the pose of the root link of the robot";
             return false;
 	}
+
+	// prepare properties for the Encoders
+        yarp::os::Property prop_enc;
+        prop_enc.put("device", "remote_controlboard");
+        prop_enc.put("remote", "/icubSim/right_arm");
+        prop_enc.put("local", "/encoder/right_arm");
+	ok = drv_arm_enc.open(prop_enc);
+        if (!ok)
+	{
+            yError() << "VisTacLocSimModule: unable to open the Remote Control Board driver.";
+            return false;
+	}
+
+	// try to retrieve the view
+        drv_arm_enc.view(ienc);
+	if (!ok || ienc == 0)
+	{
+	    yError() << "VisTacLocSimModule: Unable to retrieve the Encoders view.";
+	    return false;
+	}
 	
 	// prepare properties for the CartesianController
         yarp::os::Property prop_arm;
@@ -350,7 +426,7 @@ public:
         {
             // this might fail if controller
             // is not connected to solver yet
-            if (drv_arm.open(prop_arm))
+            if (drv_arm_cart.open(prop_arm))
             {
                 ok = true;
                 break;
@@ -359,15 +435,15 @@ public:
         }
         if (!ok)
         {
-            yError() << "Unable to open the Cartesian Controller driver.";
+            yError() << "VisTacLocSimModule: Unable to open the Cartesian Controller driver.";
             return false;
         }
 
-	// try to retrieve the view	
-        drv_arm.view(iarm);
+	// try to retrieve the views
+        drv_arm_cart.view(iarm);
 	if (!ok || iarm == 0)
 	{
-	    yError() << "Unable to retrieve the CartesianController view.";
+	    yError() << "VisTacLocSimModule: Unable to retrieve the CartesianController view.";
 	    return false;
 	}
 
@@ -417,7 +493,8 @@ public:
         iarm->restoreContext(startup_cart_context_id);
 
 	// close drivers
-        drv_arm.close();
+        drv_arm_cart.close();
+        drv_arm_enc.close();	
 	drv_transform_client.close();
 
 	// close ports

@@ -17,10 +17,12 @@ project(visual-tactile-localization-sim)
 
 # mandatory use of ICUBcontrib
 find_package(YARP REQUIRED)
+find_package(ICUB)
 find_package(ICUBcontrib REQUIRED)
 
 # extend the current search path used by cmake to load helpers
 list(APPEND CMAKE_MODULE_PATH ${YARP_MODULE_PATH})
+list(APPEND CMAKE_MODULE_PATH ${ICUB_MODULE_PATH})
 list(APPEND CMAKE_MODULE_PATH ${ICUBCONTRIB_MODULE_PATH})
 
 # helpers
@@ -40,9 +42,10 @@ set(sources
   ${CMAKE_SOURCE_DIR}/src/main.cpp)
 
 include_directories(${YARP_INCLUDE_DIRS})
+include_directories(${ICUB_INCLUDE_DIRS})
 include_directories(${PROJECT_SOURCE_DIR})
 add_executable(${PROJECT_NAME} ${headers} ${sources})
-target_link_libraries(${PROJECT_NAME} ${YARP_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${YARP_LIBRARIES} ${ICUB_LIBRARIES})
 install(TARGETS ${PROJECT_NAME} DESTINATION bin)
 
 # add uninstall target
