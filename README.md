@@ -57,7 +57,11 @@ make install
 ```
 
 ### Install icub-gazebo
-Cloning is sufficient. However there is an open [issue](https://github.com/robotology/QA/issues/115) that prevents from using Gazebo with the YARP Cartesian Interface if low level velocity control is used which is the default in the `simCartesianControl` context. To switch to low level position control, which is working, the option `PositionControl` has to be modified in the files `$ROBOT_INSTALL/share/iCub/contexts/simCartesianControl/cartesian/{left,right}_arm_cartesian.xml`
+```
+cd $ROBOT_CODE/icub-gazebo
+git checkout visual_tactile_loc
+```
+Cloning and checkout is sufficient. However there is an open [issue](https://github.com/robotology/QA/issues/115) that prevents from using Gazebo with the YARP Cartesian Interface if low level velocity control is used which is the default in the `simCartesianControl` context. To switch to low level position control, which is working, the option `PositionControl` has to be modified in the files `$ROBOT_INSTALL/share/iCub/contexts/simCartesianControl/cartesian/{left,right}_arm_cartesian.xml`
 ```
 <devices robot="icubSim" build="0">
     <device name="left_arm_cartesian" type="cartesiancontrollerserver">
