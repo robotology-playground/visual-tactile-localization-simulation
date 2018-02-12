@@ -9,7 +9,7 @@ Gazebo based simulation scenario for a visual-tactile localization algorithm.
   - `FakePointCloudViewer` (show the fake point cloud within Gazebo using straight lines from the center of the object to the surface of it - this is required only if Gazebo < 8 is used. Conversely the plugin `FakePointCloud` also implements a viewer using the [gazebo visualization markers](https://bitbucket.org/osrf/gazebo/pull-requests/2541/markers-take-2/diff).)
   - `EstimateViewer` (show the estimated pose as an additional transparent visual element within Gazebo)
 - [Gazebo](http://gazebosim.org/) (tested with version `7.9.0`)
-- [icub-gazebo](https://github.com/robotology/icub-gazebo/)
+- [icub-gazebo (forked)](https://github.com/xEnVrE/icub-gazebo)
 - [visual-tactile-localization](https://github.com/robotology-playground/visual-tactile-localization)
 
 ### VCG
