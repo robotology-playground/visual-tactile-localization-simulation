@@ -18,6 +18,7 @@
 #include <yarp/os/ResourceFinder.h>
 #include <yarp/os/RFModule.h>
 #include <yarp/os/SystemClock.h>
+#include <yarp/os/Vocab.h>
 
 // yarp sig
 #include <yarp/sig/Vector.h>
@@ -61,7 +62,7 @@ protected:
     // mutexes required to share data between
     // the RFModule thread and the rpc thread
     yarp::os::Mutex mutex;
-    yarp::os::Mutex mutex_contacts;
+    yarp::os::Mutex mutex_contacts;    
 
     // point cloud port and storage
     yarp::os::BufferedPort<PointCloud> port_pc;
@@ -73,6 +74,7 @@ protected:
     // contact points port and storage
     yarp::os::BufferedPort<iCub::skinDynLib::skinContactList> port_contacts;
     iCub::skinDynLib::skinContactList contacts;
+    bool are_contacts_available;
 
     // FrameTransformClient to read the
     // published poses 
@@ -212,6 +214,9 @@ protected:
 	    // clear the storage
 	    filter_data.clear();
 
+	    // set the tag
+	    filter_data.setTag(VOCAB3('V','I','S'));
+
 	    // add measures
 	    for (size_t k=0; k<n_points; k++)
 		filter_data.addPoint(pc[i+k]);
@@ -317,10 +322,12 @@ protected:
 
         // request pose to the cartesian interface
         iarm->goToPoseSync(pos, hand_orientation);
-
-        // wait for motion completion
-	bool done = false;
+	
+        // filter while motion happens
         double t0 = yarp::os::Time::now();
+	double dt = 0.03;	
+	bool done = false;
+	yarp::sig::Vector prev_vel(3, 0.0);	
 	while (!done && (yarp::os::Time::now() - t0 < 3.0))
 	{
 	    iarm->checkMotionDone(&done);
@@ -328,11 +335,39 @@ protected:
 	    // get velocity of the finger
 	    yarp::sig::Vector x_dot;
 	    yarp::sig::Vector att_dot;
-	    if (iarm->getTaskVelocities(x_dot, att_dot))
+
+	    mutex_contacts.lock();
+
+	    bool new_speed = iarm->getTaskVelocities(x_dot, att_dot);
+	    if (new_speed && are_contacts_available)
 	    {
-		// do something with velocites
-	    }
+		yarp::sig::FilterData &filter_data = port_filter.prepare();
 	    
+		// clear the storage
+		filter_data.clear();
+
+		// set the tag
+		filter_data.setTag(VOCAB3('T','A','C'));
+
+		// add measures
+		for (size_t i=0; i<contacts.size(); i++)
+		{
+		    yInfo() << contacts[i].getGeoCenter().toString();
+		    filter_data.addPoint(contacts[i].getGeoCenter());
+		}
+		// add input
+		filter_data.addInput(prev_vel * dt);
+
+		// send data to the filter
+		port_filter.writeStrict();
+	    }
+
+	    mutex_contacts.unlock();
+
+	    // store previous velocity
+	    if (new_speed)
+		prev_vel = x_dot;
+		
 	    // wait
 	    yarp::os::Time::delay(0.03);
 	}
@@ -369,7 +404,7 @@ public:
 
 	// open the contacts port
 	// TODO: take name from config
-	ok = port_filter.open("/vis_tac_localization/contacts:i");
+	ok = port_contacts.open("/vis_tac_localization/contacts:i");
 	if (!ok)
         {
             yError() << "VisTacLocSimModule: unable to open the contacts port";
@@ -501,8 +536,9 @@ public:
         rpc_port.open("/service");
         attach(rpc_port);
 
-	// set default value of flag
+	// set default value of flags
 	is_estimate_available = false;
+	are_contacts_available = false;
 
 	// compute orientation of right hand once for all
 	computeHandOrientation(hand_orientation);
@@ -532,6 +568,7 @@ public:
         rpc_port.close();
 	port_pc.close();
 	port_filter.close();
+	port_contacts.close();
 	
         return true;
     }
@@ -597,9 +634,14 @@ public:
 	mutex_contacts.lock();
 	
 	iCub::skinDynLib::skinContactList *new_contacts = port_contacts.read(false);
-	if (new_contacts != NULL)
+	if (new_contacts != NULL && new_contacts->size() > 0)
+	{
 	    contacts = *new_contacts;
-	
+	    are_contacts_available = true;
+	    for (size_t i=0; i<contacts.size(); i++)
+		yInfo() << contacts[i].getGeoCenter().toString();
+	}
+
 	mutex_contacts.unlock();
 
         return true;
