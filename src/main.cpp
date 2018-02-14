@@ -290,6 +290,7 @@ protected:
     /*
      * This function moves the right hand near the
      * localized object and then pushes left.
+     * During pushing the pose of the object is estimaed.
      * TODO: handle push direction
      */
     bool pushObject()
@@ -339,8 +340,9 @@ protected:
 	
         // filter while motion happens
         double t0 = yarp::os::Time::now();
-	double dt = 0.03;	
+	double dt = 0.03;
 	bool done = false;
+	yarp::sig::Vector input(3, 0.0);
 	yarp::sig::Vector prev_vel(3, 0.0);	
 	while (!done && (yarp::os::Time::now() - t0 < 3.0))
 	{
@@ -349,36 +351,43 @@ protected:
 	    // get velocity of the finger
 	    yarp::sig::Vector x_dot;
 	    yarp::sig::Vector att_dot;
+	    bool new_speed = iarm->getTaskVelocities(x_dot, att_dot);
 
 	    mutex_contacts.lock();
 
-	    bool new_speed = iarm->getTaskVelocities(x_dot, att_dot);
-	    if (new_speed && are_contacts_available)
+	    if (new_speed)
 	    {
-		yarp::sig::FilterData &filter_data = port_filter.prepare();
-	    
-		// clear the storage
-		filter_data.clear();
-
-		// set the tag
-		filter_data.setTag(VOCAB3('T','A','C'));
-
-		// add measures
-		for (size_t i=0; i<contacts.size(); i++)
+		// accumulate the contribution
+		// due to the velocity of the finger
+		input += prev_vel * dt;
+		
+		if(are_contacts_available)
 		{
-		    yInfo() << contacts[i].getGeoCenter().toString();
-		    filter_data.addPoint(contacts[i].getGeoCenter());
+		    yarp::sig::FilterData &filter_data = port_filter.prepare();
+	    
+		    // clear the storage
+		    filter_data.clear();
+
+		    // set the tag
+		    filter_data.setTag(VOCAB3('T','A','C'));
+
+		    // add measures
+		    for (size_t i=0; i<contacts.size(); i++)
+			filter_data.addPoint(contacts[i].getGeoCenter());
+
+		    // add input
+		    filter_data.addInput(input);
+
+		    // reset input
+		    input = 0;
+
+		    // send data to the filter
+		    port_filter.writeStrict();
 		}
-		// add input
-		filter_data.addInput(prev_vel * dt);
-
-		// send data to the filter
-		port_filter.writeStrict();
 	    }
-
 	    mutex_contacts.unlock();
 
-	    // store previous velocity
+	    // store velocity for the next iteration
 	    if (new_speed)
 		prev_vel = x_dot;
 		
