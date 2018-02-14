@@ -439,7 +439,7 @@ public:
             return false;
         }
 
-	// try to retrieve the views
+	// try to retrieve the view
         drv_arm_cart.view(iarm);
 	if (!ok || iarm == 0)
 	{
