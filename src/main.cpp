@@ -93,6 +93,10 @@ protected:
     // fixed hand orientation
     yarp::sig::Vector hand_orientation;
 
+    // home pose
+    yarp::sig::Vector home_pos;
+    yarp::sig::Vector home_att;    
+    
     /*
      * This function evaluates the orientation of the right hand
      * required during a pushing phase
@@ -188,6 +192,15 @@ protected:
 	}
 
 	return true;
+    }
+
+    /*
+     * This function restore the initial pose of the arm.
+     */
+    void goHome()
+    {
+	iarm->goToPoseSync(home_pos, home_att);
+	iarm->waitMotionDone(0.03, 5);
     }
     
     /*
@@ -301,7 +314,8 @@ protected:
 	    return false;
 
 	// approach object using a shifted position
-	pos[1] += 0.04;
+	pos[0] -= 0.02;		
+	pos[1] += 0.07;
 
         // request pose to the cartesian interface
         iarm->goToPoseSync(pos, hand_orientation);
@@ -520,6 +534,10 @@ public:
         // set trajectory time
         iarm->setTrajTime(1.0);
 
+	// store home pose
+	while(!iarm->getPose(home_pos, home_att))
+	    yarp::os::Time::yield();
+	
         // use also the torso
         yarp::sig::Vector newDoF, curDoF;
         iarm->getDOF(curDoF);
@@ -580,10 +598,16 @@ public:
         {
             reply.addVocab(yarp::os::Vocab::encode("many"));
             reply.addString("Available commands:");
+            reply.addString("- home");	    
             reply.addString("- localize");
 	    reply.addString("- push");
             reply.addString("- quit");	    
         }
+	else if (cmd == "home")
+	{
+	    goHome();
+	    reply.addString("Go home done.");	    
+	}
 	else if (cmd == "localize")
 	{
 	    if (localizeObject())
@@ -641,6 +665,8 @@ public:
 	    for (size_t i=0; i<contacts.size(); i++)
 		yInfo() << contacts[i].getGeoCenter().toString();
 	}
+	else
+	    are_contacts_available = false;
 
 	mutex_contacts.unlock();
 
