@@ -313,7 +313,23 @@ protected:
         iarm->goToPoseSync(pos, hand_orientation);
 
         // wait for motion completion
-        iarm->waitMotionDone(0.04, 3.0);
+	bool done = false;
+        double t0 = yarp::os::Time::now();
+	while (!done && (yarp::os::Time::now() - t0 < 3.0))
+	{
+	    iarm->checkMotionDone(&done);
+
+	    // get velocity of the finger
+	    yarp::sig::Vector x_dot;
+	    yarp::sig::Vector att_dot;
+	    if (iarm->getTaskVelocities(x_dot, att_dot))
+	    {
+		// do something with velocites
+	    }
+	    
+	    // wait
+	    yarp::os::Time::delay(0.03);
+	}
 
         // restore the context
         iarm->restoreContext(context_id);
