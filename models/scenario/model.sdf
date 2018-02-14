@@ -50,10 +50,7 @@
           <xyz>0 0 1</xyz>
         </axis>
       </joint>
-      
-      <plugin name="pose_publisher" filename='libgazebo_yarp_modelposepublisher.so'>
-	<period>0.1</period>
-      </plugin>
+
     </model>
 
     <!-- default camera -->
