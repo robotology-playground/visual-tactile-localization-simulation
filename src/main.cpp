@@ -36,6 +36,7 @@
 
 // icub-main
 #include <iCub/iKin/iKinFwd.h>
+#include <iCub/skinDynLib/skinContactList.h>
 
 #include <cmath>
 
@@ -57,9 +58,10 @@ protected:
     // rpc server
     yarp::os::RpcServer rpc_port;
 
-    // mutex required to share data between
+    // mutexes required to share data between
     // the RFModule thread and the rpc thread
     yarp::os::Mutex mutex;
+    yarp::os::Mutex mutex_contacts;
 
     // point cloud port and storage
     yarp::os::BufferedPort<PointCloud> port_pc;
@@ -67,6 +69,10 @@ protected:
 
     // filter port
     yarp::os::BufferedPort<yarp::sig::FilterData> port_filter;
+
+    // contact points port and storage
+    yarp::os::BufferedPort<iCub::skinDynLib::skinContactList> port_contacts;
+    iCub::skinDynLib::skinContactList contacts;
 
     // FrameTransformClient to read the
     // published poses 
@@ -361,6 +367,15 @@ public:
             return false;
         }
 
+	// open the contacts port
+	// TODO: take name from config
+	ok = port_filter.open("/vis_tac_localization/contacts:i");
+	if (!ok)
+        {
+            yError() << "VisTacLocSimModule: unable to open the contacts port";
+            return false;
+        }
+
 	// prepare properties for the FrameTransformClient
 	yarp::os::Property propTfClient;
 	propTfClient.put("device", "transformClient");
@@ -578,6 +593,14 @@ public:
 	is_estimate_available = tf_client->getTransform(target, source, estimate);
 	
 	mutex.unlock();
+
+	mutex_contacts.lock();
+	
+	iCub::skinDynLib::skinContactList *new_contacts = port_contacts.read(false);
+	if (new_contacts != NULL)
+	    contacts = *new_contacts;
+	
+	mutex_contacts.unlock();
 
         return true;
     }
