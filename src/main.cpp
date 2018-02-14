@@ -396,7 +396,7 @@ public:
         yarp::os::Property prop_enc;
         prop_enc.put("device", "remote_controlboard");
         prop_enc.put("remote", "/icubSim/right_arm");
-        prop_enc.put("local", "/encoder/right_arm");
+        prop_enc.put("local", "/vis_tac_localization/encoder/right_arm");
 	ok = drv_arm_enc.open(prop_enc);
         if (!ok)
 	{
@@ -416,7 +416,7 @@ public:
         yarp::os::Property prop_arm;
         prop_arm.put("device", "cartesiancontrollerclient");
         prop_arm.put("remote", "/icubSim/cartesianController/right_arm");
-        prop_arm.put("local", "/cartesian_client/right_arm");
+        prop_arm.put("local", "/vis_tac_localization/cartesian_client/right_arm");
 
         // let's give the controller some time to warm up
 	// here use real time and not simulation time
