@@ -38,6 +38,7 @@
 // icub-main
 #include <iCub/iKin/iKinFwd.h>
 #include <iCub/skinDynLib/skinContactList.h>
+#include <iCub/iKin/iKinFwd.h>
 
 #include <cmath>
 
@@ -50,11 +51,13 @@ class VisTacLocSimModule: public yarp::os::RFModule
 {
 protected:
     // driver and context
-    yarp::dev::PolyDriver drv_arm_cart;
-    yarp::dev::PolyDriver drv_arm_enc;    
+    yarp::dev::PolyDriver drv_arm_cart_right;
+    yarp::dev::PolyDriver drv_arm_enc_right;
+    yarp::dev::PolyDriver drv_arm_enc_torso;    
     yarp::dev::ICartesianControl *iarm;
-    yarp::dev::IEncoders *ienc;
-    int startup_cart_context_id;    
+    yarp::dev::IEncoders *ienc_right;
+    yarp::dev::IEncoders *ienc_torso;
+    int startup_cart_context_id;
     
     // rpc server
     yarp::os::RpcServer rpc_port;
@@ -73,7 +76,7 @@ protected:
 
     // contact points port and storage
     yarp::os::BufferedPort<iCub::skinDynLib::skinContactList> port_contacts;
-    iCub::skinDynLib::skinContactList contacts;
+    iCub::skinDynLib::skinContactList skin_contact_list;
     bool are_contacts_available;
 
     // FrameTransformClient to read the
@@ -95,7 +98,10 @@ protected:
 
     // home pose
     yarp::sig::Vector home_pos;
-    yarp::sig::Vector home_att;    
+    yarp::sig::Vector home_att;
+
+    // chain for the right arm
+    iCub::iKin::iCubArm right_arm_chain;    
     
     /*
      * This function evaluates the orientation of the right hand
@@ -195,12 +201,69 @@ protected:
     }
 
     /*
+     * This function return the latest contact points received
+     * taking into account the pose of the frame attached to 
+     * the palm of the hand. Contact points produced
+     * by the skinManager are expressed with respect to that 
+     * frame while the filter requires the point to be expressed
+     * with respect to the robot root frame.
+     */
+    bool getContactPoints(std::vector<yarp::sig::Vector> &points)
+    {
+	// get current value of encoders
+	yarp::sig::Vector encs_torso(3);
+	yarp::sig::Vector encs_arm(16);
+
+	bool ok = ienc_right->getEncoders(encs_arm.data());
+	if(!ok)
+	    return false;
+
+	ok = ienc_torso->getEncoders(encs_torso.data());
+	if(!ok)
+	    return false;
+
+	// fill in the vector of degrees of freedom
+	yarp::sig::Vector joints_angles(right_arm_chain.getDOF());
+	joints_angles[0] = encs_torso[2];
+	joints_angles[1] = encs_torso[1];
+	joints_angles[2] = encs_torso[0];
+	joints_angles[3] = encs_arm[0];
+	joints_angles[4] = encs_arm[1];
+	joints_angles[5] = encs_arm[2];
+	joints_angles[6] = encs_arm[3];
+	joints_angles[7] = encs_arm[4];
+	joints_angles[8] = encs_arm[5];    
+	joints_angles[9] = encs_arm[6];
+
+	// set the current values of the joints
+	// iKin uses radians
+	right_arm_chain.setAng((M_PI/180) * joints_angles);
+
+	// get the transform from the robot root frame
+	// to the frame attached to the plam of the hand
+	yarp::sig::Matrix inertial_to_hand = right_arm_chain.getH();
+
+	// transform all the contact points
+	for (size_t i=0; i<skin_contact_list.size();  i++)
+	{
+	    const yarp::sig::Vector &skin_contact = skin_contact_list[i].getGeoCenter();
+	    
+	    yarp::sig::Vector point = inertial_to_hand.getCol(3).subVector(0,2) +
+		inertial_to_hand.submatrix(0, 2, 0, 2) * skin_contact;
+	    
+	    points.push_back(point);
+	}
+
+	return true;
+    }
+
+    /*
      * This function restore the initial pose of the arm.
      */
     void goHome()
     {
 	iarm->goToPoseSync(home_pos, home_att);
-	iarm->waitMotionDone(0.03, 5);
+	iarm->waitMotionDone(0.03, 3);
     }
     
     /*
@@ -259,12 +322,12 @@ protected:
 	
 	// get current value of encoders
 	int nEncs;
-	ok = ienc->getAxes(&nEncs);
+	ok = ienc_right->getAxes(&nEncs);
 	if(!ok)
 	    return false;
 	
 	yarp::sig::Vector encs(nEncs);
-	ok = ienc->getEncoders(encs.data());
+	ok = ienc_right->getEncoders(encs.data());
 	if(!ok)
 	    return false;
 
@@ -372,10 +435,14 @@ protected:
 		    filter_data.setTag(VOCAB3('T','A','C'));
 
 		    // add measures
-		    for (size_t i=0; i<contacts.size(); i++)
-			filter_data.addPoint(contacts[i].getGeoCenter());
+		    std::vector<yarp::sig::Vector> points;
+		    getContactPoints(points);
+		    for (size_t i=0; i<points.size(); i++)
+			filter_data.addPoint(points[i]);
 
 		    // add input
+		    // remove components on the z plane
+		    input[2] = 0;
 		    filter_data.addInput(input);
 
 		    // reset input
@@ -482,22 +549,44 @@ public:
 	}
 
 	// prepare properties for the Encoders
-        yarp::os::Property prop_enc;
-        prop_enc.put("device", "remote_controlboard");
-        prop_enc.put("remote", "/icubSim/right_arm");
-        prop_enc.put("local", "/vis_tac_localization/encoder/right_arm");
-	ok = drv_arm_enc.open(prop_enc);
+        yarp::os::Property prop_enc_right;
+        prop_enc_right.put("device", "remote_controlboard");
+        prop_enc_right.put("remote", "/icubSim/right_arm");
+        prop_enc_right.put("local", "/vis_tac_localization/encoder/right_arm");
+	ok = drv_arm_enc_right.open(prop_enc_right);
         if (!ok)
 	{
-            yError() << "VisTacLocSimModule: unable to open the Remote Control Board driver.";
+            yError() << "VisTacLocSimModule: unable to open the Remote Control Board driver"
+		     << "for the right arm";
             return false;
 	}
 
-	// try to retrieve the view
-        drv_arm_enc.view(ienc);
-	if (!ok || ienc == 0)
+	yarp::os::Property prop_enc_torso;
+        prop_enc_torso.put("device", "remote_controlboard");
+        prop_enc_torso.put("remote", "/icubSim/torso");
+        prop_enc_torso.put("local", "/vis_tac_localization/encoder/torso");
+	ok = drv_arm_enc_torso.open(prop_enc_torso);
+        if (!ok)
 	{
-	    yError() << "VisTacLocSimModule: Unable to retrieve the Encoders view.";
+            yError() << "VisTacLocSimModule: unable to open the Remote Control Board driver"
+		     << "for the torso.";
+            return false;
+	}
+
+	// try to retrieve the views
+        drv_arm_enc_right.view(ienc_right);
+	if (!ok || ienc_right == 0)
+	{
+	    yError() << "VisTacLocSimModule: Unable to retrieve the Encoders view."
+		     << "for the right arm";
+	    return false;
+	}
+
+        drv_arm_enc_torso.view(ienc_torso);
+	if (!ok || ienc_torso == 0)
+	{
+	    yError() << "VisTacLocSimModule: Unable to retrieve the Encoders view."
+		     << "for the torso";
 	    return false;
 	}
 	
@@ -515,7 +604,7 @@ public:
         {
             // this might fail if controller
             // is not connected to solver yet
-            if (drv_arm_cart.open(prop_arm))
+            if (drv_arm_cart_right.open(prop_arm))
             {
                 ok = true;
                 break;
@@ -529,7 +618,7 @@ public:
         }
 
 	// try to retrieve the view
-        drv_arm_cart.view(iarm);
+        drv_arm_cart_right.view(iarm);
 	if (!ok || iarm == 0)
 	{
 	    yError() << "VisTacLocSimModule: Unable to retrieve the CartesianController view.";
@@ -557,6 +646,16 @@ public:
         newDoF[2] = 1;
 
         iarm->setDOF(newDoF, curDoF);
+
+	// instantiate arm chains
+	right_arm_chain = iCub::iKin::iCubArm("right");
+	// limits update is not required to evaluate the forward kinematics
+	// using angles from the encoders
+	right_arm_chain.setAllConstraints(false);
+	// torso can be moved in general so its links have to be released
+	right_arm_chain.releaseLink(0);
+	right_arm_chain.releaseLink(1);
+	right_arm_chain.releaseLink(2);
 
 	// open the rpc server
 	// TODO: take name from config
@@ -587,8 +686,8 @@ public:
         iarm->restoreContext(startup_cart_context_id);
 
 	// close drivers
-        drv_arm_cart.close();
-        drv_arm_enc.close();	
+        drv_arm_cart_right.close();
+        drv_arm_enc_right.close();	
 	drv_transform_client.close();
 
 	// close ports
@@ -669,10 +768,9 @@ public:
 	iCub::skinDynLib::skinContactList *new_contacts = port_contacts.read(false);
 	if (new_contacts != NULL && new_contacts->size() > 0)
 	{
-	    contacts = *new_contacts;
+	    skin_contact_list = *new_contacts;
 	    are_contacts_available = true;
-	    for (size_t i=0; i<contacts.size(); i++)
-		yInfo() << contacts[i].getGeoCenter().toString();
+	    std::vector<yarp::sig::Vector> ps;
 	}
 	else
 	    are_contacts_available = false;
