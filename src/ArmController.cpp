@@ -342,6 +342,9 @@ void ArmController::goHome()
     // restore home position
     icart->goToPoseSync(home_pos, home_att);
     icart->waitMotionDone(0.03, 2);
+
+    // stop control
+    icart->stopControl();
     
     // restore the context
     icart->restoreContext(current_context);    
