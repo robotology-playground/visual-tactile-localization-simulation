@@ -78,6 +78,18 @@
     <environment>YARP_CLOCK=/clock</environment>    
   </module>
 
+  <module>
+    <name>iKinCartesianSolver</name>
+    <node>localhost</node>    
+    <parameters>--context simCartesianControl --part left_arm</parameters>
+    <dependencies>
+      <port timeout="5.0">/clock</port>      
+      <port timeout="20">/icubSim/torso/state:o</port>
+      <port timeout="20">/icubSim/left_arm/state:o</port>
+    </dependencies>
+    <environment>YARP_CLOCK=/clock</environment>    
+  </module>
+  
   <connection>
     <from>/mustard/fakepointcloud:o</from>
     <to>/mustard/fakepointcloud_viewer:i</to>
