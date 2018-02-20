@@ -215,10 +215,10 @@ void ArmController::setHandAttitude(const double &yaw = 0,
     // rotation equivalent to a yaw rotation along the
     // z-axis of the robot waist
     axis_angle[0] = 0.0;
-    axis_angle[1] = 1.0;
-    axis_angle[2] = 0.0;
-    axis_angle[3] = -yaw * (M_PI/180);
-    dcm = dcm * yarp::math::axis2dcm(axis_angle);
+    axis_angle[1] = 0.0;
+    axis_angle[2] = 1.0;
+    axis_angle[3] = yaw * (M_PI/180);
+    dcm = yarp::math::axis2dcm(axis_angle) * dcm;
 
     // pitch rotation along current z axis
     axis_angle[0] = 0.0;
