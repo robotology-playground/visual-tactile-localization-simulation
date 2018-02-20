@@ -452,6 +452,10 @@ public:
             yError() << "VisTacLocSimModule: unable to configure the left arm controller";
             return false;
 	}
+
+	// set default hands orientation
+	right_arm.setHandAttitude(15, 0, 0);
+	left_arm.setHandAttitude(-15, 0, 0);	
 	
         return true;
     }
