@@ -11,6 +11,7 @@
 
 // std
 #include <string>
+#include <map>
 
 // yarp os
 #include <yarp/os/BufferedPort.h>
@@ -39,6 +40,8 @@
 #include "headers/ArmController.h"
 
 using namespace yarp::math;
+
+typedef std::map<iCub::skinDynLib::SkinPart, iCub::skinDynLib::skinContactList> skinPartMap;
 
 class VisTacLocSimModule: public yarp::os::RFModule
 {
@@ -80,7 +83,7 @@ protected:
     bool is_estimate_available;
     
     /*
-     * This function return the last point cloud stored in
+     * Return the last point cloud stored in
      * this->pc taking into account the pose of the root frame
      * of the robot attached to its waist.
      * This function is simulation-related and allows to obtain
@@ -132,51 +135,120 @@ protected:
     }
 
     /*
-     * This function return the latest contact points received
+     * Return the number of contacts detected for each finger tip 
+     * for the specified hand as a std::map. 
+     * The key is the name of the finger, i.e. 'thumb', 'index',
+     * 'middle', 'ring' or 'pinky'.
+     */
+    bool getNumberContacts(const std::string &which_hand,
+			   std::map<std::string, int> &numberContacts)
+    {
+	// split contacts per SkinPart
+	skinPartMap map = skin_contact_list.splitPerSkinPart();
+	
+	// take the right skinPart
+	iCub::skinDynLib::SkinPart skinPart;
+	if (which_hand == "right")
+	    skinPart = iCub::skinDynLib::SkinPart::SKIN_RIGHT_HAND;
+	else
+	    skinPart = iCub::skinDynLib::SkinPart::SKIN_LEFT_HAND;
+
+	// clear number of contacts for each finger
+	int n_thumb = 0;
+	int n_index = 0;
+	int n_middle = 0;
+	int n_ring = 0;
+	int n_pinky = 0;
+
+    	// count 
+	iCub::skinDynLib::skinContactList &list = map[skinPart];
+    	for (size_t i=0; i<list.size(); i++)
+    	{
+	    // need to verify if this contact was effectively produced
+	    // by taxels on the finger tips
+	    // for now just the first taxel is considered because the other should
+	    // be in its neighbourhood since the skinManager groups them within
+	    // the same contact
+	    std::vector<unsigned int> taxels_ids = list[i].getTaxelList();
+	    unsigned int taxel_id = taxels_ids[0];
+	    // taxels ids for finger tips are between 0 and 59
+	    if (taxel_id >= 0 && taxel_id < 12)
+		n_index++;
+	    else if (taxel_id >= 12 && taxel_id < 24)
+		n_middle++;
+	    else if (taxel_id >= 24 && taxel_id < 36)
+		n_ring++;
+	    else if (taxel_id >= 36 && taxel_id < 48)
+		n_pinky++;
+	    else if (taxel_id >= 48 && taxel_id < 60)
+		n_thumb++;
+    	}
+
+	numberContacts["thumb"] = n_thumb;
+	numberContacts["index"] = n_index;
+	numberContacts["middle"] = n_middle;
+	numberContacts["ring"] = n_ring;
+	numberContacts["pinky"] = n_pinky;
+
+	return true;
+    }
+
+    /*
+     * Return the latest contact points received for specified hand
      * taking into account the pose of the frame attached to 
      * the palm of the hand. Contact points produced
      * by the skinManager are expressed with respect to that 
      * frame while the filter requires the point to be expressed
      * with respect to the robot root frame.
      */
-    bool getContactPoints(std::vector<yarp::sig::Vector> &points)
+    bool getContactPoints(const std::string &which_hand,
+			  std::vector<yarp::sig::Vector> &points)
     {
-	// get pose of the hands
-	yarp::sig::Vector right_hand_pos;
-	yarp::sig::Vector left_hand_pos;
-	yarp::sig::Matrix right_hand_rot;
-	yarp::sig::Matrix left_hand_rot;
-
+	// get pose of the hand
+	yarp::sig::Vector hand_pos;
+	yarp::sig::Matrix hand_rot;
 	bool ok;
-	ok = right_arm.getHandPose(right_hand_pos,
-				   right_hand_rot);
-	ok = ok && left_arm.getHandPose(left_hand_pos,
-					left_hand_rot);
+	if (which_hand == "right")
+	    ok = right_arm.getHandPose(hand_pos,
+				       hand_rot);
+	else
+	    ok = left_arm.getHandPose(hand_pos,
+				      hand_rot);
 	if (!ok)
 	    return false;
+
+	// split contacts per SkinPart
+	skinPartMap map = skin_contact_list.splitPerSkinPart();
+	
+	// take the right skinPart
+	iCub::skinDynLib::SkinPart skinPart;
+	if (which_hand == "right")
+	    skinPart = iCub::skinDynLib::SkinPart::SKIN_RIGHT_HAND;
+	else
+	    skinPart = iCub::skinDynLib::SkinPart::SKIN_LEFT_HAND;
 	
     	// transform all the contact points
-    	for (size_t i=0; i<skin_contact_list.size();  i++)
+	iCub::skinDynLib::skinContactList &list = map[skinPart];
+    	for (size_t i=0; i<list.size(); i++)
     	{
-    	    const yarp::sig::Vector &skin_contact = skin_contact_list[i].getGeoCenter();
-	    
-    	    yarp::sig::Vector point;
+	    // extract the skin contact
+    	    iCub::skinDynLib::skinContact &skin_contact = list[i];
 
-	    if (skin_contact_list[i].getSkinPart() == iCub::skinDynLib::SkinPart::SKIN_RIGHT_HAND)
-		// contact from right hand
-		point = right_hand_pos + right_hand_rot * skin_contact;
-	    else if (skin_contact_list[i].getSkinPart() == iCub::skinDynLib::SkinPart::SKIN_LEFT_HAND)
-		// contact from left hand
-		point = left_hand_pos + left_hand_rot * skin_contact;
-	    
-    	    points.push_back(point);
+	    // need to verify if this contact was effectively produced
+	    // by taxels on the finger tips
+	    // for now just the first taxel is considered because the other should
+	    // be in its neighbourhood since the skinManager groups them within
+	    // the same contact
+	    std::vector<unsigned int> taxels_ids = skin_contact.getTaxelList();
+	    // taxels ids for finger tips are between 0 and 59
+	    if (taxels_ids[0] >= 0 && taxels_ids[0] < 60)
+		points.push_back(hand_pos + hand_rot * skin_contact.getGeoCenter());
     	}
-
     	return true;
     }
     
     /*
-     * This function perform object localization using the last
+     * Perform object localization using the last
      * point cloud available.
      */
     bool localizeObject()
@@ -221,8 +293,7 @@ protected:
     }
 
     /*
-     * This function moves the right/left hand near the
-     * localized object and then pushes left/right.
+     * Pushes left/right.
      * During pushing the pose of the object is estimated.
      */
     bool pushObject(const std::string &which_hand)
@@ -286,6 +357,7 @@ protected:
         double t0 = yarp::os::Time::now();
     	double dt = 0.03;
     	bool done = false;
+	bool contactDetected = false;
     	yarp::sig::Vector input(3, 0.0);
     	yarp::sig::Vector prev_vel(3, 0.0);	
     	while (!done && (yarp::os::Time::now() - t0 < 3.0))
@@ -303,34 +375,48 @@ protected:
     	    {
     		// accumulate the contribution
     		// due to the velocity of the finger
-    		input += prev_vel * dt;
-		
+		if (contactDetected)
+		    input += prev_vel * dt;
+
     		if(are_contacts_available)
-    		{
-    		    yarp::sig::FilterData &filter_data = port_filter.prepare();
+    		{		    
+		    // extract contact points for the specified hand
+		    std::vector<yarp::sig::Vector> points;
+    		    getContactPoints(which_hand, points);
+
+		    // contacts were detected but need to check
+		    // if there are contacts from the finger tips
+		    // of the specified hand
+
+		    if (points.size() > 0)
+		    {
+			// the first time contact on figer tips is
+			// detected the flag is set to true
+			contactDetected = true;
+			
+			yarp::sig::FilterData &filter_data = port_filter.prepare();
 	    
-    		    // clear the storage
-    		    filter_data.clear();
+			// clear the storage
+			filter_data.clear();
 
-    		    // set the tag
-    		    filter_data.setTag(VOCAB3('T','A','C'));
+			// set the tag
+			filter_data.setTag(VOCAB3('T','A','C'));
 
-    		    // add measures
-    		    std::vector<yarp::sig::Vector> points;
-    		    getContactPoints(points);
-    		    for (size_t i=0; i<points.size(); i++)
-    			filter_data.addPoint(points[i]);
+			// add measures
+			for (size_t i=0; i<points.size(); i++)
+			    filter_data.addPoint(points[i]);
 
-    		    // add input
-    		    // remove components on the z plane
-    		    input[2] = 0;
-    		    filter_data.addInput(input);
+			// add input
+			// remove components on the z plane
+			input[2] = 0;
+			filter_data.addInput(input);
 
-    		    // reset input
-    		    input = 0;
+			// reset input
+			input = 0;
 
-    		    // send data to the filter
-    		    port_filter.writeStrict();
+			// send data to the filter
+			port_filter.writeStrict();
+		    }
     		}
     	    }
     	    mutex_contacts.unlock();
@@ -454,8 +540,8 @@ public:
 	}
 
 	// set default hands orientation
-	right_arm.setHandAttitude(15, 0, 0);
-	left_arm.setHandAttitude(-15, 0, 0);	
+	right_arm.setHandAttitude(25, 0, 0);
+	left_arm.setHandAttitude(-25, 0, 0);	
 	
         return true;
     }
@@ -565,7 +651,6 @@ public:
 	{
 	    skin_contact_list = *new_contacts;
 	    are_contacts_available = true;
-	    std::vector<yarp::sig::Vector> ps;
 	}
 	else
 	    are_contacts_available = false;
