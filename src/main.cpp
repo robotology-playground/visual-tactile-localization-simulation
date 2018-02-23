@@ -348,7 +348,7 @@ protected:
         arm->cartesian()->storeContext(&context_id);
 
         // set trajectory time
-        arm->cartesian()->setTrajTime(3.0);
+        arm->cartesian()->setTrajTime(6.0);
 
         // request pose to the cartesian interface
         arm->goToPos(pos);
