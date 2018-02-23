@@ -32,7 +32,7 @@ git clone https://github.com/robotology/icub-gazebo.git
 cd $ROBOT_CODE/visual-tactile-localization
 git checkout feature/rf_module
 mkdir build && cd build
-cmake ../
+cmake ../ -DCMAKE_INSTALL_PREFIX=$ROBOT_INSTALL
 make install
 ```
 This package provides a module `upf-localizer` and a context `simVisualTactileLocalization` containg configuration file for the localizer as well as `.OFF` mesh files of the models.
@@ -41,7 +41,7 @@ This package provides a module `upf-localizer` and a context `simVisualTactileLo
 ```
 cd $ROBOT_CODE/visual-tactile-localization-simulation
 mkdir build && cd build
-cmake ../
+cmake ../ -DCMAKE_INSTALL_PREFIX=$ROBOT_INSTALL
 make install
 ```
 This package provides a module `visual-tactile-localization-sim` and two applications description `xml`s in ICUBcontrib:
