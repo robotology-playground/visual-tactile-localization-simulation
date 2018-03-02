@@ -330,7 +330,8 @@ protected:
         arm->cartesian()->storeContext(&context_id);
 
         // set trajectory time
-        arm->cartesian()->setTrajTime(6.0);
+	double duration = 6.0;
+        arm->cartesian()->setTrajTime(duration);
 
         // request pose to the cartesian interface
         arm->goToPos(pos);
@@ -342,7 +343,7 @@ protected:
 	bool contactDetected = false;
     	yarp::sig::Vector input(3, 0.0);
     	yarp::sig::Vector prev_vel(3, 0.0);	
-    	while (!done && (yarp::os::Time::now() - t0 < 3.0))
+    	while (!done && (yarp::os::Time::now() - t0 < duration + 1))
     	{
     	    arm->cartesian()->checkMotionDone(&done);
 
@@ -408,7 +409,7 @@ protected:
     		prev_vel = x_dot;
 		
     	    // wait
-    	    yarp::os::Time::delay(0.03);
+    	    yarp::os::Time::delay(dt);
     	}
 
         // restore the context
