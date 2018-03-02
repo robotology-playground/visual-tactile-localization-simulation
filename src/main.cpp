@@ -160,15 +160,14 @@ protected:
 	int n_ring = 0;
 	int n_pinky = 0;
 
-    	// count 
+    	// count contacts coming from finger tips only	
 	iCub::skinDynLib::skinContactList &list = map[skinPart];
     	for (size_t i=0; i<list.size(); i++)
     	{
 	    // need to verify if this contact was effectively produced
 	    // by taxels on the finger tips
-	    // for now just the first taxel is considered because the other should
-	    // be in its neighbourhood since the skinManager groups them within
-	    // the same contact
+	    // in order to simplify things the Gazebo plugin only sends one
+	    // taxel id that is used to identify which finger is in contact
 	    std::vector<unsigned int> taxels_ids = list[i].getTaxelList();
 	    unsigned int taxel_id = taxels_ids[0];
 	    // taxels ids for finger tips are between 0 and 59
@@ -194,29 +193,13 @@ protected:
     }
 
     /*
-     * Return the latest contact points received for specified hand
-     * taking into account the pose of the frame attached to 
-     * the palm of the hand. Contact points produced
-     * by the skinManager are expressed with respect to that 
-     * frame while the filter requires the point to be expressed
-     * with respect to the robot root frame.
+     * Return the latest contact points received for specified hand.
+     * Contact points produced by the Gazebo plugin are already
+     * expressed with respect to the robot root frame.
      */
     bool getContactPoints(const std::string &which_hand,
 			  std::vector<yarp::sig::Vector> &points)
     {
-	// get pose of the hand
-	yarp::sig::Vector hand_pos;
-	yarp::sig::Matrix hand_rot;
-	bool ok;
-	if (which_hand == "right")
-	    ok = right_arm.getHandPose(hand_pos,
-				       hand_rot);
-	else
-	    ok = left_arm.getHandPose(hand_pos,
-				      hand_rot);
-	if (!ok)
-	    return false;
-
 	// split contacts per SkinPart
 	skinPartMap map = skin_contact_list.splitPerSkinPart();
 	
@@ -227,7 +210,7 @@ protected:
 	else
 	    skinPart = iCub::skinDynLib::SkinPart::SKIN_LEFT_HAND;
 	
-    	// transform all the contact points
+    	// extract contacts coming from finger tips only
 	iCub::skinDynLib::skinContactList &list = map[skinPart];
     	for (size_t i=0; i<list.size(); i++)
     	{
@@ -236,13 +219,12 @@ protected:
 
 	    // need to verify if this contact was effectively produced
 	    // by taxels on the finger tips
-	    // for now just the first taxel is considered because the other should
-	    // be in its neighbourhood since the skinManager groups them within
-	    // the same contact
+	    // in order to simplify things the Gazebo plugin only sends one
+	    // taxel id that is used to identify which finger is in contact
 	    std::vector<unsigned int> taxels_ids = skin_contact.getTaxelList();
 	    // taxels ids for finger tips are between 0 and 59
 	    if (taxels_ids[0] >= 0 && taxels_ids[0] < 60)
-		points.push_back(hand_pos + hand_rot * skin_contact.getGeoCenter());
+		points.push_back(skin_contact.getGeoCenter());
     	}
     	return true;
     }
