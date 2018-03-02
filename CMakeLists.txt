@@ -37,10 +37,12 @@ icubcontrib_set_default_prefix()
 set(headers
   ${CMAKE_SOURCE_DIR}/headers/PointCloud.h
   ${CMAKE_SOURCE_DIR}/headers/filterData.h
-  ${CMAKE_SOURCE_DIR}/headers/ArmController.h)
+  ${CMAKE_SOURCE_DIR}/headers/ArmController.h
+  ${CMAKE_SOURCE_DIR}/headers/FingerController.h)
 set(sources
   ${CMAKE_SOURCE_DIR}/src/filterData.cpp
   ${CMAKE_SOURCE_DIR}/src/ArmController.cpp
+  ${CMAKE_SOURCE_DIR}/src/FingerController.cpp
   ${CMAKE_SOURCE_DIR}/src/main.cpp)
 
 include_directories(${YARP_INCLUDE_DIRS})
