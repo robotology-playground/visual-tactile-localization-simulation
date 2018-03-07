@@ -30,6 +30,9 @@ bool ArmController::configure(const std::string &which_arm)
     yarp::os::Property prop;
     bool ok;
 
+    // set default value for flag
+    is_tip_attached = false;
+
     // store which arm
     this->which_arm = which_arm;
     
@@ -285,6 +288,19 @@ bool ArmController::useFingerFrame(const std::string& finger_name)
 {
     bool ok;
 
+    if (is_tip_attached)
+    {
+	// since a tip is already attached
+	// first it is required to detach it
+	ok = removeFingerFrame();
+	if (!ok)
+	    return false;
+    }
+    else
+    {
+	is_tip_attached = true;
+    }	
+	
     // get current value of encoders
     int n_encs;
     ok = ienc_arm->getAxes(&n_encs);
@@ -317,6 +333,8 @@ bool ArmController::useFingerFrame(const std::string& finger_name)
 
 bool ArmController::removeFingerFrame()
 {
+    is_tip_attached = false;
+    
     return icart->removeTipFrame();
 }
 
@@ -337,6 +355,14 @@ bool ArmController::goHome()
     if (!ok)
 	return false;
 
+    // remove finger tip in case it is attached
+    if (is_tip_attached)
+    {	
+	ok = removeFingerFrame();
+	if (!ok)
+	    return false;
+    }
+    
     // force the IK to use 0, 0, 0
     // as solution for the torso
     ok = icart->setLimits(0,0.0,0.0);

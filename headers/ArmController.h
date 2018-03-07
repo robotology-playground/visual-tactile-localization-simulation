@@ -53,6 +53,9 @@ protected:
     // string that indicates which arm
     // this controller uses
     std::string which_arm;
+
+    // whether the finger tip is attached to the chain or not
+    bool is_tip_attached;
     
 public:
     
