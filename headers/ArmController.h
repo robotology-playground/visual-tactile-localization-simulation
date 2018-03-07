@@ -123,8 +123,9 @@ public:
 
     /*
      * This function restore the initial pose of the arm.
+     * @return true/false on success/failure
      */
-    void goHome();
+    bool goHome();
 
     /*
      * Call the method goToPoseSync of the underlying cartesian controller
@@ -133,7 +134,6 @@ public:
      */
     void goToPos(const yarp::sig::Vector &pos);
 };
-
 
 class RightArmController : public ArmController
 {
