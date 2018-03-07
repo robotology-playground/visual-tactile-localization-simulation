@@ -12,6 +12,7 @@
 // std
 #include <string>
 #include <map>
+#include <unordered_map>
 
 // yarp os
 #include <yarp/os/BufferedPort.h>
@@ -38,6 +39,7 @@
 #include "headers/PointCloud.h"
 #include "headers/filterData.h"
 #include "headers/ArmController.h"
+#include "headers/HandController.h"
 
 using namespace yarp::math;
 
@@ -52,6 +54,10 @@ protected:
     // arm controllers
     RightArmController right_arm;
     LeftArmController left_arm;
+
+    // hand controllers
+    RightHandController right_hand;
+    LeftHandController left_hand;
 
     // mutexes required to share data between
     // the RFModule thread and the rpc thread
@@ -141,7 +147,7 @@ protected:
      * 'middle', 'ring' or 'pinky'.
      */
     bool getNumberContacts(const std::string &which_hand,
-			   std::map<std::string, int> &numberContacts)
+			   std::unordered_map<std::string, int> &numberContacts)
     {
 	// split contacts per SkinPart
 	skinPartMap map = skin_contact_list.splitPerSkinPart();
@@ -189,6 +195,9 @@ protected:
 	numberContacts["ring"] = n_ring;
 	numberContacts["pinky"] = n_pinky;
 
+	// clean the list once used
+	skin_contact_list.clear();
+
 	return true;
     }
 
@@ -210,7 +219,7 @@ protected:
 	else
 	    skinPart = iCub::skinDynLib::SkinPart::SKIN_LEFT_HAND;
 	
-    	// extract contacts coming from finger tips only
+	// extract contacts coming from finger tips only
 	iCub::skinDynLib::skinContactList &list = map[skinPart];
     	for (size_t i=0; i<list.size(); i++)
     	{
@@ -226,6 +235,10 @@ protected:
 	    if (taxels_ids[0] >= 0 && taxels_ids[0] < 60)
 		points.push_back(skin_contact.getGeoCenter());
     	}
+
+	// clean the list once used
+	skin_contact_list.clear();
+	
     	return true;
     }
     
@@ -274,20 +287,25 @@ protected:
 	return true;
     }
 
-    /*
-     * Pushes left/right.
-     * During pushing the pose of the object is estimated.
-     */
-    bool pushObject(const std::string &which_hand)
+    bool approachObject(const std::string &which_hand)
     {
+	bool ok;
+	
     	if (!is_estimate_available)
     	    return false;
 
 	ArmController* arm;
+	HandController* hand;
 	if (which_hand == "right")
+	{
 	    arm = &right_arm;
+	    hand = &right_hand;
+	}
 	else
+	{
 	    arm = &left_arm;
+	    hand = &left_hand;	    
+	}
 	
     	mutex.lock();
 
@@ -302,27 +320,96 @@ protected:
     	    pos[i] = estimate[i][3];
 
     	// change effector to the middle finger
-    	if(!arm->useFingerFrame("middle"))
+	ok = arm->useFingerFrame("middle");
+    	if (!ok)
     	    return false;
 
     	// approach object using a shifted position
     	pos[0] -= 0.02;
 	if (which_hand == "right")
-	    pos[1] += 0.07;
+	    pos[1] += 0.02;
 	else
-	    pos[1] -= 0.07;
+	    pos[1] -= 0.02;
 
         // request pose to the cartesian interface
         arm->goToPos(pos);
 
         // wait for motion completion
-        arm->cartesian()->waitMotionDone(0.04, 3.0);
+        arm->cartesian()->waitMotionDone(0.04, 10.0);
 
+	// reset contacts detected
+	hand->resetFingersContacts();
+
+	mutex_contacts.lock();
+	skin_contact_list.clear();
+	mutex_contacts.unlock();	
+
+	// move fingers until contact
+	double t0 = yarp::os::Time::now();
+	bool done = false;
+	std::unordered_map<std::string, int> number_contacts;
+	while (!done && (yarp::os::Time::now() - t0 < 4.0))
+	{
+    	    mutex_contacts.lock();
+
+	    getNumberContacts(which_hand, number_contacts);
+
+	    mutex_contacts.unlock();
+	
+	    ok = hand->moveFingersUntilContact(0.005,
+					       number_contacts,
+					       done);
+	    if (!ok)
+		return false;
+	    
+    	    yarp::os::Time::delay(0.01);
+	}
+	// in case the contact was not reached for all the fingers
+	// stop them and abort
+	if (!done)
+	{
+	    hand->stopFingers();
+
+	    return false;
+	}
+	
+	return true;
+    }
+
+    /*
+     * Pushes left/right.
+     * During pushing the pose of the object is estimated.
+     */
+    bool pushObject(const std::string &which_hand)
+    {
+	bool ok;
+	
+    	if (!is_estimate_available)
+    	    return false;
+
+	ArmController* arm;
+	HandController* hand;
+	if (which_hand == "right")
+	{
+	    arm = &right_arm;
+	    hand = &right_hand;
+	}
+	else
+	{
+	    arm = &left_arm;
+	    hand = &left_hand;	    
+	}
+	
+	// get the current position of the hand
+	yarp::sig::Vector pos;
+	yarp::sig::Vector att;	
+	arm->cartesian()->getPose(pos, att);
+	
         // final pose in the negative/positive waist y-direction
 	if (which_hand == "right")
-	    pos[1] -= 0.2;
+	    pos[1] -= 0.1;
 	else
-	    pos[1] += 0.2;
+	    pos[1] += 0.1;
 
         // store the current context because we are going
         // to change the trajectory time
@@ -414,9 +501,6 @@ protected:
 
         // restore the context
         arm->cartesian()->restoreContext(context_id);
-
-    	// detach tip frame
-    	arm->removeFingerFrame(); 
 
     	return true;
     }
@@ -524,7 +608,22 @@ public:
 
 	// set default hands orientation
 	right_arm.setHandAttitude(25, 0, 0);
-	left_arm.setHandAttitude(-25, 0, 0);	
+	left_arm.setHandAttitude(-25, 0, 0);
+
+	// configure hand controllers
+	ok = right_hand.configure();
+        if (!ok)
+	{
+            yError() << "VisTacLocSimModule: unable to configure the right hand controller";
+            return false;
+	}
+	
+	ok = left_hand.configure();
+        if (!ok)
+	{
+            yError() << "VisTacLocSimModule: unable to configure the left hand controller";
+            return false;
+	}
 	
         return true;
     }
@@ -551,6 +650,7 @@ public:
 
     bool respond(const yarp::os::Bottle &command, yarp::os::Bottle &reply)
     {
+	bool ok;
         std::string cmd = command.get(0).asString();
         if (cmd == "help")
         {
@@ -559,19 +659,30 @@ public:
             reply.addString("- home-right");
             reply.addString("- home-left");	    
             reply.addString("- localize");
+	    reply.addString("- approach-right");
+	    reply.addString("- approach-left");
 	    reply.addString("- push-right");
-	    reply.addString("- push-left");	    
+	    reply.addString("- push-left");
+	    reply.addString("- test");	    
             reply.addString("- quit");	    
         }
 	else if (cmd == "home-right")
 	{
-	    right_arm.goHome();
-	    reply.addString("Go home done for right arm.");	    
+	    ok = right_arm.goHome();
+	    ok &= right_hand.restoreFingersPosition();
+	    if (ok)
+		reply.addString("Go home done for right arm.");
+	    else
+		reply.addString("Go home failed for right arm.");		
 	}
 	else if (cmd == "home-left")
 	{
-	    left_arm.goHome();
-	    reply.addString("Go home done for left arm.");	    
+	    ok = left_arm.goHome();
+	    ok &= left_hand.restoreFingersPosition();
+	    if (ok)
+		reply.addString("Go home done for left arm.");
+	    else
+		reply.addString("Go home failed for left arm.");		
 	}
 	else if (cmd == "localize")
 	{
@@ -579,6 +690,20 @@ public:
 	    	reply.addString("Localization using vision done.");
 	    else
 	    	reply.addString("Localization using vision failed.");		
+	}
+	else if (cmd == "approach-right")
+	{
+	    if (approachObject("right"))
+	    	reply.addString("Approaching phase done.");
+	    else
+	    	reply.addString("Approaching phase failed.");		
+	}
+	else if (cmd == "approach-left")
+	{
+	    if (approachObject("left"))
+	    	reply.addString("Approaching phase done.");
+	    else
+	    	reply.addString("Approaching phase failed.");		
 	}
 	else if (cmd == "push-right")
 	{	
@@ -624,7 +749,7 @@ public:
 	std::string source = "/iCub/frame";
 	std::string target = "/mustard/estimate/frame";
 	is_estimate_available = tf_client->getTransform(target, source, estimate);
-	
+
 	mutex.unlock();
 
 	mutex_contacts.lock();
@@ -636,7 +761,10 @@ public:
 	    are_contacts_available = true;
 	}
 	else
+	{
+	    skin_contact_list.clear();
 	    are_contacts_available = false;
+	}
 
 	mutex_contacts.unlock();
 
