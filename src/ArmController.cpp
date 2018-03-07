@@ -30,6 +30,9 @@ bool ArmController::configure(const std::string &which_arm)
     yarp::os::Property prop;
     bool ok;
 
+    // set default value for flag
+    is_tip_attached = false;
+
     // store which arm
     this->which_arm = which_arm;
     
@@ -284,6 +287,19 @@ bool ArmController::getHandPose(yarp::sig::Vector& pos,
 bool ArmController::useFingerFrame(const std::string& finger_name)
 {
     bool ok;
+
+    if (is_tip_attached)
+    {
+	// since a tip is already attached
+	// first it is required to detach it
+	ok = removeFingerFrame();
+	if (!ok)
+	    return false;
+    }
+    else
+    {
+	is_tip_attached = true;
+    }	
 	
     // get current value of encoders
     int n_encs;
@@ -317,11 +333,15 @@ bool ArmController::useFingerFrame(const std::string& finger_name)
 
 bool ArmController::removeFingerFrame()
 {
+    is_tip_attached = false;
+    
     return icart->removeTipFrame();
 }
 
-void ArmController::goHome()
+bool ArmController::goHome()
 {
+    bool ok;
+    
     // since this function may be called for both
     // right and left arms it should be taken into account
     // the fact that different IK solutions for the torso
@@ -331,23 +351,46 @@ void ArmController::goHome()
 
     // store the context
     int current_context;
-    icart->storeContext(&current_context);
+    ok = icart->storeContext(&current_context);
+    if (!ok)
+	return false;
 
+    // remove finger tip in case it is attached
+    if (is_tip_attached)
+    {	
+	ok = removeFingerFrame();
+	if (!ok)
+	    return false;
+    }
+    
     // force the IK to use 0, 0, 0
     // as solution for the torso
-    icart->setLimits(0,0.0,0.0);
-    icart->setLimits(1,0.0,0.0);
-    icart->setLimits(2,0.0,0.0);
+    ok = icart->setLimits(0,0.0,0.0);
+    ok &= icart->setLimits(1,0.0,0.0);
+    ok &= icart->setLimits(2,0.0,0.0);
+    if (!ok)
+	return false;
 
     // restore home position
-    icart->goToPoseSync(home_pos, home_att);
-    icart->waitMotionDone(0.03, 2);
+    ok = icart->goToPoseSync(home_pos, home_att);
+    if (!ok)
+	return false;
+    ok = icart->waitMotionDone(0.03, 2);
+    if (!ok)
+	return false;
 
     // stop control
-    icart->stopControl();
+    ok = icart->stopControl();
+    if (!ok)
+	return false;
     
     // restore the context
-    icart->restoreContext(current_context);    
+    // this restore also the finger tip if it was attached
+    ok = icart->restoreContext(current_context);
+    if (!ok)
+	return false;
+
+    return true;
 }
 
 void ArmController::goToPos(const yarp::sig::Vector &pos)
