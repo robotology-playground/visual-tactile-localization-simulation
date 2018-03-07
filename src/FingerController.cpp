@@ -337,9 +337,7 @@ bool FingerController::setJointsVelocities(const yarp::sig::Vector &vels)
     bool ok;
     
     // switch to velocity control
-    // FIX ME: it is better if the user calls this once outside of this function
-    //         since this is used in "streaming" mode
-    // ok = setControlMode(VOCAB_CM_VELOCITY);
+    ok = setControlMode(VOCAB_CM_VELOCITY);
     if (!ok)
     {
 	yInfo() << "FingerController::setJointsVelocites Error:"
