@@ -296,10 +296,9 @@ bool ArmController::useFingerFrame(const std::string& finger_name)
 	if (!ok)
 	    return false;
     }
-    else
-    {
-	is_tip_attached = true;
-    }
+    
+    // update tip status
+    is_tip_attached = true;
 
     // get current value of encoders
     int n_encs;
