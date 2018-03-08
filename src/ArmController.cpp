@@ -367,6 +367,7 @@ bool ArmController::goHome()
 	return false;
 
     // remove finger tip in case it is attached
+    bool tip_status = is_tip_attached;
     if (is_tip_attached)
     {
 	ok = removeFingerFrame();
@@ -399,7 +400,6 @@ bool ArmController::goHome()
     icart->waitMotionDone(0.03, 2);
 
     // restore the context
-    // this restore also the finger tip if it was attached
     ok = icart->restoreContext(current_context);
     if (!ok)
     {
@@ -408,6 +408,9 @@ bool ArmController::goHome()
 		 << which_arm << "arm";
 	return false;
     }
+    // the restoreContext also restore the finger tip if it was attached
+    // hence it is required to restore the original state
+    is_tip_attached = tip_status;
 
     return true;
 }
