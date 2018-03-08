@@ -92,7 +92,7 @@ bool ArmController::configure(const std::string &which_arm)
     icart->setDOF(newDoF, curDoF);
 
     // set a default trajectory time
-    icart->setTrajTime(1.0);
+    icart->setTrajTime(2.0);
 
     // store home pose
     // wait until the pose is available
@@ -296,10 +296,9 @@ bool ArmController::useFingerFrame(const std::string& finger_name)
 	if (!ok)
 	    return false;
     }
-    else
-    {
-	is_tip_attached = true;
-    }
+    
+    // update tip status
+    is_tip_attached = true;
 
     // get current value of encoders
     int n_encs;
@@ -397,7 +396,7 @@ bool ArmController::goHome()
 		 << which_arm << "arm";
 	return false;
     }
-    icart->waitMotionDone(0.03, 2);
+    icart->waitMotionDone(0.03, 5.0);
 
     // restore the context
     ok = icart->restoreContext(current_context);
