@@ -35,7 +35,7 @@ bool ArmController::configure(const std::string &which_arm)
 
     // store which arm
     this->which_arm = which_arm;
-    
+
     // prepare properties for the CartesianController
     prop.put("device", "cartesiancontrollerclient");
     prop.put("remote", "/icubSim/cartesianController/" + which_arm + "_arm");
@@ -54,7 +54,7 @@ bool ArmController::configure(const std::string &which_arm)
 	    ok = true;
 	    break;
 	}
-	yarp::os::SystemClock::delaySystem(1.0);	    
+	yarp::os::SystemClock::delaySystem(1.0);
     }
     if (!ok)
     {
@@ -79,7 +79,7 @@ bool ArmController::configure(const std::string &which_arm)
     // store the current context so that
     // it can be restored when the controller closes
     icart->storeContext(&startup_cart_context);
-	
+
     // use also the torso
     yarp::sig::Vector newDoF, curDoF;
     icart->getDOF(curDoF);
@@ -119,7 +119,7 @@ bool ArmController::configure(const std::string &which_arm)
     }
 
     prop.put("remote", "/icubSim/torso");
-    prop.put("local", "/" + which_arm + "_arm_controller/encoder/torso");    
+    prop.put("local", "/" + which_arm + "_arm_controller/encoder/torso");
     ok = drv_enc_torso.open(prop);
     if (!ok)
     {
@@ -167,7 +167,7 @@ void ArmController::close()
 
     // restore the cartesian controller context
     icart->restoreContext(startup_cart_context);
-    
+
     // close drivers
     drv_cart.close();
     drv_enc_arm.close();
@@ -235,7 +235,7 @@ void ArmController::setHandAttitude(const double &yaw = 0,
     axis_angle[1] = 0.0;
     axis_angle[2] = 0.0;
     axis_angle[3] = roll * (M_PI/180);
-    dcm = dcm * yarp::math::axis2dcm(axis_angle); 
+    dcm = dcm * yarp::math::axis2dcm(axis_angle);
 
     // store orientation
     hand_attitude = yarp::math::dcm2axis(dcm);
@@ -266,7 +266,7 @@ bool ArmController::getHandPose(yarp::sig::Vector& pos,
     joints_angles[5] = encs_arm[2];
     joints_angles[6] = encs_arm[3];
     joints_angles[7] = encs_arm[4];
-    joints_angles[8] = encs_arm[5];    
+    joints_angles[8] = encs_arm[5];
     joints_angles[9] = encs_arm[6];
 
     // set the current values of the joints
@@ -277,7 +277,7 @@ bool ArmController::getHandPose(yarp::sig::Vector& pos,
     // to the frame attached to the plam of the hand
     yarp::sig::Matrix inertial_to_hand = arm_chain.getH();
 
-    // extract position and rotation matrix	    
+    // extract position and rotation matrix
     pos = inertial_to_hand.getCol(3).subVector(0,2);
     rot = inertial_to_hand.submatrix(0, 2, 0, 2);
 
@@ -299,14 +299,14 @@ bool ArmController::useFingerFrame(const std::string& finger_name)
     else
     {
 	is_tip_attached = true;
-    }	
-	
+    }
+
     // get current value of encoders
     int n_encs;
     ok = ienc_arm->getAxes(&n_encs);
     if(!ok)
 	return false;
-	
+
     yarp::sig::Vector encs(n_encs);
     ok = ienc_arm->getEncoders(encs.data());
     if(!ok)
@@ -334,14 +334,14 @@ bool ArmController::useFingerFrame(const std::string& finger_name)
 bool ArmController::removeFingerFrame()
 {
     is_tip_attached = false;
-    
+
     return icart->removeTipFrame();
 }
 
 bool ArmController::goHome()
 {
     bool ok;
-    
+
     // since this function may be called for both
     // right and left arms it should be taken into account
     // the fact that different IK solutions for the torso
@@ -357,12 +357,12 @@ bool ArmController::goHome()
 
     // remove finger tip in case it is attached
     if (is_tip_attached)
-    {	
+    {
 	ok = removeFingerFrame();
 	if (!ok)
 	    return false;
     }
-    
+
     // force the IK to use 0, 0, 0
     // as solution for the torso
     ok = icart->setLimits(0,0.0,0.0);
@@ -383,7 +383,7 @@ bool ArmController::goHome()
     ok = icart->stopControl();
     if (!ok)
 	return false;
-    
+
     // restore the context
     // this restore also the finger tip if it was attached
     ok = icart->restoreContext(current_context);
