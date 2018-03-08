@@ -333,9 +333,20 @@ bool ArmController::useFingerFrame(const std::string& finger_name)
 
 bool ArmController::removeFingerFrame()
 {
+    bool ok;
+
     is_tip_attached = false;
 
-    return icart->removeTipFrame();
+    ok = icart->removeTipFrame();
+    if (!ok)
+    {
+	yError() << "ArmController::removeFingerFrame"
+		 << "Error: unable to remove finger tip from the"
+		 << which_arm << "arm chain";
+	return false;
+    }
+
+    return true;
 }
 
 bool ArmController::goHome()
@@ -369,12 +380,22 @@ bool ArmController::goHome()
     ok &= icart->setLimits(1,0.0,0.0);
     ok &= icart->setLimits(2,0.0,0.0);
     if (!ok)
+    {
+	yError() << "ArmController::goHome"
+		 << "Error: unable to force torso solution to 0 for the"
+		 << which_arm << "arm";
 	return false;
+    }
 
     // restore home position
     ok = icart->goToPoseSync(home_pos, home_att);
     if (!ok)
+    {
+	yError() << "ArmController::goHome"
+		 << "Error: unable to command home position for the"
+		 << which_arm << "arm";
 	return false;
+    }
     ok = icart->waitMotionDone(0.03, 2);
     if (!ok)
 	return false;
@@ -388,7 +409,12 @@ bool ArmController::goHome()
     // this restore also the finger tip if it was attached
     ok = icart->restoreContext(current_context);
     if (!ok)
+    {
+	yError() << "ArmController::goHome"
+		 << "Error: unable to restore the previous context for the"
+		 << which_arm << "arm";
 	return false;
+    }
 
     return true;
 }
