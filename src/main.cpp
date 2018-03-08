@@ -62,7 +62,7 @@ protected:
     // mutexes required to share data between
     // the RFModule thread and the rpc thread
     yarp::os::Mutex mutex;
-    yarp::os::Mutex mutex_contacts;    
+    yarp::os::Mutex mutex_contacts;
 
     // point cloud port and storage
     yarp::os::BufferedPort<PointCloud> port_pc;
@@ -87,7 +87,7 @@ protected:
     // last estimate published by the filter
     yarp::sig::Matrix estimate;
     bool is_estimate_available;
-    
+
     /*
      * Return the last point cloud stored in
      * this->pc taking into account the pose of the root frame
@@ -118,7 +118,7 @@ protected:
 
 	    pc_out.push_back(point);
 	}
-	
+
 	mutex.unlock();
 
 	// transform the points taking into account
@@ -133,7 +133,7 @@ protected:
 	    // it is relative to the orign of the robot root frame
 	    // and expressed in the robot root frame
 	    point = SE3inv(inertial_to_robot) * point;
-	    
+
 	    pc_out[i] = point.subVector(0,2);
 	}
 
@@ -141,8 +141,8 @@ protected:
     }
 
     /*
-     * Return the number of contacts detected for each finger tip 
-     * for the specified hand as a std::map. 
+     * Return the number of contacts detected for each finger tip
+     * for the specified hand as a std::map.
      * The key is the name of the finger, i.e. 'thumb', 'index',
      * 'middle', 'ring' or 'pinky'.
      */
@@ -151,7 +151,7 @@ protected:
     {
 	// split contacts per SkinPart
 	skinPartMap map = skin_contact_list.splitPerSkinPart();
-	
+
 	// take the right skinPart
 	iCub::skinDynLib::SkinPart skinPart;
 	if (which_hand == "right")
@@ -166,7 +166,7 @@ protected:
 	int n_ring = 0;
 	int n_pinky = 0;
 
-    	// count contacts coming from finger tips only	
+    	// count contacts coming from finger tips only
 	iCub::skinDynLib::skinContactList &list = map[skinPart];
     	for (size_t i=0; i<list.size(); i++)
     	{
@@ -211,14 +211,14 @@ protected:
     {
 	// split contacts per SkinPart
 	skinPartMap map = skin_contact_list.splitPerSkinPart();
-	
+
 	// take the right skinPart
 	iCub::skinDynLib::SkinPart skinPart;
 	if (which_hand == "right")
 	    skinPart = iCub::skinDynLib::SkinPart::SKIN_RIGHT_HAND;
 	else
 	    skinPart = iCub::skinDynLib::SkinPart::SKIN_LEFT_HAND;
-	
+
 	// extract contacts coming from finger tips only
 	iCub::skinDynLib::skinContactList &list = map[skinPart];
     	for (size_t i=0; i<list.size(); i++)
@@ -238,10 +238,10 @@ protected:
 
 	// clean the list once used
 	skin_contact_list.clear();
-	
+
     	return true;
     }
-    
+
     /*
      * Perform object localization using the last
      * point cloud available.
@@ -262,7 +262,7 @@ protected:
     	{
     	    // prepare to write
     	    yarp::sig::FilterData &filter_data = port_filter.prepare();
-	    
+
     	    // clear the storage
     	    filter_data.clear();
 
@@ -272,7 +272,7 @@ protected:
     	    // add measures
     	    for (size_t k=0; k<n_points; k++)
     		filter_data.addPoint(pc[i+k]);
-	    
+
     	    // add zero input
     	    yarp::sig::Vector zero(3, 0.0);
     	    filter_data.addInput(zero);
@@ -290,7 +290,7 @@ protected:
     bool approachObject(const std::string &which_hand)
     {
 	bool ok;
-	
+
     	if (!is_estimate_available)
     	    return false;
 
@@ -304,14 +304,14 @@ protected:
 	else
 	{
 	    arm = &left_arm;
-	    hand = &left_hand;	    
+	    hand = &left_hand;
 	}
-	
+
     	mutex.lock();
 
     	// copy the current estimate of the object
     	yarp::sig::Matrix estimate = this->estimate;
-	
+
     	mutex.unlock();
 
     	// extract positional part of the estimate
@@ -342,7 +342,7 @@ protected:
 
 	mutex_contacts.lock();
 	skin_contact_list.clear();
-	mutex_contacts.unlock();	
+	mutex_contacts.unlock();
 
 	// move fingers until contact
 	double t0 = yarp::os::Time::now();
@@ -355,13 +355,13 @@ protected:
 	    getNumberContacts(which_hand, number_contacts);
 
 	    mutex_contacts.unlock();
-	
+
 	    ok = hand->moveFingersUntilContact(0.005,
 					       number_contacts,
 					       done);
 	    if (!ok)
 		return false;
-	    
+
     	    yarp::os::Time::delay(0.01);
 	}
 	// in case the contact was not reached for all the fingers
@@ -372,7 +372,7 @@ protected:
 
 	    return false;
 	}
-	
+
 	return true;
     }
 
@@ -383,7 +383,7 @@ protected:
     bool pushObject(const std::string &which_hand)
     {
 	bool ok;
-	
+
     	if (!is_estimate_available)
     	    return false;
 
@@ -397,14 +397,14 @@ protected:
 	else
 	{
 	    arm = &left_arm;
-	    hand = &left_hand;	    
+	    hand = &left_hand;
 	}
-	
+
 	// get the current position of the hand
 	yarp::sig::Vector pos;
-	yarp::sig::Vector att;	
+	yarp::sig::Vector att;
 	arm->cartesian()->getPose(pos, att);
-	
+
         // final pose in the negative/positive waist y-direction
 	if (which_hand == "right")
 	    pos[1] -= 0.1;
@@ -422,14 +422,14 @@ protected:
 
         // request pose to the cartesian interface
         arm->goToPos(pos);
-	
+
         // filter while motion happens
         double t0 = yarp::os::Time::now();
     	double dt = 0.03;
     	bool done = false;
 	bool contactDetected = false;
     	yarp::sig::Vector input(3, 0.0);
-    	yarp::sig::Vector prev_vel(3, 0.0);	
+    	yarp::sig::Vector prev_vel(3, 0.0);
     	while (!done && (yarp::os::Time::now() - t0 < duration + 1))
     	{
     	    arm->cartesian()->checkMotionDone(&done);
@@ -449,7 +449,7 @@ protected:
 		    input += prev_vel * dt;
 
     		if(are_contacts_available)
-    		{		    
+    		{
 		    // extract contact points for the specified hand
 		    std::vector<yarp::sig::Vector> points;
     		    getContactPoints(which_hand, points);
@@ -463,9 +463,9 @@ protected:
 			// the first time contact on figer tips is
 			// detected the flag is set to true
 			contactDetected = true;
-			
+
 			yarp::sig::FilterData &filter_data = port_filter.prepare();
-	    
+
 			// clear the storage
 			filter_data.clear();
 
@@ -494,7 +494,7 @@ protected:
     	    // store velocity for the next iteration
     	    if (new_speed)
     		prev_vel = x_dot;
-		
+
     	    // wait
     	    yarp::os::Time::delay(dt);
     	}
@@ -504,7 +504,7 @@ protected:
 
     	return true;
     }
-    
+
 public:
     bool configure(yarp::os::ResourceFinder &rf)
     {
@@ -540,7 +540,7 @@ public:
 	propTfClient.put("device", "transformClient");
 	propTfClient.put("local", "/vis_tac_localization/transformClient");
 	propTfClient.put("remote", "/transformServer");
-	
+
 	// try to open the driver
 	ok = drv_transform_client.open(propTfClient);
 	if (!ok)
@@ -598,7 +598,7 @@ public:
             yError() << "VisTacLocSimModule: unable to configure the right arm controller";
             return false;
 	}
-	
+
 	ok = left_arm.configure();
         if (!ok)
 	{
@@ -617,14 +617,14 @@ public:
             yError() << "VisTacLocSimModule: unable to configure the right hand controller";
             return false;
 	}
-	
+
 	ok = left_hand.configure();
         if (!ok)
 	{
             yError() << "VisTacLocSimModule: unable to configure the left hand controller";
             return false;
 	}
-	
+
         return true;
     }
 
@@ -638,13 +638,13 @@ public:
 	// close arm controllers
 	right_arm.close();
 	left_arm.close();
-	
+
 	// close ports
         rpc_port.close();
 	port_pc.close();
 	port_filter.close();
 	port_contacts.close();
-	
+
         return true;
     }
 
@@ -657,14 +657,14 @@ public:
             reply.addVocab(yarp::os::Vocab::encode("many"));
             reply.addString("Available commands:");
             reply.addString("- home-right");
-            reply.addString("- home-left");	    
+            reply.addString("- home-left");
             reply.addString("- localize");
 	    reply.addString("- approach-right");
 	    reply.addString("- approach-left");
 	    reply.addString("- push-right");
 	    reply.addString("- push-left");
-	    reply.addString("- test");	    
-            reply.addString("- quit");	    
+	    reply.addString("- test");
+            reply.addString("- quit");
         }
 	else if (cmd == "home-right")
 	{
@@ -673,7 +673,7 @@ public:
 	    if (ok)
 		reply.addString("Go home done for right arm.");
 	    else
-		reply.addString("Go home failed for right arm.");		
+		reply.addString("Go home failed for right arm.");
 	}
 	else if (cmd == "home-left")
 	{
@@ -682,42 +682,42 @@ public:
 	    if (ok)
 		reply.addString("Go home done for left arm.");
 	    else
-		reply.addString("Go home failed for left arm.");		
+		reply.addString("Go home failed for left arm.");
 	}
 	else if (cmd == "localize")
 	{
 	    if (localizeObject())
 	    	reply.addString("Localization using vision done.");
 	    else
-	    	reply.addString("Localization using vision failed.");		
+	    	reply.addString("Localization using vision failed.");
 	}
 	else if (cmd == "approach-right")
 	{
 	    if (approachObject("right"))
 	    	reply.addString("Approaching phase done.");
 	    else
-	    	reply.addString("Approaching phase failed.");		
+	    	reply.addString("Approaching phase failed.");
 	}
 	else if (cmd == "approach-left")
 	{
 	    if (approachObject("left"))
 	    	reply.addString("Approaching phase done.");
 	    else
-	    	reply.addString("Approaching phase failed.");		
+	    	reply.addString("Approaching phase failed.");
 	}
 	else if (cmd == "push-right")
-	{	
+	{
 	    if (pushObject("right"))
 	    	reply.addString("Pushing with right hand done.");
 	    else
-	    	reply.addString("Pushing with right hand failed.");		
+	    	reply.addString("Pushing with right hand failed.");
 	}
 	else if (cmd == "push-left")
-	{	
+	{
 	    if (pushObject("left"))
 	    	reply.addString("Pushing with left hand done.");
 	    else
-	    	reply.addString("Pushing with left hand failed.");		
+	    	reply.addString("Pushing with left hand failed.");
 	}
         else
             // the father class already handles the "quit" command
@@ -753,7 +753,7 @@ public:
 	mutex.unlock();
 
 	mutex_contacts.lock();
-	
+
 	iCub::skinDynLib::skinContactList *new_contacts = port_contacts.read(false);
 	if (new_contacts != NULL && new_contacts->size() > 0)
 	{
@@ -785,4 +785,3 @@ int main()
     yarp::os::ResourceFinder rf;
     return mod.runModule(rf);
 }
-
