@@ -207,10 +207,7 @@ void ArmController::setHandAttitude(const double &yaw = 0,
     axis_angle[0] = 1.0;
     axis_angle[1] = 0.0;
     axis_angle[2] = 0.0;
-    if (which_arm == "right")
-	axis_angle[3] = -M_PI/2.0;
-    else
-	axis_angle[3] = M_PI/2.0;
+    axis_angle[3] = -M_PI/2.0;
     dcm = dcm * yarp::math::axis2dcm(axis_angle);
 
     // additional rotations
@@ -320,10 +317,12 @@ bool ArmController::useFingerFrame(const std::string& finger_name)
 	return false;
     yarp::sig::Matrix tip_frame = finger.getH((M_PI/180.0)*joints);
 
-    // attach the tip
+    // attach the tip taking into account only the positional part
     yarp::sig::Vector tip_x = tip_frame.getCol(3);
-    yarp::sig::Vector tip_o = yarp::math::dcm2axis(tip_frame);
-    ok = icart->attachTipFrame(tip_x,tip_o);
+    yarp::sig::Matrix identity(3, 3);
+    identity.eye();
+    yarp::sig::Vector tip_a = yarp::math::dcm2axis(identity);
+    ok = icart->attachTipFrame(tip_x, tip_a);
     if(!ok)
 	return false;
 
