@@ -207,10 +207,7 @@ void ArmController::setHandAttitude(const double &yaw = 0,
     axis_angle[0] = 1.0;
     axis_angle[1] = 0.0;
     axis_angle[2] = 0.0;
-    if (which_arm == "right")
-	axis_angle[3] = -M_PI/2.0;
-    else
-	axis_angle[3] = M_PI/2.0;
+    axis_angle[3] = -M_PI/2.0;
     dcm = dcm * yarp::math::axis2dcm(axis_angle);
 
     // additional rotations
