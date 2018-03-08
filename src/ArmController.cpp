@@ -398,11 +398,6 @@ bool ArmController::goHome()
     }
     icart->waitMotionDone(0.03, 2);
 
-    // stop control
-    ok = icart->stopControl();
-    if (!ok)
-	return false;
-
     // restore the context
     // this restore also the finger tip if it was attached
     ok = icart->restoreContext(current_context);
