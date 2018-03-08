@@ -396,9 +396,7 @@ bool ArmController::goHome()
 		 << which_arm << "arm";
 	return false;
     }
-    ok = icart->waitMotionDone(0.03, 2);
-    if (!ok)
-	return false;
+    icart->waitMotionDone(0.03, 2);
 
     // stop control
     ok = icart->stopControl();
