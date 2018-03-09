@@ -18,10 +18,10 @@ mu = 0.1
 mu2 = 0.1
 %>
 <sdf version="1.5">
-  <model name="table_alt">
+  <model name="shelf">
     <static>true</static>
     <link name="shelf_root_link">
-      <collision name="table_surface_collision">
+      <collision name="shelf_surface_collision">
 	<pose>0 0 <%= surface_z0 %> 0 0 0</pose>
 	<geometry>
           <box>
@@ -37,7 +37,7 @@ mu2 = 0.1
         <!--   </friction> -->
 	<!-- </surface> -->
       </collision>
-      <visual name="table_surface_visual">
+      <visual name="shelf_surface_visual">
 	<pose>0 0 <%= surface_z0 %> 0 0 0</pose>
 	<geometry>
           <box>
@@ -51,14 +51,6 @@ mu2 = 0.1
           </script>
 	</material>
       </visual>
-      <collision name="left_support_collision">
-	<pose><% support_left_x0 %> 0.0 <%= support_z0 %> 0 0 0</pose>
-	<geometry>
-          <box>
-            <size><%= support_w %> <%= d %> <%= h %></size>
-          </box>
-	</geometry>
-      </collision>
       <visual name="left_support_visual">
 	<pose><%= support_left_x0 %> 0.0 <%= support_z0 %> 0 0 0</pose>
 	<geometry>
@@ -73,14 +65,6 @@ mu2 = 0.1
           </script>
 	</material>
       </visual>
-      <collision name="right_support_collision">
-	<pose><% support_right_x0 %> 0.0 <%= support_z0 %> 0 0 0</pose>
-	<geometry>
-          <box>
-            <size><%= support_w %> <%= d %> <%= h %></size>
-          </box>
-	</geometry>
-      </collision>
       <visual name="right_support_visual">
 	<pose><%= support_right_x0 %> 0.0 <%= support_z0 %> 0 0 0</pose>
 	<geometry>
