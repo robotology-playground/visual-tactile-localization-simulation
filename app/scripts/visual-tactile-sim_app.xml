@@ -18,7 +18,7 @@
   </module>
 
   <connection>
-    <from>/mustard/fakepointcloud:o</from>    
+    <from>/box_alt/fakepointcloud:o</from>    
     <to>/vis_tac_localization/pc:i</to>
   </connection>
 
