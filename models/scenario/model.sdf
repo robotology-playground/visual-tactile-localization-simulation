@@ -15,7 +15,7 @@
     <!-- Table -->
     <include>
       <uri>model://table_alt</uri>
-      <pose>0 0.5 0 0 0 0</pose>
+      <pose>0.530772 0.5 0 0 0 0</pose>
     </include>
 
     <!-- Shelf -->        
@@ -23,7 +23,7 @@
       <uri>model://shelf_alt</uri>
       <!-- Put the model frame on top of the table -->
       <!-- Warning: The z coordinate should be changed if table/model.rsdf changes -->
-      <pose>0.16 0.47 0.38 0 0 0.0</pose>
+      <pose>0.1798 0.431506 0.38 0 0 0.0</pose>
     </include>
 
     <!-- Book -->    
@@ -32,7 +32,7 @@
     <!-- Put the model frame on top of the shelf -->
     <!-- Warning: The z coordinate should be changed if table_alt/model.sdf -->
     <!-- or shelf_alt/model.sdf changes -->
-    <pose>0.08 0.47 0.60 0 0 -0.6</pose>
+    <pose>0.08 0.44 0.55 0 0 -0.6</pose>
     </include>
 
     <!-- Observer origin represented as a sphere -->    
