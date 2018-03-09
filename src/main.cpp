@@ -400,6 +400,11 @@ protected:
 	    hand = &left_hand;
 	}
 
+	// change effector to the middle finger
+	ok = arm->useFingerFrame("middle");
+	if (!ok)
+	    return false;
+
 	// get the current position of the hand
 	yarp::sig::Vector pos;
 	yarp::sig::Vector att;
