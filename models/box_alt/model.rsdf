@@ -1,0 +1,109 @@
+<?xml version="1.0"?>
+<%
+# Box with variable lengths and mass.
+
+# Mass
+m = 0.8
+
+# Lengths
+w = 0.24
+d = 0.17
+h = 0.027
+half_h = h / 2.0
+
+# Inertia matrix
+factor = 1.0 / 12.0 * m
+ixx = factor * (h*h + d*d)
+ixy = 0.0
+ixz = 0.0
+iyy = factor * (h*h + w*w)
+iyz = 0.0
+izz = factor * (d*d + w*w)
+
+# Friction coefficients
+mu = 0.1
+mu2 = 0.1
+%>
+
+<sdf version="1.5">
+  <model name='box_alt'>
+    <link name='box_alt_root_link'>
+      <pose>0 0 <%= half_h  %> 0 0 0</pose>
+      <inertial>
+	<!-- CoM -->
+	<pose>0.0 0.0 0.0</pose>	
+        <mass><%= m %></mass>
+        <inertia>
+          <ixx><%= ixx %></ixx>
+          <ixy><%= ixy %></ixy>
+          <ixz><%= ixz %></ixz>
+          <iyy><%= iyy %></iyy>
+          <iyz><%= iyz %></iyz>
+          <izz><%= izz %></izz>
+        </inertia>
+      </inertial>
+      <collision name='box_alt_collision'>
+        <geometry>
+	  <box>
+	    <size><%= w %> <%= d %> <%= h %></size>
+	  </box>
+        </geometry>
+	<surface>
+          <friction>
+            <ode>
+              <mu><%= mu %></mu>
+              <mu2><%= mu2 %></mu2>
+            </ode>
+          </friction>
+	</surface>
+      </collision>
+      <visual name='box_alt_visual'>
+        <geometry>
+	  <box>
+	    <size><%= w %> <%= d %> <%= h %></size>
+	  </box>
+        </geometry>
+        <material>
+	  <script>
+	    <uri>file://media/materials/scripts/gazebo.material</uri>
+	    <name>Gazebo/Orange</name>
+	  </script>
+        </material>
+      </visual>
+    </link>
+    <link name="box_alt_estimate_link">
+      <pose>0.2 0 0.0932 0 0 0</pose>      
+      <gravity>false</gravity>
+      <kinematic>true</kinematic>
+      <visual name='box_alt_estimate_visual'>
+	<plugin name="viewer" filename='libgazebo_yarp_estimateViewer.so'></plugin>
+        <geometry>
+	  <box>
+	    <size><%= w %> <%= d %> <%= h %></size>
+	  </box>
+        </geometry>
+        <material>
+	  <script>
+	    <uri>file://media/materials/scripts/gazebo.material</uri>
+	    <name>Gazebo/Blue</name>
+	  </script>
+        </material>
+	<transparency>0.7</transparency>
+      </visual>
+    </link>
+    <joint name="fixed_estimate" type="fixed">
+      <parent>world</parent>
+      <child>box_alt_estimate_link</child>
+    </joint>
+    <plugin name="pose_publisher" filename='libgazebo_yarp_modelposepublisher.so'>
+      <period>0.01</period>
+    </plugin>
+    <plugin name="point_cloud" filename='libgazebo_yarp_fakePointCloud.so'>
+      <period>0.05</period>
+      <observerOrigin>0 0.07 0.93</observerOrigin>
+      <numPoints>100</numPoints>
+      <meshPath>model://box_alt/box.off</meshPath>
+      <showPointCloud>true</showPointCloud>
+    </plugin>
+  </model>
+</sdf>
