@@ -325,17 +325,14 @@ protected:
     	    return false;
 
     	// approach object using a shifted position
-    	pos[0] -= 0.02;
-	if (which_hand == "right")
-	    pos[1] += 0.02;
-	else
-	    pos[1] -= 0.02;
+	pos[0] -= 0.14;
+    	pos[2] += 0.045;
 
         // request pose to the cartesian interface
         arm->goToPos(pos);
 
         // wait for motion completion
-        arm->cartesian()->waitMotionDone(0.04, 10.0);
+        arm->cartesian()->waitMotionDone(0.04, 5.0);
 
 	// reset contacts detected
 	hand->resetFingersContacts();
@@ -348,7 +345,7 @@ protected:
 	double t0 = yarp::os::Time::now();
 	bool done = false;
 	std::unordered_map<std::string, int> number_contacts;
-	while (!done && (yarp::os::Time::now() - t0 < 4.0))
+	while (!done && (yarp::os::Time::now() - t0 < 20.0))
 	{
     	    mutex_contacts.lock();
 
@@ -406,15 +403,12 @@ protected:
 	    return false;
 
 	// get the current position of the hand
-	yarp::sig::Vector pos;
-	yarp::sig::Vector att;
-	arm->cartesian()->getPose(pos, att);
+	// yarp::sig::Vector pos;
+	// yarp::sig::Vector att;
+	// arm->cartesian()->getPose(pos, att);
 
-        // final pose in the negative/positive waist y-direction
-	if (which_hand == "right")
-	    pos[1] -= 0.1;
-	else
-	    pos[1] += 0.1;
+        // final pose 
+	// pos[0] += 0.1;
 
         // store the current context because we are going
         // to change the trajectory time
@@ -422,11 +416,19 @@ protected:
         arm->cartesian()->storeContext(&context_id);
 
         // set trajectory time
-	double duration = 6.0;
-        arm->cartesian()->setTrajTime(duration);
+	double duration = 5.0;
+	double traj_time = 3.0;
+        arm->cartesian()->setTrajTime(traj_time);
 
-        // request pose to the cartesian interface
-        arm->goToPos(pos);
+        // // request pose to the cartesian interface
+        // arm->goToPos(pos);
+
+	yarp::sig::Vector pos_dot(3, 0.0);
+	yarp::sig::Vector att_dot(4, 0.0);
+	pos_dot[0] = 0.05;
+	att_dot[2] = -1;
+	att_dot[3] = 3 * (M_PI/180);
+	arm->cartesian()->setTaskVelocities(pos_dot, att_dot);
 
         // filter while motion happens
         double t0 = yarp::os::Time::now();
@@ -435,9 +437,9 @@ protected:
 	bool contactDetected = false;
     	yarp::sig::Vector input(3, 0.0);
     	yarp::sig::Vector prev_vel(3, 0.0);
-    	while (!done && (yarp::os::Time::now() - t0 < duration + 1))
+    	while ((yarp::os::Time::now() - t0 < duration))
     	{
-    	    arm->cartesian()->checkMotionDone(&done);
+    	    // arm->cartesian()->checkMotionDone(&done);
 
     	    // get velocity of the finger
     	    yarp::sig::Vector x_dot;
@@ -503,6 +505,9 @@ protected:
     	    // wait
     	    yarp::os::Time::delay(dt);
     	}
+	pos_dot = 0;
+	att_dot = 0;
+	arm->cartesian()->setTaskVelocities(pos_dot, att_dot);	
 
         // restore the context
         arm->cartesian()->restoreContext(context_id);
@@ -612,7 +617,7 @@ public:
 	}
 
 	// set default hands orientation
-	right_arm.setHandAttitude(0, 0, -90);
+	right_arm.setHandAttitude(0, 15, -90);
 	left_arm.setHandAttitude(0, 0, 0);
 
 	// configure hand controllers
