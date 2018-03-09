@@ -18,9 +18,9 @@
       <pose>0 0.6 0 0 0 0</pose>
     </include>
 
-    <!-- Bottle -->    
+    <!-- Book -->    
     <include>
-      <uri>model://mustard</uri>
+      <uri>model://box_alt</uri>
       <!-- Put the model frame on top of the table -->
       <!-- Warning: The z coordinate should be changed if table/model.rsdf changes -->
       <pose>0.08 0.36 0.48 0 0 -0.6</pose>
