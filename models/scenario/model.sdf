@@ -32,7 +32,7 @@
     <!-- Put the model frame on top of the shelf -->
     <!-- Warning: The z coordinate should be changed if table_alt/model.sdf -->
     <!-- or shelf_alt/model.sdf changes -->
-    <pose>0.08 0.44 0.55 0 0 -0.6</pose>
+    <pose>0.08 0.44 0.55 0 0 0.0</pose>
     </include>
 
     <!-- Observer origin represented as a sphere -->    
