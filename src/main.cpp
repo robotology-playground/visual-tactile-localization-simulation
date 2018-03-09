@@ -612,8 +612,8 @@ public:
 	}
 
 	// set default hands orientation
-	right_arm.setHandAttitude(25, 0, 0);
-	left_arm.setHandAttitude(-25, 0, 0);
+	right_arm.setHandAttitude(0, 0, -90);
+	left_arm.setHandAttitude(0, 0, 0);
 
 	// configure hand controllers
 	ok = right_hand.configure();
