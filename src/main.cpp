@@ -757,7 +757,7 @@ public:
 	// get current estimate from the filter
 	// TODO: get source and target from configuration file
 	std::string source = "/iCub/frame";
-	std::string target = "/mustard/estimate/frame";
+	std::string target = "/box_alt/estimate/frame";
 	is_estimate_available = tf_client->getTransform(target, source, estimate);
 
 	mutex.unlock();
