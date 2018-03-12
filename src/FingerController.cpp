@@ -40,7 +40,12 @@ bool FingerController::configure(const std::string &hand_name,
     finger = iCub::iKin::iCubFinger(hand_name + "_" + finger_name);
 
     // set the controlled joints depending on the finger name
-    if (finger_name == "index")
+    if (finger_name == "thumb")
+    {
+	// up to now only thumb opposition is considered
+	ctl_joints.push_back(8);
+    }
+    else if (finger_name == "index")
     {
 	ctl_joints.push_back(11);
 	ctl_joints.push_back(12);
@@ -99,6 +104,11 @@ bool FingerController::configure(const std::string &hand_name,
     {
 	// within ring only one DoF is available
 	coupling = 1.0 / 3.0;
+    }
+    else if (finger_name == "thumb")
+    {
+	// only thumb opposition is considered
+	coupling.resize(1, 1);
     }
 
     // extract the constant transformation between the hand
@@ -223,17 +233,31 @@ bool FingerController::getJacobianFingerFrame(yarp::sig::Matrix &jacobian)
     // get the jacobian
     jacobian = finger.GeoJacobian();
 
-    // neglect abduction if not the middle finger
-    if (finger_name != "middle")
+    // neglect abduction if index or ring
+    if (finger_name == "index" || finger_name == "ring")
 	jacobian.removeCols(0, 1);
+    // retain only opposition if thumb
+    else if (finger_name == "thumb")
+	jacobian.removeCols(1, 3);
 
+    // the number of columns should be one for the thumb
+    bool valid_no_cols = true;
+    if (finger_name == "thumb")
+    {
+	if (jacobian.cols() != 1)
+	    valid_no_cols = false;
+    }
     // the number of columns should be three
-    if (jacobian.cols() != 3)
+    // for index, middle and ring
+    else{
+	if (jacobian.cols() != 3)
+	    valid_no_cols = false;
+    }
+    if (!valid_no_cols)
     {
 	yError() << "FingerController::getJacobianFingerFrame"
-		 << "Error: jacobian.cols() ="
-		 << jacobian.cols()
-		 << "instead of 3 for finger"
+		 << "Error: wrong number of columns"
+		 << "for the jacobian of the finger"
 		 << hand_name << finger_name;
 	
 	return false;
@@ -287,9 +311,13 @@ bool FingerController::getFingerTipPoseFingerFrame(yarp::sig::Vector &pose)
     // representing the attitude of the planar chain
     double att = 0;
 
-    // neglect abduction if not the middle finger
-    if (finger_name != "middle")
+    // only opposition if thumb
+    if (finger_name == "thumb")
+	att = joints[0];
+    // neglect abduction if index or ring    
+    else if (finger_name == "index" || finger_name == "ring")
 	att = joints[1] + joints[2] + joints[3];
+    // middle finger
     else
 	att = joints[0] + joints[1] + joints[2];
     
