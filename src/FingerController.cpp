@@ -272,10 +272,14 @@ bool FingerController::getJacobianFingerFrame(yarp::sig::Matrix &jacobian)
     // express linear velocity in the root frame of the finger
     j_lin = finger_root_att.transposed() * j_lin;
 
+    
     // the motion of the finger described w.r.t its root frame
-    // is planar and velocities along the z axis are zeros
-    // hence the third row of the linear velocity jacobian can be dropped
-    j_lin = j_lin.removeRows(2, 1);
+    // is planar and velocities along the z axis (y axis for thumb opposition)
+    // are zero hence the third row (second row) of the linear velocity jacobian can be dropped
+    if (finger_name == "thumb")
+	j_lin = j_lin.removeRows(1, 1);
+    else
+	j_lin = j_lin.removeRows(2, 1);
 
     // extract angular velocity part
     if (finger_name == "thumb")
@@ -288,9 +292,18 @@ bool FingerController::getJacobianFingerFrame(yarp::sig::Matrix &jacobian)
 
     // the motion of the finger described w.r.t its root frame
     // is planar and angular velocities is all along the z axis
-    // hence first and second row of the angular velocity jacobian
+    // (-y axis for the thumb opposition)
+    // hence first and second row (first and third) of the angular velocity jacobian
     // can be dropped
-    j_ang.removeRows(0, 2);
+    if (finger_name == "thumb")
+    {
+	j_ang.removeRows(0, 1);
+	j_ang.removeRows(2, 1);	
+    }
+    else
+    {
+	j_ang.removeRows(0, 2);
+    }
 
     // compose the linear velocity and angular velocity parts together
     if (finger_name == "thumb")
