@@ -264,7 +264,10 @@ bool FingerController::getJacobianFingerFrame(yarp::sig::Matrix &jacobian)
     }
 
     // extract linear velocity part
-    j_lin = jacobian.submatrix(0, 2, 0, 2);
+    if (finger_name == "thumb")
+	j_lin = jacobian.submatrix(0, 2, 0, 0);
+    else
+	j_lin = jacobian.submatrix(0, 2, 0, 2);
 
     // express linear velocity in the root frame of the finger
     j_lin = finger_root_att.transposed() * j_lin;
@@ -275,7 +278,10 @@ bool FingerController::getJacobianFingerFrame(yarp::sig::Matrix &jacobian)
     j_lin = j_lin.removeRows(2, 1);
 
     // extract angular velocity part
-    j_ang = jacobian.submatrix(3, 5, 0, 2);
+    if (finger_name == "thumb")
+	j_ang = jacobian.submatrix(3, 5, 0, 0);
+    else
+	j_ang = jacobian.submatrix(3, 5, 0, 2);
 
     // express angular velocity in root frame of the finger
     j_ang = finger_root_att.transposed() * j_ang;
@@ -287,7 +293,10 @@ bool FingerController::getJacobianFingerFrame(yarp::sig::Matrix &jacobian)
     j_ang.removeRows(0, 2);
 
     // compose the linear velocity and angular velocity parts together
-    jacobian.resize(3, 3);
+    if (finger_name == "thumb")
+	jacobian.resize(3, 1);
+    else
+	jacobian.resize(3, 3);
     jacobian.setSubmatrix(j_lin, 0, 0);
     jacobian.setSubmatrix(j_ang, 2, 0);
 
