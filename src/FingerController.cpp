@@ -40,7 +40,12 @@ bool FingerController::configure(const std::string &hand_name,
     finger = iCub::iKin::iCubFinger(hand_name + "_" + finger_name);
 
     // set the controlled joints depending on the finger name
-    if (finger_name == "index")
+    if (finger_name == "thumb")
+    {
+	// up to now only thumb opposition is considered
+	ctl_joints.push_back(8);
+    }
+    else if (finger_name == "index")
     {
 	ctl_joints.push_back(11);
 	ctl_joints.push_back(12);
@@ -99,6 +104,11 @@ bool FingerController::configure(const std::string &hand_name,
     {
 	// within ring only one DoF is available
 	coupling = 1.0 / 3.0;
+    }
+    else if (finger_name == "thumb")
+    {
+	// only thumb opposition is considered
+	coupling.resize(1, 1);
     }
 
     // extract the constant transformation between the hand
@@ -223,24 +233,41 @@ bool FingerController::getJacobianFingerFrame(yarp::sig::Matrix &jacobian)
     // get the jacobian
     jacobian = finger.GeoJacobian();
 
-    // neglect abduction if not the middle finger
-    if (finger_name != "middle")
+    // neglect abduction if index or ring
+    if (finger_name == "index" || finger_name == "ring")
 	jacobian.removeCols(0, 1);
+    // retain only opposition if thumb
+    else if (finger_name == "thumb")
+	jacobian.removeCols(1, 3);
 
+    // the number of columns should be one for the thumb
+    bool valid_no_cols = true;
+    if (finger_name == "thumb")
+    {
+	if (jacobian.cols() != 1)
+	    valid_no_cols = false;
+    }
     // the number of columns should be three
-    if (jacobian.cols() != 3)
+    // for index, middle and ring
+    else{
+	if (jacobian.cols() != 3)
+	    valid_no_cols = false;
+    }
+    if (!valid_no_cols)
     {
 	yError() << "FingerController::getJacobianFingerFrame"
-		 << "Error: jacobian.cols() ="
-		 << jacobian.cols()
-		 << "instead of 3 for finger"
+		 << "Error: wrong number of columns"
+		 << "for the jacobian of the finger"
 		 << hand_name << finger_name;
 	
 	return false;
     }
 
     // extract linear velocity part
-    j_lin = jacobian.submatrix(0, 2, 0, 2);
+    if (finger_name == "thumb")
+	j_lin = jacobian.submatrix(0, 2, 0, 0);
+    else
+	j_lin = jacobian.submatrix(0, 2, 0, 2);
 
     // express linear velocity in the root frame of the finger
     j_lin = finger_root_att.transposed() * j_lin;
@@ -251,7 +278,10 @@ bool FingerController::getJacobianFingerFrame(yarp::sig::Matrix &jacobian)
     j_lin = j_lin.removeRows(2, 1);
 
     // extract angular velocity part
-    j_ang = jacobian.submatrix(3, 5, 0, 2);
+    if (finger_name == "thumb")
+	j_ang = jacobian.submatrix(3, 5, 0, 0);
+    else
+	j_ang = jacobian.submatrix(3, 5, 0, 2);
 
     // express angular velocity in root frame of the finger
     j_ang = finger_root_att.transposed() * j_ang;
@@ -263,7 +293,10 @@ bool FingerController::getJacobianFingerFrame(yarp::sig::Matrix &jacobian)
     j_ang.removeRows(0, 2);
 
     // compose the linear velocity and angular velocity parts together
-    jacobian.resize(3, 3);
+    if (finger_name == "thumb")
+	jacobian.resize(3, 1);
+    else
+	jacobian.resize(3, 3);
     jacobian.setSubmatrix(j_lin, 0, 0);
     jacobian.setSubmatrix(j_ang, 2, 0);
 
@@ -287,9 +320,13 @@ bool FingerController::getFingerTipPoseFingerFrame(yarp::sig::Vector &pose)
     // representing the attitude of the planar chain
     double att = 0;
 
-    // neglect abduction if not the middle finger
-    if (finger_name != "middle")
+    // only opposition if thumb
+    if (finger_name == "thumb")
+	att = joints[0];
+    // neglect abduction if index or ring    
+    else if (finger_name == "index" || finger_name == "ring")
 	att = joints[1] + joints[2] + joints[3];
+    // middle finger
     else
 	att = joints[0] + joints[1] + joints[2];
     
@@ -369,9 +406,41 @@ bool FingerController::moveFingerForward(const double &speed)
     // find joint velocities minimizing v_y - J_y * q_dot
     yarp::sig::Vector q_dot;
     yarp::sig::Vector vel(1, speed);
-    
-    q_dot = jac.transposed() *
-	yarp::math::pinv(jac * jac.transposed()) * vel;
+    yarp::sig::Matrix jac_inv;
+
+    jac_inv = jac.transposed() *
+	yarp::math::pinv(jac * jac.transposed());
+    q_dot = jac_inv * vel;
+
+    // try to avoid too much displacement for the first
+    // joint for fingers index and middle
+    if (finger_name == "index" ||
+	finger_name == "middle")
+    {
+	// evaluate null projector
+	yarp::sig::Matrix eye2(2, 2);
+	yarp::sig::Matrix projector;
+	
+	eye2.eye();
+	projector = eye2 - jac_inv * jac;
+
+	// get current value of the first joint
+	double joint;
+	if (finger_name == "index")
+	    joint = joints[1];
+	else
+	    joint = joints[0];
+
+	// evaluate gradient of the repulsive potential
+	yarp::sig::Vector q_dot_limits(2, 0.0);
+	double joint_comfort = 10 * (M_PI / 180);
+	double joint_max = 25 * (M_PI / 180);
+	double gain = 10;
+	q_dot_limits[0] = -0.5 * (joint - joint_comfort) /
+	    pow(joint_max, 2);
+
+	q_dot += projector * gain * q_dot_limits;
+    }
 
     // issue velocity command
     return setJointsVelocities(q_dot);
