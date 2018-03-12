@@ -151,6 +151,17 @@ public:
     bool goHome();
 
     /*
+     * Return the status of a movement
+     * issued with the position control inteface.
+     *
+     * May be used after a call to goHome() for example.
+     *
+     * @param done the status of the movement
+     * @return true/false on success/failure
+     */
+    bool isPositionMoveDone(bool &done);
+
+    /*
      * Set the velocities of the controlled joints of the finger.
      *
      * To be used in "streaming" mode.
