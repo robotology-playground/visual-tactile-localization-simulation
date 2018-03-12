@@ -159,7 +159,8 @@ void HandController::resetFingersContacts()
     }
 }
 
-bool HandController::moveFingersUntilContact(const double &speed,
+bool HandController::moveFingersUntilContact(const std::vector<std::string> names,
+					     const double &speed,
 					     const std::unordered_map<std::string, int> &number_contacts,
                                              bool &done)
 {
@@ -169,7 +170,7 @@ bool HandController::moveFingersUntilContact(const double &speed,
     yarp::sig::Vector joints;
     getJoints(joints);
 
-    for (std::string finger_name : fingers_names)
+    for (std::string finger_name : names)
     {
 	// if finger never reached contact
 	if (!contacts[finger_name])
@@ -208,10 +209,10 @@ bool HandController::moveFingersUntilContact(const double &speed,
 
     // check if all the contacts were reached
     done = true;
-    for (auto &contact : contacts)
+    for (std::string finger_name : names)
     {
 	// get contact status
-	bool &is_contact = contact.second;
+	bool &is_contact = contacts[finger_name];
 
 	done &= is_contact;
     }

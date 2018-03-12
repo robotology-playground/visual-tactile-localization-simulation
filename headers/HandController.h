@@ -87,13 +87,15 @@ public:
      * To be used in "streaming" mode by providing tactile feedback using the
      * input number_contacts. 
      *
+     * @param names list of fingers involved in the movement
      * @param speed the desired speed in the positive y direction 
      *              of the root frame of the finger
      * @param number_contacts the current number of contacts for each finger
      * @param done true if all fingers reached contact, false otherwise
      * @return true/false con success/failure
      */
-    bool moveFingersUntilContact(const double &speed,
+    bool moveFingersUntilContact(const std::vector<std::string> names,
+				 const double &speed,
 				 const std::unordered_map<std::string, int> &number_contacts,
 				 bool &done);
     
