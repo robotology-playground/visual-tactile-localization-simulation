@@ -369,9 +369,41 @@ bool FingerController::moveFingerForward(const double &speed)
     // find joint velocities minimizing v_y - J_y * q_dot
     yarp::sig::Vector q_dot;
     yarp::sig::Vector vel(1, speed);
-    
-    q_dot = jac.transposed() *
-	yarp::math::pinv(jac * jac.transposed()) * vel;
+    yarp::sig::Matrix jac_inv;
+
+    jac_inv = jac.transposed() *
+	yarp::math::pinv(jac * jac.transposed());
+    q_dot = jac_inv * vel;
+
+    // try to avoid too much displacement for the first
+    // joint for fingers index and middle
+    if (finger_name == "index" ||
+	finger_name == "middle")
+    {
+	// evaluate null projector
+	yarp::sig::Matrix eye2(2, 2);
+	yarp::sig::Matrix projector;
+	
+	eye2.eye();
+	projector = eye2 - jac_inv * jac;
+
+	// get current value of the first joint
+	double joint;
+	if (finger_name == "index")
+	    joint = joints[1];
+	else
+	    joint = joints[0];
+
+	// evaluate gradient of the repulsive potential
+	yarp::sig::Vector q_dot_limits(2, 0.0);
+	double joint_comfort = 10 * (M_PI / 180);
+	double joint_max = 25 * (M_PI / 180);
+	double gain = 10;
+	q_dot_limits[0] = -0.5 * (joint - joint_comfort) /
+	    pow(joint_max, 2);
+
+	q_dot += projector * gain * q_dot_limits;
+    }
 
     // issue velocity command
     return setJointsVelocities(q_dot);
