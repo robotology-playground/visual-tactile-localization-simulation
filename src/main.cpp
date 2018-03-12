@@ -412,8 +412,7 @@ protected:
 	arm->cartesian()->getPose(pos, att);
 
         // final pose 
-	pos[0] += 0.15;
-	pos[1] -= 0.04;	
+	pos[0] += 0.10;
 
         // store the current context because we are going
         // to change the trajectory time
