@@ -109,6 +109,7 @@ bool FingerController::configure(const std::string &hand_name,
     {
 	// only thumb opposition is considered
 	coupling.resize(1, 1);
+	coupling = 1.0;
     }
 
     // extract the constant transformation between the hand
