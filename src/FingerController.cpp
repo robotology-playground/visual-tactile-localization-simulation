@@ -383,6 +383,15 @@ bool FingerController::goHome()
     return true;
 }
 
+bool FingerController::isPositionMoveDone(bool &done)
+{
+    bool ok;
+
+    return ipos->checkMotionDone(ctl_joints.size(),
+				 ctl_joints.getFirst(),
+				 &done);
+}
+
 bool FingerController::setJointsVelocities(const yarp::sig::Vector &vels)
 {
     bool ok;
