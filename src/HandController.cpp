@@ -98,7 +98,7 @@ bool HandController::configure(const std::string &hand_name)
     }
     
     // handle fingers
-    fingers_names = {"index", "middle", "ring"};
+    fingers_names = {"thumb", "index", "middle", "ring"};
     for (std::string finger_name : fingers_names)
     {
 	// instantiate and configure fingers	
