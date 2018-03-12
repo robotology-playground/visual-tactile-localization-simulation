@@ -236,6 +236,25 @@ bool HandController::restoreFingersPosition()
 	    return false;
     }
 
+    // wait for the movement completion
+    bool done = false;
+    bool finger_done;
+    while (!done)
+    {
+	done = true;
+	for (std::string finger_name : fingers_names)
+	{
+	    // get the finger controller
+	    FingerController &ctl = fingers[finger_name];
+
+	    // update done
+	    ok = ctl.isPositionMoveDone(finger_done);
+	    if (!ok)
+		return false;
+	    done &= finger_done;
+	}
+    }
+
     return true;
 }
 
