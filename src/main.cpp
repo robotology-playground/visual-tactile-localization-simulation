@@ -664,6 +664,7 @@ public:
 
     bool respond(const yarp::os::Bottle &command, yarp::os::Bottle &reply)
     {
+	bool ok;
         std::string cmd = command.get(0).asString();
         if (cmd == "help")
         {
@@ -681,27 +682,27 @@ public:
         }
 	else if (cmd == "home-right")
 	{
-            reply.addVocab(yarp::os::Vocab::encode("many"));
-	    if (right_arm.goHome())
+	    ok = right_hand.restoreFingersPosition();
+
+	    if (ok)
+		ok &= right_arm.goHome();
+		
+	    if (ok)
 		reply.addString("Go home done for right arm.");
 	    else
 		reply.addString("Go home failed for right arm.");
-	    if (right_hand.restoreFingersPosition())
-		reply.addString("Go home done for right arm fingers.");
-	    else
-		reply.addString("Go home failed for right arm fingers.");
 	}
 	else if (cmd == "home-left")
 	{
-            reply.addVocab(yarp::os::Vocab::encode("many"));
-	    if (left_arm.goHome())
+	    ok = left_hand.restoreFingersPosition();
+
+	    if (ok)
+		ok &= left_arm.goHome();
+		
+	    if (ok)
 		reply.addString("Go home done for left arm.");
 	    else
 		reply.addString("Go home failed for left arm.");
-	    if (left_hand.restoreFingersPosition())
-		reply.addString("Go home done for left arm fingers.");
-	    else
-		reply.addString("Go home failed for left arm fingers.");
 	}
 	else if (cmd == "localize")
 	{
