@@ -8,7 +8,7 @@ m = 0.8
 # Lengths
 w = 0.24
 d = 0.17
-h = 0.027
+h = 0.037
 half_h = h / 2.0
 
 # Inertia matrix
