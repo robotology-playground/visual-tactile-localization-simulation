@@ -89,6 +89,17 @@ protected:
     bool is_estimate_available;
 
     /*
+     * Wait approximately for n seconds.
+     * @param seconds the number of seconds to wait for
+     */
+    void waitSeconds(const int &seconds)
+    {
+	double t0 = yarp::os::Time::now();
+	while (yarp::os::Time::now() - t0 < seconds)
+	    yarp::os::Time::delay(1.0);
+    }
+
+    /*
      * Return the last point cloud stored in
      * this->pc taking into account the pose of the root frame
      * of the robot attached to its waist.
@@ -684,6 +695,8 @@ public:
 	{
 	    ok = right_hand.restoreFingersPosition();
 
+	    waitSeconds(5);
+
 	    if (ok)
 		ok &= right_arm.goHome();
 		
@@ -695,6 +708,8 @@ public:
 	else if (cmd == "home-left")
 	{
 	    ok = left_hand.restoreFingersPosition();
+
+	    waitSeconds(5);
 
 	    if (ok)
 		ok &= left_arm.goHome();
