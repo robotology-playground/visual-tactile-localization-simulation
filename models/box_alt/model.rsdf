@@ -77,7 +77,11 @@ mu2 = 0.1
       <kinematic>true</kinematic>
       <visual name='box_alt_estimate_visual'>
 	<plugin name="viewer" filename='libgazebo_yarp_estimateViewer.so'>
+	  <!-- local port is composed as /model_name/clientLocalPortSuffix -->
 	  <clientLocalPortSuffix>/estimate_viewer/transformClient:i</clientLocalPortSuffix>
+	  <sourceFrameName>/inertial</sourceFrameName>
+	  <!-- target frame name is composed as /model_name/targetFrameNameSuffix -->
+	  <targetFrameNameSuffix>estimate/frame</targetFrameNameSuffix>
 	</plugin>
         <geometry>
 	  <box>
