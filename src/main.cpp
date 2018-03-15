@@ -500,7 +500,6 @@ protected:
 
 			// add input
 			// remove components on the z plane
-			input[2] = 0;
 			filter_data.addInput(input);
 
 			// reset input
