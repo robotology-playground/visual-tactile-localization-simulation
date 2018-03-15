@@ -1,25 +1,25 @@
 # visual-tactile-localization-simulation[WIP]
 Gazebo based simulation scenario for a visual-tactile localization algorithm.
 
-## Requirements[WIP]
+## Requirements
 - [YARP](http://www.yarp.it/)
-- [gazebo-yarp-plugins (forked)](https://github.com/xEnVrE/gazebo-yarp-plugins/) including:
+- [gazebo-yarp-plugins (forked)](https://github.com/xEnVrE/gazebo-yarp-plugins/tree/visual_tactile_loc_plugins) including:
   - `GazeboYarpModelPosePublisher` (publish pose of a model using [yarp::dev::FrameTransformServer](http://www.yarp.it/classyarp_1_1dev_1_1FrameTransformServer.html))
-  - `FakePointCloud` (send on a port a fake point cloud given the mesh of a model and the origin of a observer)
-  - `FakePointCloudViewer` (show the fake point cloud within Gazebo using straight lines from the center of the object to the surface of it - this is required only if Gazebo < 8 is used. Conversely the plugin `FakePointCloud` also implements a viewer using the [gazebo visualization markers](https://bitbucket.org/osrf/gazebo/pull-requests/2541/markers-take-2/diff).)
+  - `FakePointCloud` (sends on a port a fake point cloud given the mesh of a model and the origin of a observer and shows the point cloud within the simulation environment)
   - `EstimateViewer` (show the estimated pose as an additional transparent visual element within Gazebo)
-  - `GazeboYarpSkin` (a temporary plugin detecting contacts between the finger tips and the external environment and sending data as [`iCub::skinDynLib::skinContactList`](http://wiki.icub.org/brain/classiCub_1_1skinDynLib_1_1skinContactList.html) over a port)
-- [Gazebo](http://gazebosim.org/) (tested with version `7.9.0`)
+  - `GazeboYarpSkin` (detects contacts between the finger tips and the external environment and sends data as [`iCub::skinDynLib::skinContactList`](http://wiki.icub.org/brain/classiCub_1_1skinDynLib_1_1skinContactList.html) over a port)
+  - `GazeboYarpControlBoard` (with joint velocity control reimplemented)
+- [Gazebo](http://gazebosim.org/) (Gazebo >= 8 required)
 - [icub-gazebo (forked)](https://github.com/xEnVrE/icub-gazebo)
 - [visual-tactile-localization](https://github.com/robotology-playground/visual-tactile-localization)
 
 ### VCG
-The plugin `FakePointCloud` uses the header-only library [VCG](http://vcg.isti.cnr.it/vcglib/) to sample point clouds.It is provided within the header files of the plugin.
+The plugin `FakePointCloud` uses the header-only library [VCG](http://vcg.isti.cnr.it/vcglib/) to sample point clouds. It is provided within the header files of the plugin.
 
 ## Configure the environment
 It is supposed that you have already installed `yarp` using two directories one for code, i.e. `$ROBOT_CODE`, and one for installed stuff, i.e. `$ROBOT-INSTALL` (this is not strictly required but it helps in setting the environment variables required for Gazebo within yarpmanager). Also it is supposed that `Gazebo 7` has already been installed.
 
-### Get the code[WIP]
+### Get the code
 ```
 cd $ROBOT_CODE
 git clone https://github.com/robotology-playground/visual-tactile-localization.git
@@ -30,7 +30,7 @@ git clone https://github.com/robotology/icub-gazebo.git
 ### Install visual-tactile-localization
 ```
 cd $ROBOT_CODE/visual-tactile-localization
-git checkout feature/rf_module
+git checkout rf_module_book_demo
 mkdir build && cd build
 cmake ../ -DCMAKE_INSTALL_PREFIX=$ROBOT_INSTALL
 make install
@@ -62,21 +62,9 @@ make install
 cd $ROBOT_CODE/icub-gazebo
 git checkout visual_tactile_loc
 ```
-Cloning and checkout are sufficient. This forked version is equipped with Gazebo contact sensors placed at finger tips and camera disabled (they are not required for now.)
+Cloning and checkout are sufficient. This forked version is equipped with Gazebo contact sensors placed at finger tips and cameras disabled (they are not required for now.)
 
-Please note that there is an open [issue](https://github.com/robotology/QA/issues/115) that prevents from using Gazebo with the YARP Cartesian Interface if low level velocity control is used which is the default in the `simCartesianControl` context. To switch to low level position control, which is working, the option `PositionControl` has to be modified in the files `$ROBOT_INSTALL/share/iCub/contexts/simCartesianControl/cartesian/{left,right}_arm_cartesian.xml`
-```
-<devices robot="icubSim" build="0">
-    <device name="left_arm_cartesian" type="cartesiancontrollerserver">
-        <group name="GENERAL">
-            ...
-            <!-- <param name="PositionControl">off</param> -->
-            <param name="PositionControl">on</param>
-            ...
-        </group>
-        ...
-```
-## Application description files `visual-tactile-sim_system.xml`[WIP]
+## Application description files `visual-tactile-sim_system.xml`
 The application description xml `visual-tactile-sim_system.xml` consists of the following modules:
 
 ### yarplogger
@@ -86,16 +74,11 @@ The application description xml `visual-tactile-sim_system.xml` consists of the 
 
 ### gazebo
 `gazebo` runs the Gazebo simulator:
-  - with the simulation server `gzserver` paused;
   - with the plugin [GazeboYarpClock](http://robotology.gitlab.io/docs/gazebo-yarp-plugins/master/classgazebo_1_1GazeboYarpClock.html) required to send the __simulation clock__ over the default port  `/clock`;
   - using [models/scenario/model.sdf](models/scenario/model.sdf) as world; 
   - using `$ROBOT_CODE/visual-tactile-localization-simulation` as working directory
-  - with a dependency on the port `/transformServer/transforms:o` opened by `yarpdev` (timeout=5.0s) required because plugin `GazeboYarpModelPosePublisher` uses it to publish transforms (e.g. absolute pose of the object, absolute pose of the iCub root frame attached on the waist), plugin `FakePointCloud` uses it to get the absolute pose of the object and plugin `EstimateViewer` uses it to get the estimated pose published by the module `upf-localizer`. Dependency allow plugins to find the port open when they start;
+  - with a dependency on the port `/transformServer/transforms:o` opened by `yarpdev` required because several plugins read and publish poses using a `FrameTransformClient`. Dependency allow plugins to find the port open when they start;
 - with environment variables
-  ```
-  YARP_CLOCK=/clock
-  ```
-  required since some plugins uses time internally and need to be synchronized with the simulation clock available on port `/clock`;
   ```
   GAZEBO_MODEL_PATH=$GAZEBO_MODEL_PATH:$ROBOT_CODE/icub-gazebo:$ROBOT_CODE/visual-tactile-localization-simulation/models
   ```
@@ -108,7 +91,7 @@ The application description xml `visual-tactile-sim_system.xml` consists of the 
 ### upf-localizer
 `upf-localizer` runs a RFModule that interfaces with the UPF:
   - with the context `simVisualTactileLocalization`
-  - with a dependency on the port `/transformServer/transforms:o` opened by `yarpdev` (timeout=5.0s) required because the module uses it to publish the estimated pose;
+  - with a dependency on the port `/transformServer/transforms:o` opened by `yarpdev` required because the module uses it to publish the estimated pose;
   - with a dependency on the ports `/yarplogger/` and `/clock` opened by module `gazebo` due to the plugin `GazeboYarpClock`;
 - with environment variables
   ```
@@ -129,18 +112,18 @@ The application description xml `visual-tactile-sim_system.xml` consists of the 
   ```
   required to synchronize time with the simulation clock available on port `\clock`.
   
-### iKinCartesianSolver
+### iKinCartesianSolver (one for each arm)
 `iKinCartesianSolver` starts the inverse kinematics online solver:
  - with the context `simCartesianControl`;
- - with the option `--part right_arm` since for now only the right arm is used;
- - with a dependency on the ports `/icubSim/torso/state:o`, `/icubSim/right_arm/state:o` and `\clock`;
+ - with the option `--part {left,right}_arm`;
+ - with a dependency on the ports `/icubSim/torso/state:o`, `/icubSim/{left,right}_arm/state:o` and `\clock`;
  - with environment variables
   ```
   YARP_CLOCK=/clock
   ```
   required to synchronize time with the simulation clock available on port `\clock`.
 
-## Application description files `visual-tactile-sim_app.xml`[WIP]
+## Application description files `visual-tactile-sim_app.xml`
 The application description xml `visual-tactile-sim_app.xml` contains the main module `visual-tactile-localization-sim`
 - with a dependency on the ports `/clock` and `/yarplogger`;
 - with environment variables
@@ -153,7 +136,6 @@ The application description xml `visual-tactile-sim_app.xml` contains the main m
   ```
 ## Connections
 Connections provided within the application description are:
-- from `/mustard/fakepointcloud:o` to `/mustard/fakepointcloud_viewer:i` where `/mustard/fakepointcloud:o` is opened by the plugin `FakePointCloud` and `/mustard/fakepointcloud_viewer:i` is opened by the plugin `FakePointCloudViewer`;
 - from `/mustard/fakepointcloud:o` to `/vis_tac_localization/pc:i` where `/mustard/fakepointcloud:o` is opened by the plugin `FakePointCloud` and `/vis_tac_localization/pc:i` is opened by the module `visual-tactile-localization-sim`;
 - from `/vis_tac_localization/filter:o` to `/upf-localizer:i` where `/vis_tac_localization/filter:o` is opened by the module `visual-tactile-localization-sim` and `/upf-localizer:i` is opened by the module `upf-localizer`;
 - from `/right_hand/skinManager/skin_events:o` to `/vis_tac_localization/contacts:i` where `/right_hand/skinManager/skin_events:o` is opened by the plugin `GazeboYarpSkin` and `/vis_tac_localization/contacts:i` is opened by the module `visual-tactile-localization-sim`;
@@ -162,20 +144,22 @@ Connections provided within the application description are:
 ## Add another object to the simulation[WIP]
 To be done
 
-## Run the simulation[WIP - for now vision only]
+## Run the simulation
 1. Run `yarpserver`
 2. Run `yarpmanager`
 3. `Run all` the application `VisualTactileLocalizationSim`
 4. `Run all` the application `VisualTactileLocalizationSimApplication`
 4. Connect all the ports
-5. Press the Play button on `gazebo` in order to start the simulation engine
 
 The module `visual-tactile-localization-sim` opens a RPC port `/service` where the following commands can be issued[WIP]
 
-- `home` restore the right arm in the starting configuration;
+- `home-right` restore the right arm in the starting configuration;
+- `home-left` restore the left arm in the starting configuration;
 - `localize` perform localization using visual information;
-- `push` move the right arm near the object, localized using visual information, and then pushes it on the left
-   During pushing the estimate is updated using the velocity of one of the finger and the contact points;
+- `approach-right` perform an approaching phase consisting in 
+   - moving the right hand near a box taking into account the current estimate;
+   - closing the fingers of the right-hand until contacts are detected between the fingers and the border of the box;
+- `push-right` perform a pushing phase. The robot tries to push the box towards himself while estimating its position using tactile data.
 - `quit` stop the module.
 
 A transparent mesh, generated by the plugin `EstimateViewer`, is superimposed on the mesh of the object to be localized and show the current estimate produced by the UPF filter.
