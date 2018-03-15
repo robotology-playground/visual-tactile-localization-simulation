@@ -337,7 +337,7 @@ protected:
 
     	// approach object using a shifted position
 	pos[0] -= 0.15;
-	// pos[1] -= 0.05;
+	pos[1] += 0.07;
     	pos[2] += 0.04;
 
         // request pose to the cartesian interface
