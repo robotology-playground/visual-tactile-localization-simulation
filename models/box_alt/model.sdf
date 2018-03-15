@@ -79,7 +79,9 @@
       <observerOrigin>0 0.07 0.93</observerOrigin>
       <numPoints>100</numPoints>
       <meshPath>model://box_alt/box.off</meshPath>
+      <outputPortSuffix>fakepointcloud:o</outputPortSuffix>
       <showPointCloud>true</showPointCloud>
+      <pointCloudColour>Gazebo/RedTransparent</pointCloudColour>
     </plugin>
   </model>
 </sdf>
