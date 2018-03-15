@@ -685,10 +685,7 @@ public:
             reply.addString("- home-left");
             reply.addString("- localize");
 	    reply.addString("- approach-right");
-	    reply.addString("- approach-left");
 	    reply.addString("- push-right");
-	    reply.addString("- push-left");
-	    reply.addString("- test");
             reply.addString("- quit");
         }
 	else if (cmd == "home-right")
@@ -733,26 +730,12 @@ public:
 	    else
 	    	reply.addString("Approaching phase failed.");
 	}
-	else if (cmd == "approach-left")
-	{
-	    if (approachObject("left"))
-	    	reply.addString("Approaching phase done.");
-	    else
-	    	reply.addString("Approaching phase failed.");
-	}
 	else if (cmd == "push-right")
 	{
 	    if (pushObject("right"))
 	    	reply.addString("Pushing with right hand done.");
 	    else
 	    	reply.addString("Pushing with right hand failed.");
-	}
-	else if (cmd == "push-left")
-	{
-	    if (pushObject("left"))
-	    	reply.addString("Pushing with left hand done.");
-	    else
-	    	reply.addString("Pushing with left hand failed.");
 	}
         else
             // the father class already handles the "quit" command
