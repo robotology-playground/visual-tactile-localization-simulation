@@ -52,7 +52,9 @@
       <gravity>false</gravity>
       <kinematic>true</kinematic>
       <visual name='box_alt_estimate_visual'>
-	<plugin name="viewer" filename='libgazebo_yarp_estimateViewer.so'></plugin>
+	<plugin name="viewer" filename='libgazebo_yarp_estimateViewer.so'>
+	  <clientLocalPortSuffix>/estimate_viewer/transformClient:i</clientLocalPortSuffix>
+	</plugin>
         <geometry>
 	  <box>
 	    <size>0.24 0.17 0.027</size>
