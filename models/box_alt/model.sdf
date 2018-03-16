@@ -45,6 +45,7 @@
 	    <name>Gazebo/Orange</name>
 	  </script>
         </material>
+	<transparency>0.4</transparency>	
       </visual>
     </link>
     <link name="box_alt_estimate_link">
@@ -70,7 +71,7 @@
 	    <name>Gazebo/Blue</name>
 	  </script>
         </material>
-	<transparency>0.7</transparency>
+	<transparency>0.5</transparency>
       </visual>
     </link>
     <joint name="fixed_estimate" type="fixed">
