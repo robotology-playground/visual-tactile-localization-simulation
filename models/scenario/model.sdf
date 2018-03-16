@@ -36,10 +36,10 @@
     </include>
 
     <!-- Observer origin represented as a sphere -->    
-    <include>
-      <uri>model://observer_origin</uri>
-      <pose>0 0.07 0.93 0 0 0</pose>
-    </include>
+    <!-- <include> -->
+    <!--   <uri>model://observer_origin</uri> -->
+    <!--   <pose>0 0.07 0.93 0 0 0</pose> -->
+    <!-- </include> -->
     
     <!-- iCub with hands and fixed  -->
     <model name="iCub">
