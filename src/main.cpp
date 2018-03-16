@@ -337,7 +337,7 @@ protected:
 
     	// approach object using a shifted position
 	pos[0] -= 0.15;
-	pos[1] += 0.07;
+	pos[1] += 0.00;
     	pos[2] += 0.04;
 
         // request pose to the cartesian interface
@@ -423,7 +423,7 @@ protected:
 	arm->cartesian()->getPose(pos, att);
 
         // final pose 
-	pos[0] += 0.10;
+	pos[0] += 0.20;
 
         // store the current context because we are going
         // to change the trajectory time
@@ -432,7 +432,7 @@ protected:
 
         // set trajectory time
 	double duration = 5.0;
-	double traj_time = 4.0;
+	double traj_time = 3.0;
         arm->cartesian()->setTrajTime(traj_time);
 
         // // request pose to the cartesian interface
