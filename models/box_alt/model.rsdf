@@ -110,6 +110,9 @@ mu2 = 0.1
       <numPoints>100</numPoints>
       <meshPath>model://box_alt/box.off</meshPath>
       <outputPortSuffix>fakepointcloud:o</outputPortSuffix>
+      <enableNoise>true</enableNoise>
+      <noiseMean>0.0</noiseMean>
+      <noiseStd>0.015</noiseStd>
       <showPointCloud>true</showPointCloud>
       <pointCloudColour>Gazebo/RedTransparent</pointCloudColour>
     </plugin>
