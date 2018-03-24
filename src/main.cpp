@@ -35,6 +35,7 @@
 // icub-main
 #include <iCub/skinDynLib/skinContactList.h>
 #include <iCub/skinDynLib/common.h>
+#include <iCub/iKin/iKinFwd.h>
 
 #include "headers/PointCloud.h"
 #include "headers/filterData.h"
@@ -91,6 +92,38 @@ protected:
 
     // model helper class
     ModelHelper mod_helper;
+
+    /**
+     *  IEncoders
+     */
+
+    // PolyDriver required to access yarp::dev::IEncoders encoders
+    yarp::dev::PolyDriver drv_right_arm;
+    yarp::dev::PolyDriver drv_left_arm;
+    yarp::dev::PolyDriver drv_torso;
+
+    // pointers to yarp::dev::IEncoders view of the PolyDriver
+    yarp::dev::IEncoders *ienc_right_arm;
+    yarp::dev::IEncoders *ienc_left_arm;
+    yarp::dev::IEncoders *ienc_torso;
+
+    /*
+     */
+
+    /**
+     *  iCub forward kinematics
+     */
+
+    iCub::iKin::iCubArm right_arm_kin;
+    iCub::iKin::iCubArm left_arm_kin;
+
+    // middle finger only for now
+    // TODO: add the other fingers
+    iCub::iKin::iCubFinger right_middle;
+    iCub::iKin::iCubFinger left_middle;
+
+    /*
+     */
 
     /*
      * Wait approximately for n seconds.
@@ -465,7 +498,8 @@ protected:
     	    // get velocity of the finger
     	    yarp::sig::Vector x_dot;
     	    yarp::sig::Vector att_dot;
-    	    bool new_speed = arm->cartesian()->getTaskVelocities(x_dot, att_dot);
+            // bool new_speed = arm->cartesian()->getTaskVelocities(x_dot, att_dot);
+	    bool new_speed = getFingerVelocity(which_hand, "middle", x_dot);
 
     	    mutex_contacts.lock();
 
@@ -658,7 +692,168 @@ public:
 	// configure model helper
 	mod_helper.setModelDimensions(0.24, 0.17, 0.037);
 
+	// prepare properties for the Encoders
+	yarp::os::Property prop_encoders;
+	prop_encoders.put("device", "remote_controlboard");
+	prop_encoders.put("remote", "/icubSim/right_arm");
+	prop_encoders.put("local", "/upf-localizer/encoders/right_arm");
+	bool ok_drv = drv_right_arm.open(prop_encoders);
+	if (!ok_drv)
+	{
+	    yError() << "LocalizerModule::configure error:"
+		     << "unable to open the Remote Control Board driver for the right arm";
+	    return false;
+	}
+
+	prop_encoders.put("remote", "/icubSim/left_arm");
+	prop_encoders.put("local", "/upf-localizer/encoders/left_arm");
+	ok_drv = drv_left_arm.open(prop_encoders);
+	if (!ok_drv)
+	{
+	    yError() << "LocalizerModule::configure error:"
+		     << "unable to open the Remote Control Board driver for the left arm";
+	    return false;
+	}
+
+	prop_encoders.put("remote", "/icubSim/torso");
+	prop_encoders.put("local", "/upf-localizer/encoders/torso");
+	ok_drv = drv_torso.open(prop_encoders);
+	if (!ok_drv)
+	{
+	    yError() << "LocalizerModule::configure error:"
+		     << "unable to open the Remote Control Board driver for the torso";
+	    return false;
+	}
+
+	// try to retrieve the views
+	bool ok_view = drv_right_arm.view(ienc_right_arm);
+	if (!ok_view || ienc_right_arm == 0)
+	{
+	    yError() << "LocalizerModule:configure error:"
+		     << "unable to retrieve the Encoders view for the right arm";
+	    return false;
+	}
+	ok_view = drv_left_arm.view(ienc_left_arm);
+	if (!ok_view || ienc_left_arm == 0)
+	{
+	    yError() << "LocalizerModule:configure error:"
+		     << "unable to retrieve the Encoders view for the left arm";
+	    return false;
+	}
+	ok_view = drv_torso.view(ienc_torso);
+	if (!ok_view || ienc_torso == 0)
+	{
+	    yError() << "LocalizerModule:configure error:"
+		     << "unable to retrieve the Encoders view for the torso";
+	    return false;
+	}
+
+	// configure forward kinematics
+	right_arm_kin = iCub::iKin::iCubArm("right");
+	left_arm_kin = iCub::iKin::iCubArm("left");
+	right_middle = iCub::iKin::iCubFinger("right_middle");
+	left_middle = iCub::iKin::iCubFinger("left_middle");
+
+	// Limits update is not required to evaluate the forward kinematics
+	// using angles from the encoders
+	right_arm_kin.setAllConstraints(false);
+	left_arm_kin.setAllConstraints(false);
+	// Torso can be moved in general so its links have to be released
+	right_arm_kin.releaseLink(0);
+	right_arm_kin.releaseLink(1);
+	right_arm_kin.releaseLink(2);
+	left_arm_kin.releaseLink(0);
+	left_arm_kin.releaseLink(1);
+	left_arm_kin.releaseLink(2);
+
         return true;
+    }
+
+    bool getFingerVelocity(const std::string &hand_name,
+			   const std::string &finger_name,
+			   yarp::sig::Vector &finger_vel)
+    {
+	// choose between right and left hand
+	// only middle finger implemented for now
+	iCub::iKin::iCubArm *arm;
+	iCub::iKin::iCubFinger *finger;
+	yarp::dev::IEncoders *enc;
+	if (hand_name == "right")
+	{
+	    arm = &right_arm_kin;
+	    enc = ienc_right_arm;
+	    finger = &right_middle;
+	}
+	else
+	{
+	    arm = &left_arm_kin;
+	    enc = ienc_left_arm;
+	    finger = &left_middle;
+	}
+
+	// get the encoders readings
+	yarp::sig::Vector encs_arm(16);
+	yarp::sig::Vector encs_torso(3);
+
+	bool ok = enc->getEncoders(encs_arm.data());
+	if(!ok)
+	    return false;
+
+	ok = ienc_torso->getEncoders(encs_torso.data());
+	if(!ok)
+	    return false;
+
+	// fill in the vector of degrees of freedom
+	yarp::sig::Vector arm_angles(arm->getDOF());
+	yarp::sig::Vector finger_angles(finger->getDOF());
+	arm_angles[0] = encs_torso[2];
+	arm_angles[1] = encs_torso[1];
+	arm_angles[2] = encs_torso[0];
+	arm_angles.setSubvector(3, encs_arm.subVector(0, 6));
+	finger->getChainJoints(encs_arm, finger_angles);
+
+	// update the chain and the finger
+	// (iKin uses radians)
+	arm->setAng((M_PI/180) * arm_angles);
+	finger->setAng((M_PI/180) * finger_angles);
+
+	// get the geometric jacobian
+	yarp::sig::Matrix jac = arm->GeoJacobian();
+
+	// get the joints speeds
+	yarp::sig::Vector speeds_torso(3);
+	yarp::sig::Vector speeds_arm(16);
+
+	ok = enc->getEncoderSpeeds(speeds_arm.data());
+	if (!ok)
+	    return false;
+
+	ok = ienc_torso->getEncoderSpeeds(speeds_torso.data());
+	if (!ok)
+	    return false;
+
+	// fill in the vector of degrees of freedom
+	yarp::sig::Vector speeds(arm->getDOF());
+	speeds[0] = speeds_torso[2];
+	speeds[1] = speeds_torso[1];
+	speeds[2] = speeds_torso[0];
+	speeds.setSubvector(3, speeds_arm.subVector(0, 6));
+
+	// evaluate the twist of the hand
+	yarp::sig::Vector twist(6, 0.0);
+	twist = jac * (M_PI / 180 * speeds);
+
+	// get the current position of the finger
+	// with respect to the center of the hand
+	yarp::sig::Vector finger_pose = finger->EndEffPosition();
+	// express it in the robot root frame
+	finger_pose = (arm->getH()).submatrix(0, 2, 0, 2) * finger_pose;
+
+	// evaluate the velocity of finger
+	finger_vel = twist.subVector(0, 2) +
+	    yarp::math::cross(twist.subVector(3, 5), finger_pose);
+
+	return true;
     }
 
     bool interruptModule()
