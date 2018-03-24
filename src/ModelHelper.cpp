@@ -22,9 +22,9 @@
 using namespace yarp::math;
 
 ModelHelper::ModelHelper() : x_dir(2, 0.0),
-			      y_dir(2, 0.0)
+			     y_dir(2, 0.0)
 {
-    // precompute the rotation between the robot root frame and 
+    // precompute the rotation between the robot root frame and
     // and the working frame used within this helper class
     yarp::sig::Vector axis_angle(4);
 
@@ -36,11 +36,32 @@ ModelHelper::ModelHelper() : x_dir(2, 0.0),
     rob_2_work_frame = yarp::math::axis2dcm(axis_angle).submatrix(0, 2, 0, 2);
 }
 
+void ModelHelper::setModelDimensions(const double &width,
+			const double &depth,
+			const double &height)
+{
+    model_width = width;
+    model_depth = depth;
+    model_height = height;
+}
+
 void ModelHelper::setModelAttitude(const yarp::sig::Matrix &rot)
 {
     // transform to working frame
     yarp::sig::Matrix transformed_rot = rob_2_work_frame.transposed() * rot;
-    
+
+    // check if the z axis is pointing downwards
+    yarp::sig::Vector z_down(3, 0.0);
+    z_down[2] = -1.0;
+    double cosine = yarp::math::dot(z_down, transformed_rot.getCol(2));
+    if (cosine >= 0)
+    {
+	// in this case the z and y cosine director
+	// are rotated so that the z axis points upwards
+	transformed_rot.setCol(1, transformed_rot.getCol(1) * -1.0);
+	transformed_rot.setCol(2, transformed_rot.getCol(2) * -1.0);
+    }
+
     // pick the first column of the rotation matrix
     // this is the x direction aligned with one of the
     // edges of the object
@@ -69,9 +90,70 @@ void ModelHelper::setModelAttitude(const yarp::sig::Matrix &rot)
 	x_dir *= -1;
 	y_dir *= -1;
     }
+}
 
-    yInfo() << x_dir.toString();
-    yInfo() << y_dir.toString();
-    yInfo() << attitude;
+void ModelHelper::setModelPosition(const yarp::sig::Vector &pos)
+{
+    model_center = pos;
+}
+
+void ModelHelper::setModelPose(const yarp::sig::Matrix &pose)
+{
+    setModelPosition(pose.getCol(3).subVector(0, 2));
+    setModelAttitude(pose.submatrix(0, 2, 0, 2));
+}
+
+double ModelHelper::evalApproachYawAttitude()
+{
+    if (attitude >= (M_PI / 4.0) &&
+	attitude < (M_PI / 4.0 + M_PI / 2.0))
+	return (attitude - M_PI / 2.0);
+    else if (attitude >= (M_PI / 4.0 + M_PI / 2.0) &&
+	     attitude <= M_PI)
+	return (attitude - M_PI);
+    else
+	return attitude;
+}
+
+void ModelHelper::evalApproachPosition(yarp::sig::Vector &pos)
+{
+    // assign the center of model
+    pos = model_center;
+
+    // offset
+    // TODO take these from configuration ini
+    double offset_x_y = 0.06;
+    double offset_h = 0.021;
+
+    // pick the right direction and length
+    // for evaluation of offset
+    yarp::sig::Vector direction;
+    double length;
+    if (attitude >= (M_PI / 4.0) &&
+	attitude < (M_PI / 4.0 + M_PI / 2.0))
+    {
+	direction = x_dir;
+	length = model_width / 2.0 + offset_x_y;
+
+    }
+    else if (attitude >= (M_PI / 4.0 + M_PI / 2.0) &&
+	     attitude <= M_PI)
+    {
+	direction = -1 * y_dir;
+	length = model_depth / 2.0 + offset_x_y;
+    }
+    else
+    {
+	direction = y_dir;
+	length = model_depth / 2.0 + offset_x_y;
+    }
+
+    // add position offset
+    yarp::sig::Vector direction_3d(3, 0.0);
+    direction_3d.setSubvector(0, direction);
+    pos += rob_2_work_frame * direction_3d * length;
+
+    // add height offset
+    pos[2] += model_height / 2.0 + offset_h;
 }
 #endif
