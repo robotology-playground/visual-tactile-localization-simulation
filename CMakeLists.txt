@@ -39,12 +39,15 @@ set(headers
   ${CMAKE_SOURCE_DIR}/headers/filterData.h
   ${CMAKE_SOURCE_DIR}/headers/ArmController.h
   ${CMAKE_SOURCE_DIR}/headers/FingerController.h
-  ${CMAKE_SOURCE_DIR}/headers/HandController.h)
+  ${CMAKE_SOURCE_DIR}/headers/HandController.h
+  ${CMAKE_SOURCE_DIR}/headers/ModelHelper.h
+  )
 set(sources
   ${CMAKE_SOURCE_DIR}/src/filterData.cpp
   ${CMAKE_SOURCE_DIR}/src/ArmController.cpp
   ${CMAKE_SOURCE_DIR}/src/FingerController.cpp  
-  ${CMAKE_SOURCE_DIR}/src/HandController.cpp  
+  ${CMAKE_SOURCE_DIR}/src/HandController.cpp
+  ${CMAKE_SOURCE_DIR}/src/ModelHelper.cpp
   ${CMAKE_SOURCE_DIR}/src/main.cpp)
 
 include_directories(${YARP_INCLUDE_DIRS})
