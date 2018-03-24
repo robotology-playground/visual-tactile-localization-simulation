@@ -40,6 +40,7 @@
 #include "headers/filterData.h"
 #include "headers/ArmController.h"
 #include "headers/HandController.h"
+#include "headers/ModelHelper.h"
 
 using namespace yarp::math;
 
@@ -87,6 +88,9 @@ protected:
     // last estimate published by the filter
     yarp::sig::Matrix estimate;
     bool is_estimate_available;
+
+    // model helper class
+    ModelHelper mod_helper;
 
     /*
      * Wait approximately for n seconds.
@@ -680,6 +684,7 @@ public:
         {
             reply.addVocab(yarp::os::Vocab::encode("many"));
             reply.addString("Available commands:");
+	    reply.addString("- model-helper-test");
             reply.addString("- home-right");
             reply.addString("- home-left");
             reply.addString("- localize");
@@ -687,6 +692,16 @@ public:
 	    reply.addString("- push-right");
             reply.addString("- quit");
         }
+	else if (cmd == "model-helper-test")
+	{
+	    mutex.lock();
+
+	    yarp::sig::Matrix rotation = estimate.submatrix(0, 2, 0, 2);
+	    mod_helper.setModelAttitude(rotation);
+	    
+	    mutex.unlock();
+            reply.addString("Done.");	    
+	}
 	else if (cmd == "home-right")
 	{
 	    ok = right_hand.restoreFingersPosition();
