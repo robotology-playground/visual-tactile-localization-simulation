@@ -321,6 +321,10 @@ protected:
 	    arm = &left_arm;
 	    hand = &left_hand;
 	}
+	// change effector to the middle finger
+	ok = arm->useFingerFrame("middle");
+        if (!ok)
+	    return false;
 
     	mutex.lock();
 
@@ -329,20 +333,18 @@ protected:
 
     	mutex.unlock();
 
-    	// extract positional part of the estimate
-    	yarp::sig::Vector pos(3, 0.0);
-    	for (size_t i=0; i<3; i++)
-    	    pos[i] = estimate[i][3];
+	// set the estimate within the model helper
+	mod_helper.setModelPose(estimate);
 
-    	// change effector to the middle finger
-	ok = arm->useFingerFrame("middle");
-    	if (!ok)
-    	    return false;
+	// set the hand yaw attitude according
+	// to the estimate
+	double yaw = mod_helper.evalApproachYawAttitude();
+	arm->setHandAttitude(yaw * 180 / M_PI, 15, -90);
 
-    	// approach object using a shifted position
-	pos[0] -= 0.15;
-	pos[1] += 0.00;
-    	pos[2] += 0.04;
+	// set the approaching position according
+	// to the estimate
+	yarp::sig::Vector pos(3, 0.0);
+	mod_helper.evalApproachPosition(pos);
 
         // request pose to the cartesian interface
         arm->goToPos(pos);
@@ -416,7 +418,7 @@ protected:
 	    hand = &left_hand;
 	}
 
-	// change effector to the middle finger
+        // change effector to the middle finger
 	ok = arm->useFingerFrame("middle");
 	if (!ok)
 	    return false;
@@ -435,7 +437,7 @@ protected:
         arm->cartesian()->storeContext(&context_id);
 
         // set trajectory time
-	double duration = 5.0;
+	double duration = 3.0;
 	double traj_time = 3.0;
         arm->cartesian()->setTrajTime(traj_time);
 
@@ -652,6 +654,9 @@ public:
             yError() << "VisTacLocSimModule: unable to configure the left hand controller";
             return false;
 	}
+
+	// configure model helper
+	mod_helper.setModelDimensions(0.24, 0.17, 0.037);
 
         return true;
     }
