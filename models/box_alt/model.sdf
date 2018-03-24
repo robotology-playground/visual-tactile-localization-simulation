@@ -89,7 +89,7 @@
       <outputPortSuffix>fakepointcloud:o</outputPortSuffix>
       <enableNoise>true</enableNoise>
       <noiseMean>0.0</noiseMean>
-      <noiseStd>0.015</noiseStd>
+      <noiseStd>0.0055</noiseStd>
       <showPointCloud>true</showPointCloud>
       <pointCloudColour>Gazebo/RedTransparent</pointCloudColour>
     </plugin>
