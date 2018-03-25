@@ -243,9 +243,6 @@ protected:
 	numberContacts["ring"] = n_ring;
 	numberContacts["pinky"] = n_pinky;
 
-	// clean the list once used
-	skin_contact_list.clear();
-
 	return true;
     }
 
@@ -403,6 +400,7 @@ protected:
     	    mutex_contacts.lock();
 
 	    getNumberContacts(which_hand, number_contacts);
+	    skin_contact_list.clear();
 
 	    mutex_contacts.unlock();
 	    
@@ -491,8 +489,18 @@ protected:
 	bool contactDetected = false;
     	yarp::sig::Vector input(3, 0.0);
     	yarp::sig::Vector prev_vel(3, 0.0);
+	std::unordered_map<std::string, int> number_contacts;
+	std::vector<std::string> finger_list = {"index", "middle", "ring"};
     	while (!done && (yarp::os::Time::now() - t0 < duration))
     	{
+	    mutex_contacts.lock();
+	    getNumberContacts(which_hand, number_contacts);
+	    mutex_contacts.unlock();
+
+	    hand->moveFingersMaintainingContact(finger_list,
+						0.005,
+						number_contacts);
+
     	    arm->cartesian()->checkMotionDone(&done);
 
     	    // get velocity of the finger
@@ -520,7 +528,7 @@ protected:
 		    // if there are contacts from the finger tips
 		    // of the specified hand
 
-		    if (points.size() > 1)
+		    if (points.size() > 0)
 		    {
 			// the first time contact on figer tips is
 			// detected the flag is set to true
@@ -550,6 +558,7 @@ protected:
 		    }
     		}
     	    }
+	    skin_contact_list.clear();
     	    mutex_contacts.unlock();
 
     	    // store velocity for the next iteration
@@ -561,7 +570,9 @@ protected:
     	}
 	// pos_dot = 0;
 	// att_dot = 0;
-	// arm->cartesian()->setTaskVelocities(pos_dot, att_dot);	
+	// arm->cartesian()->setTaskVelocities(pos_dot, att_dot);
+
+	hand->stopFingers();
 
         // restore the context
         arm->cartesian()->restoreContext(context_id);
