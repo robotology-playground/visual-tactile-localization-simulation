@@ -220,6 +220,52 @@ bool HandController::moveFingersUntilContact(const std::vector<std::string> name
     return true;
 }
 
+bool HandController::moveFingersMaintainingContact(const std::vector<std::string> names,
+						   const double &speed,
+						   const std::unordered_map<std::string, int> &number_contacts)
+{
+    bool ok;
+
+    // get current joints
+    yarp::sig::Vector joints;
+    getJoints(joints);
+
+    for (std::string finger_name : names)
+    {
+	// get the finger controller
+	FingerController &ctl = fingers[finger_name];
+
+	// try to update finger chain
+	ok = ctl.updateFingerChain(joints);
+	if (!ok)
+	    return false;
+
+	// check if contact is reached
+	if (number_contacts.at(finger_name) > 0 ||
+	    // this is because the ring and the pinky are coupled
+	    // and the pinky could touch before the ring finger
+	    finger_name == "ring" && number_contacts.at("pinky") > 0)
+	{   yInfo() << finger_name << number_contacts.at(finger_name);
+	    // stop the finger
+	    ok = ctl.stop();
+	    if (!ok)
+		return false;
+
+	}
+	else
+	{
+	    // continue finger movements
+	    yInfo() << finger_name << "commanded!";
+	    ok = ctl.moveFingerForward(speed);
+	    if (!ok)
+		return false;
+	}
+    }
+
+    return true;
+}
+
+
 bool HandController::restoreFingersPosition()
 {
     bool ok;

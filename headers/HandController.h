@@ -98,6 +98,10 @@ public:
 				 const double &speed,
 				 const std::unordered_map<std::string, int> &number_contacts,
 				 bool &done);
+
+    bool moveFingersMaintainingContact(const std::vector<std::string> names,
+				       const double &speed,
+				       const std::unordered_map<std::string, int> &number_contacts);
     
     /* Restore the initial configuration of all the fingers.
      * @return true/false con success/failure
