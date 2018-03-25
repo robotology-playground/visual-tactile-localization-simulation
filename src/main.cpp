@@ -156,47 +156,6 @@ protected:
     }
 
     /*
-     * Return the latest contact points received for specified hand.
-     * Contact points produced by the Gazebo plugin are already
-     * expressed with respect to the robot root frame.
-     */
-    bool getContactPoints(const std::string &which_hand,
-			  std::vector<yarp::sig::Vector> &points)
-    {
-	// split contacts per SkinPart
-	skinPartMap map = skin_contact_list.splitPerSkinPart();
-
-	// take the right skinPart
-	iCub::skinDynLib::SkinPart skinPart;
-	if (which_hand == "right")
-	    skinPart = iCub::skinDynLib::SkinPart::SKIN_RIGHT_HAND;
-	else
-	    skinPart = iCub::skinDynLib::SkinPart::SKIN_LEFT_HAND;
-
-	// extract contacts coming from finger tips only
-	iCub::skinDynLib::skinContactList &list = map[skinPart];
-    	for (size_t i=0; i<list.size(); i++)
-    	{
-	    // extract the skin contact
-    	    iCub::skinDynLib::skinContact &skin_contact = list[i];
-
-	    // need to verify if this contact was effectively produced
-	    // by taxels on the finger tips
-	    // in order to simplify things the Gazebo plugin only sends one
-	    // taxel id that is used to identify which finger is in contact
-	    std::vector<unsigned int> taxels_ids = skin_contact.getTaxelList();
-	    // taxels ids for finger tips are between 0 and 59
-	    if (taxels_ids[0] >= 0 && taxels_ids[0] < 60)
-		points.push_back(skin_contact.getGeoCenter());
-    	}
-
-	// clean the list once used
-	skin_contact_list.clear();
-
-    	return true;
-    }
-
-    /*
      * Request visual localization to the filtering algorithm
      */
     bool localizeObject()
@@ -361,7 +320,14 @@ protected:
         // // request pose to the cartesian interface
         arm->goToPos(pos);
 
-        // filter while motion happens
+	// enable filtering
+	yarp::sig::FilterData &filter_data = port_filter.prepare();
+	filter_data.clear();
+	filter_data.setCommand(VOCAB2('O','N'));
+	filter_data.setTag(VOCAB3('T','A','C'));
+	port_filter.writeStrict();
+
+	// perform pushing
         double t0 = yarp::os::Time::now();
     	double dt = 0.03;
     	bool done = false;
@@ -378,43 +344,10 @@ protected:
 						number_contacts);
 
     	    arm->cartesian()->checkMotionDone(&done);
-
-    	    mutex_contacts.lock();
-
-	    if(are_contacts_available)
-	    {
-		// extract contact points for the specified hand
-		std::vector<yarp::sig::Vector> points;
-		getContactPoints(which_hand, points);
-
-		yarp::sig::FilterData &filter_data = port_filter.prepare();
-
-		// clear the storage
-		filter_data.clear();
-
-		// set the command
-		filter_data.setCommand(VOCAB2('O','N'));
-
-		// set the tag
-		filter_data.setTag(VOCAB3('T','A','C'));
-
-		// add measures
-		for (size_t i=0; i<points.size(); i++)
-		    filter_data.addPoint(points[i]);
-
-		// send data to the filter
-		port_filter.writeStrict();
-	    }
-
-	    skin_contact_list.clear();
-    	    mutex_contacts.unlock();
-
-    	    // wait
-    	    yarp::os::Time::delay(dt);
-    	}
+	}
 
 	// stop filtering
-	yarp::sig::FilterData &filter_data = port_filter.prepare();
+	filter_data = port_filter.prepare();
 	filter_data.clear();
 	filter_data.setCommand(VOCAB3('O','F','F'));
 	port_filter.writeStrict();
