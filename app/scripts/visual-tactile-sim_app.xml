@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <application>
 
   <name>VisualTactileLocalizationSimApplication</name>
@@ -36,6 +37,15 @@
     <from>/left_hand/skinManager/skin_events:o</from>    
     <to>/vis_tac_localization/contacts:i</to>
   </connection>
-  
+
+  <connection>
+    <from>/right_hand/skinManager/skin_events:o</from>
+    <to>/upf-localizer/contacts:i</to>
+  </connection>
+
+  <connection>
+    <from>/left_hand/skinManager/skin_events:o</from>    
+    <to>/upf-localizer/contacts:i</to>
+  </connection>
 
 </application>
