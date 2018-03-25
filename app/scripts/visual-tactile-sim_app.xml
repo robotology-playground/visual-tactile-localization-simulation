@@ -19,7 +19,7 @@
 
   <connection>
     <from>/box_alt/fakepointcloud:o</from>    
-    <to>/vis_tac_localization/pc:i</to>
+    <to>/upf-localizer/pc:i</to>
   </connection>
 
   <connection>
