@@ -311,6 +311,9 @@ protected:
     	    // clear the storage
     	    filter_data.clear();
 
+	    // set the command
+	    filter_data.setCommand(VOCAB2('O','N'));
+
     	    // set the tag
     	    filter_data.setTag(VOCAB3('V','I','S'));
 
@@ -475,20 +478,10 @@ protected:
         // // request pose to the cartesian interface
         arm->goToPos(pos);
 
-	// yarp::sig::Vector pos_dot(3, 0.0);
-	// yarp::sig::Vector att_dot(4, 0.0);
-	// pos_dot[0] = 0.05;
-	// att_dot[2] = -1;
-	// att_dot[3] = 3 * (M_PI/180);
-	// arm->cartesian()->setTaskVelocities(pos_dot, att_dot);
-
         // filter while motion happens
         double t0 = yarp::os::Time::now();
     	double dt = 0.03;
     	bool done = false;
-	bool contactDetected = false;
-    	yarp::sig::Vector input(3, 0.0);
-    	yarp::sig::Vector prev_vel(3, 0.0);
 	std::unordered_map<std::string, int> number_contacts;
 	std::vector<std::string> finger_list = {"index", "middle", "ring"};
     	while (!done && (yarp::os::Time::now() - t0 < duration))
@@ -505,72 +498,50 @@ protected:
 
     	    // get velocity of the finger
     	    yarp::sig::Vector x_dot;
-    	    yarp::sig::Vector att_dot;
-            // bool new_speed = arm->cartesian()->getTaskVelocities(x_dot, att_dot);
 	    bool new_speed = getFingerVelocity(which_hand, "middle", x_dot);
 
     	    mutex_contacts.lock();
 
-    	    if (new_speed)
-    	    {
-    		// accumulate the contribution
-    		// due to the velocity of the finger
-		if (contactDetected)
-		    input += prev_vel * dt;
+	    if(are_contacts_available)
+	    {
+		// extract contact points for the specified hand
+		std::vector<yarp::sig::Vector> points;
+		getContactPoints(which_hand, points);
 
-    		if(are_contacts_available)
-    		{
-		    // extract contact points for the specified hand
-		    std::vector<yarp::sig::Vector> points;
-    		    getContactPoints(which_hand, points);
+		yarp::sig::FilterData &filter_data = port_filter.prepare();
 
-		    // contacts were detected but need to check
-		    // if there are contacts from the finger tips
-		    // of the specified hand
+		// clear the storage
+		filter_data.clear();
 
-		    if (points.size() > 0)
-		    {
-			// the first time contact on figer tips is
-			// detected the flag is set to true
-			contactDetected = true;
+		// set the command
+		filter_data.setCommand(VOCAB2('O','N'));
 
-			yarp::sig::FilterData &filter_data = port_filter.prepare();
+		// set the tag
+		filter_data.setTag(VOCAB3('T','A','C'));
 
-			// clear the storage
-			filter_data.clear();
+		// add measures
+		for (size_t i=0; i<points.size(); i++)
+		    filter_data.addPoint(points[i]);
 
-			// set the tag
-			filter_data.setTag(VOCAB3('T','A','C'));
+		// add input
+		filter_data.addInput(x_dot);
 
-			// add measures
-			for (size_t i=0; i<points.size(); i++)
-			    filter_data.addPoint(points[i]);
+		// send data to the filter
+		port_filter.writeStrict();
+	    }
 
-			// add input
-			// remove components on the z plane
-			filter_data.addInput(input);
-
-			// reset input
-			input = 0;
-
-			// send data to the filter
-			port_filter.writeStrict();
-		    }
-    		}
-    	    }
 	    skin_contact_list.clear();
     	    mutex_contacts.unlock();
-
-    	    // store velocity for the next iteration
-    	    if (new_speed)
-    		prev_vel = x_dot;
 
     	    // wait
     	    yarp::os::Time::delay(dt);
     	}
-	// pos_dot = 0;
-	// att_dot = 0;
-	// arm->cartesian()->setTaskVelocities(pos_dot, att_dot);
+
+	// stop filtering
+	yarp::sig::FilterData &filter_data = port_filter.prepare();
+	filter_data.clear();
+	filter_data.setCommand(VOCAB3('O','F','F'));
+	port_filter.writeStrict();
 
 	hand->stopFingers();
 
