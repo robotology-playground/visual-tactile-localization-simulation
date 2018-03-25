@@ -37,7 +37,6 @@
 #include <iCub/skinDynLib/common.h>
 #include <iCub/iKin/iKinFwd.h>
 
-#include "headers/PointCloud.h"
 #include "headers/filterData.h"
 #include "headers/ArmController.h"
 #include "headers/HandController.h"
@@ -65,10 +64,6 @@ protected:
     // the RFModule thread and the rpc thread
     yarp::os::Mutex mutex;
     yarp::os::Mutex mutex_contacts;
-
-    // point cloud port and storage
-    yarp::os::BufferedPort<PointCloud> port_pc;
-    PointCloud pc;
 
     // filter port
     yarp::os::BufferedPort<yarp::sig::FilterData> port_filter;
@@ -134,58 +129,6 @@ protected:
 	double t0 = yarp::os::Time::now();
 	while (yarp::os::Time::now() - t0 < seconds)
 	    yarp::os::Time::delay(1.0);
-    }
-
-    /*
-     * Return the last point cloud stored in
-     * this->pc taking into account the pose of the root frame
-     * of the robot attached to its waist.
-     * This function is simulation-related and allows to obtain
-     * point clouds expressed with respect to the robot root frame
-     * as happens in the real setup.
-     */
-    bool getPointCloud(std::vector<yarp::sig::Vector> &pc_out)
-    {
-	mutex.lock();
-
-	// check if there are points
-	if (pc.size() == 0 )
-	{
-	    mutex.unlock();
-	    return false;
-	}
-
-	// copy data to pc_out
-	for (size_t i=0; i<pc.size(); i++)
-	{
-	    PointCloudItem item = pc[i];
-	    yarp::sig::Vector point(3, 0.0);
-	    point[0] = item.x;
-	    point[1] = item.y;
-	    point[2] = item.z;
-
-	    pc_out.push_back(point);
-	}
-
-	mutex.unlock();
-
-	// transform the points taking into account
-	// the root link of the robot
-	for (size_t i=0; i<pc_out.size(); i++)
-	{
-	    yarp::sig::Vector point(4, 0.0);
-	    point.setSubvector(0, pc_out[i]);
-	    point[3] = 1;
-
-	    // transform the point so that
-	    // it is relative to the orign of the robot root frame
-	    // and expressed in the robot root frame
-	    point = SE3inv(inertial_to_robot) * point;
-
-	    pc_out[i] = point.subVector(0,2);
-	}
-
-	return true;
     }
 
     /*
@@ -288,49 +231,23 @@ protected:
     }
 
     /*
-     * Perform object localization using the last
-     * point cloud available.
+     * Request visual localization to the filtering algorithm
      */
     bool localizeObject()
     {
-    	// process cloud in chuncks of 10 points
-    	// TODO: take n_points from config
-    	int n_points = 10;
+	yarp::sig::FilterData &filter_data = port_filter.prepare();
 
-    	// get the last point cloud received
-    	std::vector<yarp::sig::Vector> pc;
-    	if (!getPointCloud(pc))
-    	    return false;
+	// clear the storage
+	filter_data.clear();
 
-    	// process the point cloud
-    	for (size_t i=0; i+n_points <= pc.size(); i += n_points)
-    	{
-    	    // prepare to write
-    	    yarp::sig::FilterData &filter_data = port_filter.prepare();
+	// set the command
+	filter_data.setCommand(VOCAB2('O','N'));
 
-    	    // clear the storage
-    	    filter_data.clear();
+	// set the tag
+	filter_data.setTag(VOCAB3('V','I','S'));
 
-	    // set the command
-	    filter_data.setCommand(VOCAB2('O','N'));
-
-    	    // set the tag
-    	    filter_data.setTag(VOCAB3('V','I','S'));
-
-    	    // add measures
-    	    for (size_t k=0; k<n_points; k++)
-    		filter_data.addPoint(pc[i+k]);
-
-    	    // add zero input
-    	    yarp::sig::Vector zero(3, 0.0);
-    	    filter_data.addInput(zero);
-
-    	    // send data to the filter
-    	    port_filter.writeStrict();
-
-    	    // wait
-    	    yarp::os::Time::delay(0.1);
-    	}
+	// send data to the filter
+	port_filter.writeStrict();
 
 	return true;
     }
@@ -554,18 +471,9 @@ protected:
 public:
     bool configure(yarp::os::ResourceFinder &rf)
     {
-	// open the point cloud port
-	// TODO: take name from config
-	bool ok = port_pc.open("/vis_tac_localization/pc:i");
-	if (!ok)
-        {
-            yError() << "VisTacLocSimModule: unable to open the point cloud port";
-            return false;
-        }
-
 	// open the filter port
 	// TODO: take name from config
-	ok = port_filter.open("/vis_tac_localization/filter:o");
+	bool ok = port_filter.open("/vis_tac_localization/filter:o");
 	if (!ok)
         {
             yError() << "VisTacLocSimModule: unable to open the filter port";
@@ -851,7 +759,6 @@ public:
 
 	// close ports
         rpc_port.close();
-	port_pc.close();
 	port_filter.close();
 	port_contacts.close();
 
@@ -951,12 +858,6 @@ public:
 	    return false;
 
 	mutex.lock();
-
-	// read from the point cloud port
-	PointCloud *new_pc = port_pc.read(false);
-	// store a copy if new data available
-	if (new_pc != NULL)
-	    pc = *new_pc;
 
 	// get current estimate from the filter
 	// TODO: get source and target from configuration file
