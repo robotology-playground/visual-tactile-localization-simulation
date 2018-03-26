@@ -93,6 +93,21 @@ bool HandControlModule::configure(yarp::os::ResourceFinder &rf)
 	return false;
     }
 
+    // configure hand controllers
+    ok = right_hand.configure();
+    if (!ok)
+    {
+	yError() << "VisTacLocSimModule: unable to configure the right hand controller";
+	return false;
+    }
+
+    ok = left_hand.configure();
+    if (!ok)
+    {
+	yError() << "VisTacLocSimModule: unable to configure the left hand controller";
+	return false;
+    }
+
     // reset flags
     are_contacts_available = false;
  	

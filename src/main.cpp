@@ -340,21 +340,6 @@ public:
 	right_arm.setHandAttitude(0, 15, -90);
 	left_arm.setHandAttitude(0, 15, 0);
 
-	// configure hand controllers
-	// ok = right_hand.configure();
-        // if (!ok)
-	// {
-        //     yError() << "VisTacLocSimModule: unable to configure the right hand controller";
-        //     return false;
-	// }
-
-	// ok = left_hand.configure();
-        // if (!ok)
-	// {
-        //     yError() << "VisTacLocSimModule: unable to configure the left hand controller";
-        //     return false;
-	// }
-
 	// configure model helper
 	mod_helper.setModelDimensions(0.24, 0.17, 0.037);
 
