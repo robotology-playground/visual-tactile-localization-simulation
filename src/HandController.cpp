@@ -188,7 +188,7 @@ bool HandController::moveFingersUntilContact(const std::vector<std::string> name
 		// this is because the ring and the pinky are coupled
 		// and the pinky could touch before the ring finger
 		finger_name == "ring" && number_contacts.at("pinky") > 0)
-	    {   yInfo() << finger_name << number_contacts.at(finger_name);
+	    {   
 		// stop the finger
 		ok = ctl.stop();
 		if (!ok)
