@@ -82,7 +82,7 @@ bool HandControlModule::configure(yarp::os::ResourceFinder &rf)
     // get the name of input port
     port_cmd_name = rf.find("inputPort").asString();
     if (rf.find("inputPort").isNull())
-	port_contacts_name = "/hand-control:i";
+	port_cmd_name = "/hand-control:i";
     yInfo() << "HandControlModule: input port name is" << port_cmd_name;
     
     // open the contacts port
@@ -92,6 +92,17 @@ bool HandControlModule::configure(yarp::os::ResourceFinder &rf)
 	yError() << "HandControlModule: unable to open the contacts port";
 	return false;
     }
+
+    // open the command port
+    ok = port_cmd.open(port_cmd_name);
+    if (!ok)
+    {
+	yError() << "HandControlModule: unable to open the contacts port";
+	return false;
+    }
+
+    // set FIFO policy
+    port_cmd.setStrict();
 
     // configure hand controllers
     ok = right_hand.configure();

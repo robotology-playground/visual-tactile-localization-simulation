@@ -22,6 +22,7 @@
 #include <string>
 
 #include "headers/HandController.h"
+#include "headers/HandControlCommand.h"
 
 enum class Action { idle, open, approach };
 enum class ApproachMode { once, continuous };
@@ -39,6 +40,7 @@ private:
     std::string port_contacts_name;
 
     // command port
+    yarp::os::BufferedPort<HandControlCommand> port_cmd;
     std::string port_cmd_name;
     
     // period
