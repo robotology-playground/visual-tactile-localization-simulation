@@ -34,28 +34,41 @@ include(ICUBcontribHelpers)
 icubcontrib_set_default_prefix()
 
 # set headers and sources
-set(headers
+set(headers_main_module
   ${CMAKE_SOURCE_DIR}/headers/PointCloud.h
   ${CMAKE_SOURCE_DIR}/headers/filterCommand.h
   ${CMAKE_SOURCE_DIR}/headers/ArmController.h
-  ${CMAKE_SOURCE_DIR}/headers/FingerController.h
-  ${CMAKE_SOURCE_DIR}/headers/HandController.h
   ${CMAKE_SOURCE_DIR}/headers/ModelHelper.h
   )
-set(sources
+set(sources_main_module
   ${CMAKE_SOURCE_DIR}/src/filterCommand.cpp
   ${CMAKE_SOURCE_DIR}/src/ArmController.cpp
-  ${CMAKE_SOURCE_DIR}/src/FingerController.cpp  
-  ${CMAKE_SOURCE_DIR}/src/HandController.cpp
   ${CMAKE_SOURCE_DIR}/src/ModelHelper.cpp
   ${CMAKE_SOURCE_DIR}/src/main.cpp)
+
+set (headers_hand_ctrl_module
+  ${CMAKE_SOURCE_DIR}/headers/FingerController.h
+  ${CMAKE_SOURCE_DIR}/headers/HandController.h
+  ${CMAKE_SOURCE_DIR}/headers/HandControlModule.h
+  )
+
+set (sources_hand_ctrl_module
+  ${CMAKE_SOURCE_DIR}/src/FingerController.cpp
+  ${CMAKE_SOURCE_DIR}/src/HandController.cpp
+  ${CMAKE_SOURCE_DIR}/src/HandControlModule.cpp
+  )
 
 include_directories(${YARP_INCLUDE_DIRS})
 include_directories(${ICUB_INCLUDE_DIRS})
 include_directories(${PROJECT_SOURCE_DIR})
-add_executable(${PROJECT_NAME} ${headers} ${sources})
+
+add_executable(${PROJECT_NAME} ${headers_main_module} ${sources_main_module})
 target_link_libraries(${PROJECT_NAME} ${YARP_LIBRARIES} ${ICUB_LIBRARIES})
 install(TARGETS ${PROJECT_NAME} DESTINATION bin)
+
+add_executable("hand_ctrl_module" ${headers_hand_ctrl_module} ${sources_hand_ctrl_module})
+target_link_libraries("hand_ctrl_module" ${YARP_LIBRARIES} ${ICUB_LIBRARIES})
+install(TARGETS "hand_ctrl_module" DESTINATION bin)
 
 # add uninstall target
 icubcontrib_add_uninstall_target()
