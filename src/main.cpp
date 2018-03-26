@@ -32,17 +32,13 @@
 #include <yarp/dev/IFrameTransform.h>
 #include <yarp/dev/PolyDriver.h>
 
-// icub-main
-#include <iCub/skinDynLib/skinContactList.h>
+#include <cmath>
 
 #include "headers/filterCommand.h"
 #include "headers/ArmController.h"
-#include "headers/HandController.h"
 #include "headers/ModelHelper.h"
 
 using namespace yarp::math;
-
-typedef std::map<iCub::skinDynLib::SkinPart, iCub::skinDynLib::skinContactList> skinPartMap;
 
 class VisTacLocSimModule: public yarp::os::RFModule
 {
@@ -54,10 +50,6 @@ protected:
     RightArmController right_arm;
     LeftArmController left_arm;
 
-    // hand controllers
-    RightHandController right_hand;
-    LeftHandController left_hand;
-
     // mutexes required to share data between
     // the RFModule thread and the rpc thread
     yarp::os::Mutex mutex;
@@ -65,11 +57,6 @@ protected:
 
     // filter port
     yarp::os::BufferedPort<yarp::sig::FilterCommand> port_filter;
-
-    // contact points port and storage
-    yarp::os::BufferedPort<iCub::skinDynLib::skinContactList> port_contacts;
-    iCub::skinDynLib::skinContactList skin_contact_list;
-    bool are_contacts_available;
 
     // FrameTransformClient to read published poses
     yarp::dev::PolyDriver drv_transform_client;
@@ -91,64 +78,6 @@ protected:
 	double t0 = yarp::os::Time::now();
 	while (yarp::os::Time::now() - t0 < seconds)
 	    yarp::os::Time::delay(1.0);
-    }
-
-    /*
-     * Return the number of contacts detected for each finger tip
-     * for the specified hand as a std::map.
-     * The key is the name of the finger, i.e. 'thumb', 'index',
-     * 'middle', 'ring' or 'pinky'.
-     */
-    bool getNumberContacts(const std::string &which_hand,
-			   std::unordered_map<std::string, int> &numberContacts)
-    {
-	// split contacts per SkinPart
-	skinPartMap map = skin_contact_list.splitPerSkinPart();
-
-	// take the right skinPart
-	iCub::skinDynLib::SkinPart skinPart;
-	if (which_hand == "right")
-	    skinPart = iCub::skinDynLib::SkinPart::SKIN_RIGHT_HAND;
-	else
-	    skinPart = iCub::skinDynLib::SkinPart::SKIN_LEFT_HAND;
-
-	// clear number of contacts for each finger
-	int n_thumb = 0;
-	int n_index = 0;
-	int n_middle = 0;
-	int n_ring = 0;
-	int n_pinky = 0;
-
-    	// count contacts coming from finger tips only
-	iCub::skinDynLib::skinContactList &list = map[skinPart];
-    	for (size_t i=0; i<list.size(); i++)
-    	{
-	    // need to verify if this contact was effectively produced
-	    // by taxels on the finger tips
-	    // in order to simplify things the Gazebo plugin only sends one
-	    // taxel id that is used to identify which finger is in contact
-	    std::vector<unsigned int> taxels_ids = list[i].getTaxelList();
-	    unsigned int taxel_id = taxels_ids[0];
-	    // taxels ids for finger tips are between 0 and 59
-	    if (taxel_id >= 0 && taxel_id < 12)
-		n_index++;
-	    else if (taxel_id >= 12 && taxel_id < 24)
-		n_middle++;
-	    else if (taxel_id >= 24 && taxel_id < 36)
-		n_ring++;
-	    else if (taxel_id >= 36 && taxel_id < 48)
-		n_pinky++;
-	    else if (taxel_id >= 48 && taxel_id < 60)
-		n_thumb++;
-    	}
-
-	numberContacts["thumb"] = n_thumb;
-	numberContacts["index"] = n_index;
-	numberContacts["middle"] = n_middle;
-	numberContacts["ring"] = n_ring;
-	numberContacts["pinky"] = n_pinky;
-
-	return true;
     }
 
     /*
@@ -181,17 +110,11 @@ protected:
     	    return false;
 
 	ArmController* arm;
-	HandController* hand;
+	// HandController* hand;
 	if (which_hand == "right")
-	{
 	    arm = &right_arm;
-	    hand = &right_hand;
-	}
 	else
-	{
 	    arm = &left_arm;
-	    hand = &left_hand;
-	}
 	// change effector to the middle finger
 	ok = arm->useFingerFrame("middle");
         if (!ok)
@@ -224,11 +147,11 @@ protected:
         arm->cartesian()->waitMotionDone(0.04, 10.0);
 
 	// reset contacts detected
-	hand->resetFingersContacts();
+	// hand->resetFingersContacts();
 
-	mutex_contacts.lock();
-	skin_contact_list.clear();
-	mutex_contacts.unlock();
+	// mutex_contacts.lock();
+	// skin_contact_list.clear();
+	// mutex_contacts.unlock();
 
 	// move thumb opposition
 	// and index, middle and ring until contact
@@ -238,17 +161,17 @@ protected:
 	std::vector<std::string> finger_list = {"thumb", "index", "middle", "ring"};
 	while (!done && (yarp::os::Time::now() - t0 < 15.0))
 	{
-    	    mutex_contacts.lock();
+    	    // mutex_contacts.lock();
 
-	    getNumberContacts(which_hand, number_contacts);
-	    skin_contact_list.clear();
+	    // getNumberContacts(which_hand, number_contacts);
+	    // skin_contact_list.clear();
 
-	    mutex_contacts.unlock();
+	    // mutex_contacts.unlock();
 	    
-	    ok = hand->moveFingersUntilContact(finger_list,
-					       0.005,
-					       number_contacts,
-					       done);
+	    // ok = hand->moveFingersUntilContact(finger_list,
+	    // 				       0.005,
+	    // 				       number_contacts,
+	    // 				       done);
 	    if (!ok)
 		return false;
 
@@ -256,12 +179,12 @@ protected:
 	}
 	// in case the contact was not reached for all the fingers
 	// stop them and abort
-	if (!done)
-	{
-	    hand->stopFingers();
+	// if (!done)
+	// {
+	//     hand->stopFingers();
 
-	    return false;
-	}
+	//     return false;
+	// }
 
 	return true;
     }
@@ -278,16 +201,16 @@ protected:
     	    return false;
 
 	ArmController* arm;
-	HandController* hand;
+	// HandController* hand;
 	if (which_hand == "right")
 	{
 	    arm = &right_arm;
-	    hand = &right_hand;
+	    // hand = &right_hand;
 	}
 	else
 	{
 	    arm = &left_arm;
-	    hand = &left_hand;
+	    // hand = &left_hand;
 	}
 
         // change effector to the middle finger
@@ -331,13 +254,13 @@ protected:
 	std::vector<std::string> finger_list = {"index", "middle", "ring"};
     	while (!done && (yarp::os::Time::now() - t0 < duration))
     	{
-	    mutex_contacts.lock();
-	    getNumberContacts(which_hand, number_contacts);
-	    mutex_contacts.unlock();
+	    // mutex_contacts.lock();
+	    // getNumberContacts(which_hand, number_contacts);
+	    // mutex_contacts.unlock();
 
-	    hand->moveFingersMaintainingContact(finger_list,
-						0.005,
-						number_contacts);
+	    // hand->moveFingersMaintainingContact(finger_list,
+	    // 					0.005,
+	    // 					number_contacts);
 
     	    arm->cartesian()->checkMotionDone(&done);
 	}
@@ -348,7 +271,7 @@ protected:
 	filter_data.setCommand(VOCAB3('O','F','F'));
 	port_filter.writeStrict();
 
-	hand->stopFingers();
+	// hand->stopFingers();
 
         // restore the context
         arm->cartesian()->restoreContext(context_id);
@@ -365,15 +288,6 @@ public:
 	if (!ok)
         {
             yError() << "VisTacLocSimModule: unable to open the filter port";
-            return false;
-        }
-
-	// open the contacts port
-	// TODO: take name from config
-	ok = port_contacts.open("/vis_tac_localization/contacts:i");
-	if (!ok)
-        {
-            yError() << "VisTacLocSimModule: unable to open the contacts port";
             return false;
         }
 
@@ -406,7 +320,6 @@ public:
 
 	// set default value of flags
 	is_estimate_available = false;
-	are_contacts_available = false;
 
 	// configure arm controllers
 	ok = right_arm.configure();
@@ -428,19 +341,19 @@ public:
 	left_arm.setHandAttitude(0, 15, 0);
 
 	// configure hand controllers
-	ok = right_hand.configure();
-        if (!ok)
-	{
-            yError() << "VisTacLocSimModule: unable to configure the right hand controller";
-            return false;
-	}
+	// ok = right_hand.configure();
+        // if (!ok)
+	// {
+        //     yError() << "VisTacLocSimModule: unable to configure the right hand controller";
+        //     return false;
+	// }
 
-	ok = left_hand.configure();
-        if (!ok)
-	{
-            yError() << "VisTacLocSimModule: unable to configure the left hand controller";
-            return false;
-	}
+	// ok = left_hand.configure();
+        // if (!ok)
+	// {
+        //     yError() << "VisTacLocSimModule: unable to configure the left hand controller";
+        //     return false;
+	// }
 
 	// configure model helper
 	mod_helper.setModelDimensions(0.24, 0.17, 0.037);
@@ -462,9 +375,6 @@ public:
 	// close ports
         rpc_port.close();
 	port_filter.close();
-	port_contacts.close();
-
-        return true;
     }
 
     bool respond(const yarp::os::Bottle &command, yarp::os::Bottle &reply)
@@ -484,9 +394,9 @@ public:
         }
 	else if (cmd == "home-right")
 	{
-	    ok = right_hand.restoreFingersPosition();
+	    // ok = right_hand.restoreFingersPosition();
 
-	    waitSeconds(5);
+	    // waitSeconds(5);
 
 	    if (ok)
 		ok &= right_arm.goHome();
@@ -498,9 +408,9 @@ public:
 	}
 	else if (cmd == "home-left")
 	{
-	    ok = left_hand.restoreFingersPosition();
+	    // ok = left_hand.restoreFingersPosition();
 
-	    waitSeconds(5);
+	    // waitSeconds(5);
 
 	    if (ok)
 		ok &= left_arm.goHome();
@@ -557,23 +467,7 @@ public:
 	is_estimate_available = tf_client->getTransform(target, source, estimate);
 
 	mutex.unlock();
-
-	mutex_contacts.lock();
-
-	iCub::skinDynLib::skinContactList *new_contacts = port_contacts.read(false);
-	if (new_contacts != NULL && new_contacts->size() > 0)
-	{
-	    skin_contact_list = *new_contacts;
-	    are_contacts_available = true;
-	}
-	else
-	{
-	    skin_contact_list.clear();
-	    are_contacts_available = false;
-	}
-
-	mutex_contacts.unlock();
-
+	
         return true;
     }
 };
