@@ -75,10 +75,6 @@ protected:
     yarp::dev::PolyDriver drv_transform_client;
     yarp::dev::IFrameTransform* tf_client;
 
-    // transformation from inertial to
-    // the root link of the robot published by gazebo
-    yarp::sig::Matrix inertial_to_robot;
-
     // last estimate published by the filter
     yarp::sig::Matrix estimate;
     bool is_estimate_available;
