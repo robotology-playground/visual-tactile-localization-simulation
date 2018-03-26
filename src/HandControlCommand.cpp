@@ -21,10 +21,11 @@ HandControlCommand::HandControlCommand() : linear_forward_speed(0.0),
 					   joint_restore_speed(0.0),
 					   cmd(Command::Empty),
 					   is_linear_forward_speed_set(false),
-					   is_joint_restore_speed_set(false)
+					   is_joint_restore_speed_set(false),
+					   available_fingers{ "thumb",	"index", "middle", "ring", "little"}
 {
-    // set the list of available fingers
-    available_fingers = { "thumb", "index", "middle", "ring", "little" };
+    // reset the commanded fingers
+    resetCommandedFingers();
 }
 
 bool HandControlCommand::setCommandedHand(const std::string &hand_name)
@@ -32,7 +33,7 @@ bool HandControlCommand::setCommandedHand(const std::string &hand_name)
     if (commanded_hand != "right" &&
 	commanded_hand != "left")
 	return false;
-    
+
     commanded_hand = hand_name;
 
     return true;
@@ -43,9 +44,15 @@ bool HandControlCommand::setCommandedFinger(const std::string &finger_name)
     if (available_fingers.find(finger_name) == available_fingers.end())
 	return false;
 
-    commanded_fingers.insert(finger_name);
-    
+    commanded_fingers[finger_name] = true;
+
     return true;
+}
+
+void HandControlCommand::resetCommandedFingers()
+{
+    for (const std::string &finger : available_fingers)
+	commanded_fingers[finger] = false;
 }
 
 bool HandControlCommand::setCommandedFingers(const std::vector<std::string> &fingers_names)
@@ -61,7 +68,7 @@ bool HandControlCommand::setFingersForwardSpeed(const double &speed)
 {
     if (speed < 0)
 	return false;
-    
+
     linear_forward_speed = speed;
     is_linear_forward_speed_set = true;
 
@@ -102,7 +109,7 @@ void HandControlCommand::commandStop()
 void HandControlCommand::clear()
 {
     commanded_hand.clear();
-    commanded_fingers.clear();
+    resetCommandedFingers();
     cmd = Command::Empty;
     is_linear_forward_speed_set = false;
     is_joint_restore_speed_set = false;
@@ -113,9 +120,9 @@ std::string HandControlCommand::getCommandedHand() const
     return commanded_hand;
 }
 
-void HandControlCommand::getCommandedFingers(std::set<std::string> &fingers_names) const
+const std::unordered_map<std::string, bool>& HandControlCommand::getCommandedFingers() const
 {
-    fingers_names = commanded_fingers;
+    return this->commanded_fingers;
 }
 
 bool HandControlCommand::getForwardSpeed(double &speed) const
@@ -145,10 +152,76 @@ Command HandControlCommand::getCommand() const
 
 bool HandControlCommand::read(yarp::os::ConnectionReader& connection)
 {
+    // clear the current object
+    clear();
+
+    // commanded hand
+    int vocab_hand = connection.expectInt();
+    if (vocab_hand == VOCAB4('R','I','G','H'))
+	commanded_hand = "right";
+    else if (vocab_hand == VOCAB4('L','E','F','T'))
+	commanded_hand = "left";
+    else
+	return false;
+
+    // commanded fingers
+    for (const std::string &finger : available_fingers)
+	commanded_fingers[finger] = connection.expectInt();
+
+    // command
+    cmd = static_cast<Command>(connection.expectInt());
+
+    // speeds
+    if (cmd == Command::Approach ||
+	cmd == Command::Follow)
+    {
+	is_linear_forward_speed_set = true;
+	linear_forward_speed = connection.expectDouble();
+    }
+    else if (cmd == Command::Restore)
+    {
+	is_joint_restore_speed_set = true;
+	joint_restore_speed = connection.expectDouble();
+    }
+
     return !connection.isError();
 }
 
 bool HandControlCommand::write(yarp::os::ConnectionWriter& connection)
 {
-    return !connection.isError();    
+    // commanded hand
+    int vocab_hand;
+    if (commanded_hand == "right")
+	vocab_hand = VOCAB4('R','I','G','H');
+    else if(commanded_hand == "left")
+	vocab_hand = VOCAB4('L','E','F','T');
+    else
+	return false;
+    connection.appendInt(vocab_hand);
+
+    // commanded fingers
+    for (const std::string &finger : available_fingers)
+	connection.appendInt(commanded_fingers[finger]);
+
+    // command
+    connection.appendInt(static_cast<int>(cmd));
+
+    // forward speed
+    if (cmd == Command::Approach ||
+	cmd == Command::Follow)
+    {
+	if (!is_linear_forward_speed_set)
+	    return false;
+	else
+	    connection.appendDouble(linear_forward_speed);
+    }
+    else if (cmd == Command::Restore)
+    {
+	if (!is_joint_restore_speed_set)
+	    return false;
+	else
+	    connection.appendDouble(joint_restore_speed);
+    }
+
+    return !connection.isError();
 }
