@@ -24,39 +24,63 @@
 #include "headers/HandController.h"
 #include "headers/HandControlCommand.h"
 
-enum class Action { idle, open, approach };
-enum class ApproachMode { once, continuous };
-
 class HandControlModule : public yarp::os::RFModule
 {
 private:
     // hand controllers
-    RightHandController right_hand;
-    LeftHandController left_hand;
+    HandController hand;
+
+    // name of the hand to be controlled
+    std::string hand_name;
 
     // contact points port and storage
     yarp::os::BufferedPort<iCub::skinDynLib::skinContactList> port_contacts;
-    iCub::skinDynLib::skinContactList skin_contact_list;
     std::string port_contacts_name;
 
     // command port
     yarp::os::BufferedPort<HandControlCommand> port_cmd;
     std::string port_cmd_name;
+
+    // current command
+    Command current_command;
+
+    // linear forward speed
+    // to be used for commands Approach and Follow
+    double linear_forward_speed;
+
+    // joint restore speed
+    // to be used for commands Restore
+    double joint_restore_speed;
+
+    // list of currently commanded fingers
+    std::unordered_map<std::string, bool> commanded_fingers;
     
     // period
     double period;
 
-    // flags
-    bool are_contacts_available;
-
    /*
     * Return the number of contacts detected for each finger tip
-    * for the specified hand as a std::map.
+    * for the specified hand as a std::unorderd_map.
     * The key is the name of the finger, i.e. 'thumb', 'index',
-    * 'middle', 'ring' or 'pinky'.
+    * 'middle', 'ring' or 'little'.
     */
-    bool getNumberContacts(const std::string &which_hand,
+    bool getNumberContacts(iCub::skinDynLib::skinContactList &skin_contact_list,
+			   const std::string &which_hand,
 			   std::unordered_map<std::string, int> &numberContacts);
+   /*
+    * Process a command
+    */
+    void processCommand(HandControlCommand cmd);
+
+   /*
+    * Perform control according to the current command
+    */
+    void performControl();
+
+   /*
+    * Stop any ongoing finger movements
+    */
+    void stopControl();
 
 public:
     /*
