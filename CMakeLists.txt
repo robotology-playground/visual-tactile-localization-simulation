@@ -50,12 +50,14 @@ set (headers_hand_ctrl_module
   ${CMAKE_SOURCE_DIR}/headers/FingerController.h
   ${CMAKE_SOURCE_DIR}/headers/HandController.h
   ${CMAKE_SOURCE_DIR}/headers/HandControlModule.h
+  ${CMAKE_SOURCE_DIR}/headers/HandControlCommand.h
   )
 
 set (sources_hand_ctrl_module
   ${CMAKE_SOURCE_DIR}/src/FingerController.cpp
   ${CMAKE_SOURCE_DIR}/src/HandController.cpp
   ${CMAKE_SOURCE_DIR}/src/HandControlModule.cpp
+  ${CMAKE_SOURCE_DIR}/src/HandControlCommand.cpp
   )
 
 include_directories(${YARP_INCLUDE_DIRS})
