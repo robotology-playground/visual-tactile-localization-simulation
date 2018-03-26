@@ -86,7 +86,7 @@ bool HandControlModule::configure(yarp::os::ResourceFinder &rf)
     yInfo() << "HandControlModule: input port name is" << port_cmd_name;
     
     // open the contacts port
-    bool ok = port_contacts.open("/vis_tac_localization/contacts:i");
+    bool ok = port_contacts.open(port_contacts_name);
     if (!ok)
     {
 	yError() << "HandControlModule: unable to open the contacts port";
