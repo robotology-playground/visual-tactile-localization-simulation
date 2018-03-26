@@ -21,7 +21,7 @@
 #include <set>
 #include <unordered_map>
 
-enum class Command { Empty = 0, Stop = 1, Approach = 2, Follow = 3, Restore = 4 };
+enum class Command { Empty = 0, Idle = 1, Stop = 2, Approach = 3, Follow = 4, Restore = 5 };
 
 class HandControlCommand : public yarp::os::Portable
 {
