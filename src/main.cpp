@@ -35,7 +35,7 @@
 // icub-main
 #include <iCub/skinDynLib/skinContactList.h>
 
-#include "headers/filterData.h"
+#include "headers/filterCommand.h"
 #include "headers/ArmController.h"
 #include "headers/HandController.h"
 #include "headers/ModelHelper.h"
@@ -64,7 +64,7 @@ protected:
     yarp::os::Mutex mutex_contacts;
 
     // filter port
-    yarp::os::BufferedPort<yarp::sig::FilterData> port_filter;
+    yarp::os::BufferedPort<yarp::sig::FilterCommand> port_filter;
 
     // contact points port and storage
     yarp::os::BufferedPort<iCub::skinDynLib::skinContactList> port_contacts;
@@ -160,7 +160,7 @@ protected:
      */
     bool localizeObject()
     {
-	yarp::sig::FilterData &filter_data = port_filter.prepare();
+	yarp::sig::FilterCommand &filter_data = port_filter.prepare();
 
 	// clear the storage
 	filter_data.clear();
@@ -321,7 +321,7 @@ protected:
         arm->goToPos(pos);
 
 	// enable filtering
-	yarp::sig::FilterData &filter_data = port_filter.prepare();
+	yarp::sig::FilterCommand &filter_data = port_filter.prepare();
 	filter_data.clear();
 	filter_data.setCommand(VOCAB2('O','N'));
 	filter_data.setTag(VOCAB3('T','A','C'));
