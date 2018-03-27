@@ -37,6 +37,7 @@
 #include "headers/filterCommand.h"
 #include "headers/ArmController.h"
 #include "headers/ModelHelper.h"
+#include "headers/HandControlCommand.h"
 
 using namespace yarp::math;
 
@@ -53,10 +54,13 @@ protected:
     // mutexes required to share data between
     // the RFModule thread and the rpc thread
     yarp::os::Mutex mutex;
-    yarp::os::Mutex mutex_contacts;
 
     // filter port
     yarp::os::BufferedPort<yarp::sig::FilterCommand> port_filter;
+
+    // hand controller modules ports
+    yarp::os::BufferedPort<HandControlCommand> port_hand_right;
+    yarp::os::BufferedPort<HandControlCommand> port_hand_left;
 
     // FrameTransformClient to read published poses
     yarp::dev::PolyDriver drv_transform_client;
@@ -110,11 +114,17 @@ protected:
     	    return false;
 
 	ArmController* arm;
-	// HandController* hand;
+	yarp::os::BufferedPort<HandControlCommand>* hand_port;
 	if (which_hand == "right")
+	{
 	    arm = &right_arm;
+	    hand_port = &port_hand_right;
+	}
 	else
+	{
 	    arm = &left_arm;
+	    hand_port = &port_hand_left;
+	}
 	// change effector to the middle finger
 	ok = arm->useFingerFrame("middle");
         if (!ok)
@@ -146,45 +156,15 @@ protected:
         // wait for motion completion
         arm->cartesian()->waitMotionDone(0.04, 10.0);
 
-	// reset contacts detected
-	// hand->resetFingersContacts();
-
-	// mutex_contacts.lock();
-	// skin_contact_list.clear();
-	// mutex_contacts.unlock();
-
-	// move thumb opposition
-	// and index, middle and ring until contact
-	double t0 = yarp::os::Time::now();
-	bool done = false;
-	std::unordered_map<std::string, int> number_contacts;
+	// move fingers towards the object
 	std::vector<std::string> finger_list = {"thumb", "index", "middle", "ring"};
-	while (!done && (yarp::os::Time::now() - t0 < 15.0))
-	{
-    	    // mutex_contacts.lock();
-
-	    // getNumberContacts(which_hand, number_contacts);
-	    // skin_contact_list.clear();
-
-	    // mutex_contacts.unlock();
-	    
-	    // ok = hand->moveFingersUntilContact(finger_list,
-	    // 				       0.005,
-	    // 				       number_contacts,
-	    // 				       done);
-	    if (!ok)
-		return false;
-
-    	    yarp::os::Time::delay(0.01);
-	}
-	// in case the contact was not reached for all the fingers
-	// stop them and abort
-	// if (!done)
-	// {
-	//     hand->stopFingers();
-
-	//     return false;
-	// }
+	HandControlCommand &hand_cmd = hand_port->prepare();
+	hand_cmd.clear();
+	hand_cmd.setCommandedHand(which_hand);
+	hand_cmd.setCommandedFingers(finger_list);
+	hand_cmd.setFingersForwardSpeed(0.005);
+	hand_cmd.commandFingersApproach();
+	hand_port->writeStrict();
 
 	return true;
     }
@@ -282,12 +262,25 @@ protected:
 public:
     bool configure(yarp::os::ResourceFinder &rf)
     {
-	// open the filter port
-	// TODO: take name from config
+	// open ports
 	bool ok = port_filter.open("/vis_tac_localization/filter:o");
 	if (!ok)
         {
             yError() << "VisTacLocSimModule: unable to open the filter port";
+            return false;
+        }
+
+	ok = port_hand_right.open("/vis_tac_localization/hand-control/right:o");
+	if (!ok)
+        {
+            yError() << "VisTacLocSimModule: unable to open the right hand control module port";
+            return false;
+        }
+
+	ok = port_hand_left.open("/vis_tac_localization/hand-control/left:o");
+	if (!ok)
+        {
+            yError() << "VisTacLocSimModule: unable to open the left hand control module port";
             return false;
         }
 
