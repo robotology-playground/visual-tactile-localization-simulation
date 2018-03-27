@@ -23,4 +23,14 @@
     <to>/upf-localizer:i</to>
   </connection>
 
+  <connection>
+    <from>/vis_tac_localization/hand-control/right:o</from>
+    <to>/hand-control/right:i</to>
+  </connection>
+
+  <connection>
+    <from>/vis_tac_localization/hand-control/left:o</from>
+    <to>/hand-control/left:i</to>
+  </connection>
+
 </application>
