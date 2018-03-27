@@ -182,7 +182,7 @@ void HandControlModule::performControl()
 
     case Command::Restore:
     {
-	hand.restoreFingersPosition();
+	hand.restoreFingersPosition(joint_restore_speed);
 
 	// go in Idle then
 	current_command = Command::Idle;
