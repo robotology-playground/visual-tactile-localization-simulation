@@ -56,7 +56,7 @@ private:
     /*
      * List of available fingers
      */
-    const std::set<std::string> available_fingers;
+    std::set<std::string> available_fingers;
 
     /*
      * Set commanded finger
