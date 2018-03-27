@@ -391,6 +391,9 @@ bool FingerController::goHome(const double &ref_vel)
 		<< "unable to restore initial positions of joints of finger"
 		<< finger_name;
 
+	// stop movements for safety
+	stop();
+
 	return false;
     }
 
@@ -480,7 +483,20 @@ bool FingerController::moveFingerForward(const double &speed)
     }
 
     // issue velocity command
-    return setJointsVelocities(q_dot);
+    bool ok = setJointsVelocities(q_dot);
+    if (!ok)
+    {
+	yInfo() << "FingerController::moveFingerForward Error:"
+		<< "unable to set joints velocities for finger"
+		<< finger_name;
+
+	// stop movements for safety
+	stop();
+
+	return false;
+    }
+
+    return true;
 }
 
 bool FingerController::stop()
