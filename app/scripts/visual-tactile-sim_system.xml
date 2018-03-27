@@ -89,7 +89,27 @@
     </dependencies>
     <environment>YARP_CLOCK=/clock</environment>    
   </module>
-  
+
+  <module>
+    <name>hand_ctrl_module</name>
+    <node>localhost</node>
+    <parameters>--context simVisualTactileLocalization --handName right</parameters>
+    <dependencies>
+      <port timeout="5.0">/clock</port>
+    </dependencies>
+    <environment>YARP_CLOCK=/clock</environment>
+  </module>
+
+  <module>
+    <name>hand_ctrl_module</name>
+    <node>localhost</node>
+    <parameters>--context simVisualTactileLocalization --handName left</parameters>
+    <dependencies>
+      <port timeout="5.0">/clock</port>
+    </dependencies>
+    <environment>YARP_CLOCK=/clock</environment>
+  </module>
+
   <connection>
     <from>/box_alt/fakepointcloud:o</from>
     <to>/box_alt/fakepointcloud_viewer:i</to>
