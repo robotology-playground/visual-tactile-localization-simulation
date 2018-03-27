@@ -199,7 +199,7 @@ void HandControlModule::performControl()
 void HandControlModule::stopControl()
 {
     // stop any ongoing movement
-    hand.stopFingers();
+    hand.stopFingers(commanded_fingers);
 }
 
 bool HandControlModule::configure(yarp::os::ResourceFinder &rf)
