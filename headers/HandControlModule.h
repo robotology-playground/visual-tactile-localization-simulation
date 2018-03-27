@@ -53,20 +53,19 @@ private:
     double joint_restore_speed;
 
     // list of currently commanded fingers
-    std::unordered_map<std::string, bool> commanded_fingers;
+    std::vector<std::string> commanded_fingers;
     
     // period
     double period;
 
    /*
     * Return the number of contacts detected for each finger tip
-    * for the specified hand as a std::unorderd_map.
+    * as a std::unorderd_map.
     * The key is the name of the finger, i.e. 'thumb', 'index',
     * 'middle', 'ring' or 'little'.
     */
     bool getNumberContacts(iCub::skinDynLib::skinContactList &skin_contact_list,
-			   const std::string &which_hand,
-			   std::unordered_map<std::string, int> &numberContacts);
+			   std::unordered_map<std::string, int> &number_contacts);
    /*
     * Process a command
     */

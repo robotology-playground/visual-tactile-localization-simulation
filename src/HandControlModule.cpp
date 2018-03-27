@@ -14,8 +14,7 @@
 typedef std::map<iCub::skinDynLib::SkinPart, iCub::skinDynLib::skinContactList> skinPartMap;
 
 bool HandControlModule::getNumberContacts(iCub::skinDynLib::skinContactList &skin_contact_list,
-                                          const std::string &which_hand,
-					  std::unordered_map<std::string, int> &numberContacts)
+					  std::unordered_map<std::string, int> &number_contacts)
 {
     // split contacts per SkinPart
     skinPartMap map = skin_contact_list.splitPerSkinPart();
@@ -57,11 +56,11 @@ bool HandControlModule::getNumberContacts(iCub::skinDynLib::skinContactList &ski
 	    n_thumb++;
     }
 
-    numberContacts["thumb"] = n_thumb;
-    numberContacts["index"] = n_index;
-    numberContacts["middle"] = n_middle;
-    numberContacts["ring"] = n_ring;
-    numberContacts["little"] = n_little;
+    number_contacts["thumb"] = n_thumb;
+    number_contacts["index"] = n_index;
+    number_contacts["middle"] = n_middle;
+    number_contacts["ring"] = n_ring;
+    number_contacts["little"] = n_little;
 
     return true;
 }
@@ -94,6 +93,11 @@ void HandControlModule::processCommand(HandControlCommand cmd)
 	current_command == Command::Follow)
     {
 	cmd.getForwardSpeed(linear_forward_speed);
+
+	if (current_command == Command::Approach)
+	    // reset detected contacts within the
+	    // hand controller
+	    hand.resetFingersContacts();
     }
     else if(current_command == Command::Restore)
     {
@@ -101,7 +105,7 @@ void HandControlModule::processCommand(HandControlCommand cmd)
     }
 
     // get commanded fingers
-    commanded_fingers = cmd.getCommandedFingers();
+    cmd.getCommandedFingers(commanded_fingers);
 }
 
 void HandControlModule::performControl()
@@ -111,12 +115,59 @@ void HandControlModule::performControl()
     {
     case Command::Empty:
     case Command::Idle:
+    {
 	// nothing to do here
 	break;
+    }
 
+    case Command::Approach:
+    {
+	// read from contacts port
+	iCub::skinDynLib::skinContactList* list;
+	list = port_contacts.read(false);
+	if (list == YARP_NULLPTR)
+	{
+	    // nothing to do here
+	    return;
+	}
+
+	// extract contact informations
+	std::unordered_map<std::string, int> number_contacts;
+	getNumberContacts(*list, number_contacts);
+
+	// command fingers
+	bool done;
+	bool ok = hand.moveFingersUntilContact(commanded_fingers,
+					       linear_forward_speed,
+					       number_contacts,
+					       done);
+	if (!ok)
+	{
+	    // something went wrong
+	    // stop finger movements
+	    stopControl();
+
+	    // go in Idle
+	    current_command = Command::Idle;
+
+	    return;
+	}
+
+	// check if contact was reached for all the fingers
+	if (done)
+	{
+	    // approach phase completed
+	    // go in Idle
+	    current_command = Command::Idle;
+	}
+
+	break;
+    }
     case Command::Stop:
+    {
 	stopControl();
 	break;
+    }
     }
 }
 
