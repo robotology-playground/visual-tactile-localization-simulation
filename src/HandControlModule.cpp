@@ -16,16 +16,6 @@ typedef std::map<iCub::skinDynLib::SkinPart, iCub::skinDynLib::skinContactList> 
 bool HandControlModule::getNumberContacts(iCub::skinDynLib::skinContactList &skin_contact_list,
 					  std::unordered_map<std::string, int> &number_contacts)
 {
-    // split contacts per SkinPart
-    skinPartMap map = skin_contact_list.splitPerSkinPart();
-
-    // take the right skinPart
-    iCub::skinDynLib::SkinPart skinPart;
-    if (hand_name == "right")
-	skinPart = iCub::skinDynLib::SkinPart::SKIN_RIGHT_HAND;
-    else
-	skinPart = iCub::skinDynLib::SkinPart::SKIN_LEFT_HAND;
-
     // clear number of contacts for each finger
     int n_thumb = 0;
     int n_index = 0;
@@ -33,27 +23,40 @@ bool HandControlModule::getNumberContacts(iCub::skinDynLib::skinContactList &ski
     int n_ring = 0;
     int n_little = 0;
 
-    // count contacts coming from finger tips only
-    iCub::skinDynLib::skinContactList &list = map[skinPart];
-    for (size_t i=0; i<list.size(); i++)
+    if (skin_contact_list.size() != 0)
     {
-	// need to verify if this contact was effectively produced
-	// by taxels on the finger tips
-	// in order to simplify things the Gazebo plugin only sends one
-	// taxel id that is used to identify which finger is in contact
-	std::vector<unsigned int> taxels_ids = list[i].getTaxelList();
-	unsigned int taxel_id = taxels_ids[0];
-	// taxels ids for finger tips are between 0 and 59
-	if (taxel_id >= 0 && taxel_id < 12)
-	    n_index++;
-	else if (taxel_id >= 12 && taxel_id < 24)
-	    n_middle++;
-	else if (taxel_id >= 24 && taxel_id < 36)
-	    n_ring++;
-	else if (taxel_id >= 36 && taxel_id < 48)
-	    n_little++;
-	else if (taxel_id >= 48 && taxel_id < 60)
-	    n_thumb++;
+	// split contacts per SkinPart
+	skinPartMap map = skin_contact_list.splitPerSkinPart();
+
+	// take the right skinPart
+	iCub::skinDynLib::SkinPart skinPart;
+	if (hand_name == "right")
+	    skinPart = iCub::skinDynLib::SkinPart::SKIN_RIGHT_HAND;
+	else
+	    skinPart = iCub::skinDynLib::SkinPart::SKIN_LEFT_HAND;
+
+	// count contacts coming from finger tips only
+	iCub::skinDynLib::skinContactList &list = map[skinPart];
+	for (size_t i=0; i<list.size(); i++)
+	{
+	    // need to verify if this contact was effectively produced
+	    // by taxels on the finger tips
+	    // in order to simplify things the Gazebo plugin only sends one
+	    // taxel id that is used to identify which finger is in contact
+	    std::vector<unsigned int> taxels_ids = list[i].getTaxelList();
+	    unsigned int taxel_id = taxels_ids[0];
+	    // taxels ids for finger tips are between 0 and 59
+	    if (taxel_id >= 0 && taxel_id < 12)
+		n_index++;
+	    else if (taxel_id >= 12 && taxel_id < 24)
+		n_middle++;
+	    else if (taxel_id >= 24 && taxel_id < 36)
+		n_ring++;
+	    else if (taxel_id >= 36 && taxel_id < 48)
+		n_little++;
+	    else if (taxel_id >= 48 && taxel_id < 60)
+		n_thumb++;
+	}
     }
 
     number_contacts["thumb"] = n_thumb;
@@ -84,9 +87,6 @@ void HandControlModule::processCommand(HandControlCommand cmd)
 	// ignore this command
 	return;
     }
-
-    // get the requested command
-    current_command = cmd.getCommand();
 
     // get requested speeds if required
     if (current_command == Command::Approach ||
@@ -123,18 +123,17 @@ void HandControlModule::performControl()
     case Command::Approach:
     case Command::Follow:
     {
+	iCub::skinDynLib::skinContactList* list_ptr;
+	iCub::skinDynLib::skinContactList empty_list;
+
 	// read from contacts port
-	iCub::skinDynLib::skinContactList* list;
-	list = port_contacts.read(false);
-	if (list == YARP_NULLPTR)
-	{
-	    // nothing to do here
-	    return;
-	}
+	list_ptr = port_contacts.read(false);
+	if (list_ptr == YARP_NULLPTR)
+	    list_ptr = &empty_list;
 
 	// extract contact informations
 	std::unordered_map<std::string, int> number_contacts;
-	getNumberContacts(*list, number_contacts);
+	getNumberContacts(*list_ptr, number_contacts);
 
 	// command fingers
 	bool done = false;
