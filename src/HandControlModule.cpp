@@ -121,6 +121,7 @@ void HandControlModule::performControl()
     }
 
     case Command::Approach:
+    case Command::Follow:
     {
 	// read from contacts port
 	iCub::skinDynLib::skinContactList* list;
@@ -136,11 +137,22 @@ void HandControlModule::performControl()
 	getNumberContacts(*list, number_contacts);
 
 	// command fingers
-	bool done;
-	bool ok = hand.moveFingersUntilContact(commanded_fingers,
-					       linear_forward_speed,
-					       number_contacts,
-					       done);
+	bool done = false;
+	bool ok = false;
+	if (current_command == Command::Approach)
+	{
+	    ok = hand.moveFingersUntilContact(commanded_fingers,
+					      linear_forward_speed,
+					      number_contacts,
+					      done);
+	}
+	else if (current_command == Command::Follow)
+	{
+	    ok = hand.moveFingersMaintainingContact(commanded_fingers,
+						    linear_forward_speed,
+						    number_contacts);
+	}
+
 	if (!ok)
 	{
 	    // something went wrong
@@ -153,12 +165,16 @@ void HandControlModule::performControl()
 	    return;
 	}
 
+	// in case of Approach
 	// check if contact was reached for all the fingers
-	if (done)
+	if (current_command == Command::Approach)
 	{
-	    // approach phase completed
-	    // go in Idle
-	    current_command = Command::Idle;
+	    if (done)
+	    {
+		// approach phase completed
+		// go in Idle
+		current_command = Command::Idle;
+	    }
 	}
 
 	break;
