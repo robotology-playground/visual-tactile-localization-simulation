@@ -109,10 +109,5 @@
     </dependencies>
     <environment>YARP_CLOCK=/clock</environment>
   </module>
-
-  <connection>
-    <from>/box_alt/fakepointcloud:o</from>
-    <to>/box_alt/fakepointcloud_viewer:i</to>
-  </connection>
   
 </application>
