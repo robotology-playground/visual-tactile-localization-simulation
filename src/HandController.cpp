@@ -265,12 +265,13 @@ bool HandController::moveFingersMaintainingContact(const std::vector<std::string
 }
 
 
-bool HandController::restoreFingersPosition(const double &ref_vel)
+bool HandController::restoreFingersPosition(const std::vector<std::string> &finger_list,
+					    const double &ref_vel)
 {
     bool ok;
 
-    // command all the fingers
-    for (std::string finger_name : fingers_names)
+    // command the requested fingers
+    for (const std::string &finger_name : finger_list)
     {
 	// get the finger controller
 	FingerController &ctl = fingers[finger_name];

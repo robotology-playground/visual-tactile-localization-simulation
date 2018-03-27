@@ -103,11 +103,13 @@ public:
 				       const double &speed,
 				       const std::unordered_map<std::string, int> &number_contacts);
     
-    /* Restore the initial configuration of all the fingers.
+    /* Restore the initial configuration for the specified fingers
      * @param ref_vel reference joints velocity used during movement
+     * @param finger_list the list of fingers to be commanded
      * @return true/false con success/failure
      */
-    bool restoreFingersPosition(const double &ref_vel);
+    bool restoreFingersPosition(const std::vector<std::string> &finger_list,
+				const double &ref_vel);
 
     /*
      * Stop all the fingers.
