@@ -146,9 +146,10 @@ public:
     /*
      * Restore the initial position of the finger.
      *
+     * @param ref_vel reference joints velocity used during movement
      * @return true/false on success/failure
      */
-    bool goHome();
+    bool goHome(const double &ref_vel);
 
     /*
      * Return the status of a movement

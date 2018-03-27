@@ -352,7 +352,7 @@ bool FingerController::getFingerTipPoseFingerFrame(yarp::sig::Vector &pose)
     return true;
 }
 
-bool FingerController::goHome()
+bool FingerController::goHome(const double &ref_vel)
 {
     bool ok;
     
@@ -362,6 +362,20 @@ bool FingerController::goHome()
     {
 	yInfo() << "FingerController::goHome Error:"
 		<< "unable to set Position control mode for finger"
+		<< finger_name;
+
+	return false;
+    }
+
+    // set reference joints velocities
+    // the same velocity is used for all the joints
+    yarp::sig::Vector speeds(ctl_joints.size(), ref_vel);
+    ok = ipos->setRefSpeeds(ctl_joints.size(),
+			    ctl_joints.getFirst(),
+			    speeds.data());
+    {
+	yInfo() << "FingerController::goHome Error:"
+		<< "unable to set joints reference speeds for finger"
 		<< finger_name;
 
 	return false;
