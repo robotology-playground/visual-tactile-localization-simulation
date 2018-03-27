@@ -245,7 +245,7 @@ bool HandController::moveFingersMaintainingContact(const std::vector<std::string
 	    // this is because the ring and the little are coupled
 	    // and the little could touch before the ring finger
 	    finger_name == "ring" && number_contacts.at("little") > 0)
-	{   yInfo() << finger_name << number_contacts.at(finger_name);
+	{
 	    // stop the finger
 	    ok = ctl.stop();
 	    if (!ok)
@@ -255,7 +255,6 @@ bool HandController::moveFingersMaintainingContact(const std::vector<std::string
 	else
 	{
 	    // continue finger movements
-	    yInfo() << finger_name << "commanded!";
 	    ok = ctl.moveFingerForward(speed);
 	    if (!ok)
 		return false;
