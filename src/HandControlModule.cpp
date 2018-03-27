@@ -214,22 +214,25 @@ bool HandControlModule::configure(yarp::os::ResourceFinder &rf)
 	return false;
     }
 
+    yarp::os::ResourceFinder inner_rf;
+    inner_rf = rf.findNestedResourceFinder(hand_name.c_str());
+
     // get the period
-    period = rf.find("period").asDouble();
-    if (rf.find("period").isNull())
+    period = inner_rf.find("period").asDouble();
+    if (inner_rf.find("period").isNull())
 	period = 0.03;
     yInfo() << "HandControlModule: period is" << period;
     
     // get the name of the contact points port
-    port_contacts_name = rf.find("contactsInputPort").asString();
-    if (rf.find("contactsInputPort").isNull())
-	port_contacts_name = "/hand-control/contacts:i";
+    port_contacts_name = inner_rf.find("contactsInputPort").asString();
+    if (inner_rf.find("contactsInputPort").isNull())
+	port_contacts_name = "/hand-control/" + hand_name + "/contacts:i";
     yInfo() << "HandControlModule: contact points input port name is" << port_contacts_name;
 
     // get the name of input port
-    port_cmd_name = rf.find("inputPort").asString();
-    if (rf.find("inputPort").isNull())
-	port_cmd_name = "/hand-control:i";
+    port_cmd_name = inner_rf.find("inputPort").asString();
+    if (inner_rf.find("inputPort").isNull())
+	port_cmd_name = "/hand-control/" + hand_name + ":i";
     yInfo() << "HandControlModule: input port name is" << port_cmd_name;
     
     // open the contact points port
@@ -305,7 +308,7 @@ int main(int argc, char **argv)
 
     // instantiate the resource finder
     yarp::os::ResourceFinder rf;
-    rf.setDefaultConfigFile("config.ini");
+    rf.setDefaultConfigFile("hand_control_module_config.ini");
     rf.configure(argc,argv);
 
     // instantiate the localizer
