@@ -141,7 +141,7 @@ public:
     /*
      * Get the commanded fingers
      */
-    const std::unordered_map<std::string, bool>& getCommandedFingers() const;
+    void getCommandedFingers(std::vector<std::string> &fingers) const;
 
     /*
      * Get the requested linear forward speed of the fingers

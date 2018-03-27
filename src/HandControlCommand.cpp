@@ -120,9 +120,13 @@ std::string HandControlCommand::getCommandedHand() const
     return commanded_hand;
 }
 
-const std::unordered_map<std::string, bool>& HandControlCommand::getCommandedFingers() const
+void HandControlCommand::getCommandedFingers(std::vector<std::string> &fingers) const
 {
-    return this->commanded_fingers;
+    fingers.clear();
+
+    for (const std::string &finger : available_fingers)
+	if(commanded_fingers.at(finger))
+	    fingers.push_back(finger);
 }
 
 bool HandControlCommand::getForwardSpeed(double &speed) const
