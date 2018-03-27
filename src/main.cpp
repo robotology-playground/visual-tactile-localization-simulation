@@ -267,6 +267,29 @@ protected:
     	return true;
     }
 
+    /*
+     * Restore the initial configuration of the fingers
+     * @param which_hand which hand to use
+     */
+    void restoreHand(const std::string &which_hand)
+    {
+	// pick the correct arm and hand
+	yarp::os::BufferedPort<HandControlCommand>* hand_port;
+	if (which_hand == "right")
+	    hand_port = &port_hand_right;
+	else
+	    hand_port = &port_hand_left;
+
+	// issue restore command
+	std::vector<std::string> finger_list = {"thumb", "index", "middle", "ring"};
+	HandControlCommand &hand_cmd = hand_port->prepare();
+	hand_cmd.clear();
+	hand_cmd.setCommandedHand(which_hand);
+	hand_cmd.setCommandedFingers(finger_list);
+	hand_cmd.commandFingersRestore();
+	hand_port->writeStrict();
+    }
+
 public:
     bool configure(yarp::os::ResourceFinder &rf)
     {
@@ -380,12 +403,11 @@ public:
         }
 	else if (cmd == "home-right")
 	{
-	    // ok = right_hand.restoreFingersPosition();
+	    restoreHand("right");
 
-	    // waitSeconds(5);
+	    waitSeconds(5);
 
-	    if (ok)
-		ok &= right_arm.goHome();
+	    ok = right_arm.goHome();
 		
 	    if (ok)
 		reply.addString("Go home done for right arm.");
@@ -394,12 +416,11 @@ public:
 	}
 	else if (cmd == "home-left")
 	{
-	    // ok = left_hand.restoreFingersPosition();
+	    restoreHand("left");
 
-	    // waitSeconds(5);
+	    waitseconds(5);
 
-	    if (ok)
-		ok &= left_arm.goHome();
+	    ok = left_arm.goHome();
 		
 	    if (ok)
 		reply.addString("Go home done for left arm.");
