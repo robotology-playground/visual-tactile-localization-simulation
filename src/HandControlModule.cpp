@@ -185,6 +185,7 @@ void HandControlModule::performControl()
 
 	// go in Idle then
 	current_command = Command::Idle;
+	break;
     }
 
     case Command::Stop:
