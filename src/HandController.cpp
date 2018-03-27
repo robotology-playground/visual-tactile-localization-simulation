@@ -242,9 +242,9 @@ bool HandController::moveFingersMaintainingContact(const std::vector<std::string
 
 	// check if contact is reached
 	if (number_contacts.at(finger_name) > 0 ||
-	    // this is because the ring and the pinky are coupled
-	    // and the pinky could touch before the ring finger
-	    finger_name == "ring" && number_contacts.at("pinky") > 0)
+	    // this is because the ring and the little are coupled
+	    // and the little could touch before the ring finger
+	    finger_name == "ring" && number_contacts.at("little") > 0)
 	{   yInfo() << finger_name << number_contacts.at(finger_name);
 	    // stop the finger
 	    ok = ctl.stop();
