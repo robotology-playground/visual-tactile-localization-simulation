@@ -19,33 +19,8 @@
   </module>
 
   <connection>
-    <from>/box_alt/fakepointcloud:o</from>    
-    <to>/upf-localizer/pc:i</to>
-  </connection>
-
-  <connection>
-    <from>/vis_tac_localization/filter:o</from>    
+    <from>/vis_tac_localization/filter:o</from>
     <to>/upf-localizer:i</to>
-  </connection>
-
-  <connection>
-    <from>/right_hand/skinManager/skin_events:o</from>
-    <to>/hand-control/right/contacts:i</to>
-  </connection>
-
-  <connection>
-    <from>/left_hand/skinManager/skin_events:o</from>
-    <to>/hand-control/left/contacts:i</to>
-  </connection>
-
-  <connection>
-    <from>/right_hand/skinManager/skin_events:o</from>
-    <to>/upf-localizer/contacts:i</to>
-  </connection>
-
-  <connection>
-    <from>/left_hand/skinManager/skin_events:o</from>    
-    <to>/upf-localizer/contacts:i</to>
   </connection>
 
 </application>
