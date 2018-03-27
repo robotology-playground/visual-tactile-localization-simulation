@@ -39,12 +39,15 @@ set(headers_main_module
   ${CMAKE_SOURCE_DIR}/headers/filterCommand.h
   ${CMAKE_SOURCE_DIR}/headers/ArmController.h
   ${CMAKE_SOURCE_DIR}/headers/ModelHelper.h
+  ${CMAKE_SOURCE_DIR}/headers/HandControlCommand.h
   )
 set(sources_main_module
   ${CMAKE_SOURCE_DIR}/src/filterCommand.cpp
   ${CMAKE_SOURCE_DIR}/src/ArmController.cpp
   ${CMAKE_SOURCE_DIR}/src/ModelHelper.cpp
-  ${CMAKE_SOURCE_DIR}/src/main.cpp)
+  ${CMAKE_SOURCE_DIR}/src/main.cpp
+  ${CMAKE_SOURCE_DIR}/src/HandControlCommand.cpp
+  )
 
 set (headers_hand_ctrl_module
   ${CMAKE_SOURCE_DIR}/headers/FingerController.h
