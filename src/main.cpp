@@ -251,6 +251,7 @@ protected:
 	// stop fingers
 	hand_cmd = hand_port->prepare();
 	hand_cmd.clear();
+	hand_cmd.setCommandedHand(which_hand);
 	hand_cmd.commandStop();
 	hand_port->writeStrict();
 
