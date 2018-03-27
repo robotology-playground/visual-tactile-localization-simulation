@@ -187,7 +187,7 @@ protected:
 
 	// pick the correct arm and hand
 	ArmController* arm;
-	yarp::os::BufferedPort<HandControlCommand> hand_port;
+	yarp::os::BufferedPort<HandControlCommand>* hand_port;
 	if (which_hand == "right")
 	{
 	    arm = &right_arm;
@@ -236,6 +236,7 @@ protected:
 	port_filter.writeStrict();
 
 	// enable fingers movements towards the object
+	std::vector<std::string> finger_list = {"index", "middle", "ring"};
 	HandControlCommand &hand_cmd = hand_port->prepare();
 	hand_cmd.clear();
 	hand_cmd.setCommandedHand(which_hand);
@@ -245,7 +246,6 @@ protected:
 	hand_port->writeStrict();
 
 	// perform pushing
-	std::vector<std::string> finger_list = {"index", "middle", "ring"};
 	arm->cartesian()->waitMotionDone(0.03, duration);
 
 	// stop fingers
