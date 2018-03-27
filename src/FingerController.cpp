@@ -375,6 +375,7 @@ bool FingerController::goHome(const double &ref_vel)
     ok = ipos->setRefSpeeds(ctl_joints.size(),
 			    ctl_joints.getFirst(),
 			    speeds.data());
+    if (!ok)
     {
 	yInfo() << "FingerController::goHome Error:"
 		<< "unable to set joints reference speeds for finger"
