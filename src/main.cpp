@@ -85,7 +85,8 @@ protected:
     }
 
     /*
-     * Request visual localization to the filtering algorithm
+     * Request visual localization to the filtering algorithm.
+     * @return true/false on success/failure
      */
     bool localizeObject()
     {
@@ -106,13 +107,32 @@ protected:
 	return true;
     }
 
+    /*
+     * Perform approaching phase.
+     * @param which_hand which hand to use
+     * @return true/false on success/failure
+     */
     bool approachObject(const std::string &which_hand)
     {
 	bool ok;
 
+	// check if the estimate is available
     	if (!is_estimate_available)
     	    return false;
 
+        // copy the current estimate of the object
+	mutex.lock();
+	yarp::sig::Matrix estimate = this->estimate;
+	mutex.unlock();
+
+	// evaluate the desired hand pose
+	// according to the current estimate
+	mod_helper.setModelPose(estimate);
+	double yaw = mod_helper.evalApproachYawAttitude();
+	yarp::sig::Vector pos(3, 0.0);
+	mod_helper.evalApproachPosition(pos);
+
+	// pick the correct arm and hand
 	ArmController* arm;
 	yarp::os::BufferedPort<HandControlCommand>* hand_port;
 	if (which_hand == "right")
@@ -125,36 +145,20 @@ protected:
 	    arm = &left_arm;
 	    hand_port = &port_hand_left;
 	}
+
 	// change effector to the middle finger
 	ok = arm->useFingerFrame("middle");
         if (!ok)
 	    return false;
 
-    	mutex.lock();
-
-    	// copy the current estimate of the object
-    	yarp::sig::Matrix estimate = this->estimate;
-
-    	mutex.unlock();
-
-	// set the estimate within the model helper
-	mod_helper.setModelPose(estimate);
-
-	// set the hand yaw attitude according
-	// to the estimate
-	double yaw = mod_helper.evalApproachYawAttitude();
+	// set desired attitude
 	arm->setHandAttitude(yaw * 180 / M_PI, 15, -90);
-
-	// set the approaching position according
-	// to the estimate
-	yarp::sig::Vector pos(3, 0.0);
-	mod_helper.evalApproachPosition(pos);
 
         // request pose to the cartesian interface
         arm->goToPos(pos);
 
         // wait for motion completion
-        arm->cartesian()->waitMotionDone(0.04, 10.0);
+        arm->cartesian()->waitMotionDone(0.03, 5.0);
 
 	// move fingers towards the object
 	std::vector<std::string> finger_list = {"thumb", "index", "middle", "ring"};
@@ -170,27 +174,29 @@ protected:
     }
 
     /*
-     * Pushes left/right.
-     * During pushing the pose of the object is estimated.
+     * Pushes the object towards the robot using one of the hands.
+     * @param which_hand which hand to use
+     * @return true/false con success/failure
      */
     bool pushObject(const std::string &which_hand)
     {
 	bool ok;
 
-    	if (!is_estimate_available)
-    	    return false;
+	// add some checks to stop this action
+	// in case approaching has not been done yet
 
+	// pick the correct arm and hand
 	ArmController* arm;
-	// HandController* hand;
+	yarp::os::BufferedPort<HandControlCommand> hand_port;
 	if (which_hand == "right")
 	{
 	    arm = &right_arm;
-	    // hand = &right_hand;
+	    hand_port = &port_hand_right;
 	}
 	else
 	{
 	    arm = &left_arm;
-	    // hand = &left_hand;
+	    hand_port = &port_hand_left;
 	}
 
         // change effector to the middle finger
@@ -203,7 +209,10 @@ protected:
 	yarp::sig::Vector att;
 	arm->cartesian()->getPose(pos, att);
 
-        // final pose 
+        // final position
+	// TODO: this should be evaluated within
+	// the model helper taking into account the geometry of the shelf
+	// and should be used to perform closed loop control
 	pos[0] += 0.20;
 
         // store the current context because we are going
@@ -216,7 +225,7 @@ protected:
 	double traj_time = 4.0;
         arm->cartesian()->setTrajTime(traj_time);
 
-        // // request pose to the cartesian interface
+        // request pose to the cartesian interface
         arm->goToPos(pos);
 
 	// enable filtering
@@ -227,31 +236,14 @@ protected:
 	port_filter.writeStrict();
 
 	// perform pushing
-        double t0 = yarp::os::Time::now();
-    	double dt = 0.03;
-    	bool done = false;
-	std::unordered_map<std::string, int> number_contacts;
 	std::vector<std::string> finger_list = {"index", "middle", "ring"};
-    	while (!done && (yarp::os::Time::now() - t0 < duration))
-    	{
-	    // mutex_contacts.lock();
-	    // getNumberContacts(which_hand, number_contacts);
-	    // mutex_contacts.unlock();
-
-	    // hand->moveFingersMaintainingContact(finger_list,
-	    // 					0.005,
-	    // 					number_contacts);
-
-    	    arm->cartesian()->checkMotionDone(&done);
-	}
+	arm->cartesian()->waitMotionDone(0.03, duration);
 
 	// stop filtering
 	filter_data = port_filter.prepare();
 	filter_data.clear();
 	filter_data.setCommand(VOCAB3('O','F','F'));
 	port_filter.writeStrict();
-
-	// hand->stopFingers();
 
         // restore the context
         arm->cartesian()->restoreContext(context_id);
@@ -462,4 +454,5 @@ int main()
     VisTacLocSimModule mod;
     yarp::os::ResourceFinder rf;
     return mod.runModule(rf);
+
 }
