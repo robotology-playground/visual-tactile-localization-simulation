@@ -266,7 +266,7 @@ bool HandController::moveFingersMaintainingContact(const std::vector<std::string
 }
 
 
-bool HandController::restoreFingersPosition()
+bool HandController::restoreFingersPosition(const double &ref_vel)
 {
     bool ok;
 
@@ -277,7 +277,8 @@ bool HandController::restoreFingersPosition()
 	FingerController &ctl = fingers[finger_name];
 
 	// try to restore the initial position of the finger
-	ok = ctl.goHome();
+	// with the requested joints reference velocity
+	ok = ctl.goHome(ref_vel);
 	if (!ok)
 	    return false;
     }
