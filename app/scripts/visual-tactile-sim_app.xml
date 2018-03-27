@@ -30,12 +30,12 @@
 
   <connection>
     <from>/right_hand/skinManager/skin_events:o</from>
-    <to>/vis_tac_localization/contacts:i</to>
+    <to>/hand-control/right/contacts:i</to>
   </connection>
 
   <connection>
-    <from>/left_hand/skinManager/skin_events:o</from>    
-    <to>/vis_tac_localization/contacts:i</to>
+    <from>/left_hand/skinManager/skin_events:o</from>
+    <to>/hand-control/left/contacts:i</to>
   </connection>
 
   <connection>
