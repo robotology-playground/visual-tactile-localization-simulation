@@ -305,11 +305,11 @@ bool HandController::restoreFingersPosition(const double &ref_vel)
     return true;
 }
 
-bool HandController::stopFingers()
+bool HandController::stopFingers(const std::vector<std::string> finger_list)
 {
     bool ok;
     
-    for (std::string finger_name : fingers_names)
+    for (const std::string &finger_name : finger_list)
     {
 	// get the finger controller
 	FingerController &ctl = fingers[finger_name];

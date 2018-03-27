@@ -111,10 +111,10 @@ public:
 
     /*
      * Stop all the fingers.
+     * @param finger_list the list of the fingers to stop
      * @return true/false con success/failure
      */
-    bool stopFingers();
-    
+    bool stopFingers(const std::vector<std::string> finger_list);
 };
 
 class RightHandController : public HandController
