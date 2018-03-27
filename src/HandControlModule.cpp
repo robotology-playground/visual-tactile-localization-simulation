@@ -179,6 +179,15 @@ void HandControlModule::performControl()
 
 	break;
     }
+
+    case Command::Restore:
+    {
+	hand.restoreFingersPosition();
+
+	// go in Idle then
+	current_command = Command::Idle;
+    }
+
     case Command::Stop:
     {
 	stopControl();
