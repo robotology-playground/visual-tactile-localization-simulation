@@ -299,7 +299,9 @@ bool FingerController::getJacobianFingerFrame(yarp::sig::Matrix &jacobian)
     if (finger_name == "thumb")
     {
 	j_ang.removeRows(0, 1);
-	j_ang.removeRows(2, 1);	
+	// after the first removeRows
+	// the third of the angular jacobian occupies the second row
+	j_ang.removeRows(1, 1);
     }
     else
     {
