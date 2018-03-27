@@ -235,9 +235,24 @@ protected:
 	filter_data.setTag(VOCAB3('T','A','C'));
 	port_filter.writeStrict();
 
+	// enable fingers movements towards the object
+	HandControlCommand &hand_cmd = hand_port->prepare();
+	hand_cmd.clear();
+	hand_cmd.setCommandedHand(which_hand);
+	hand_cmd.setCommandedFingers(finger_list);
+	hand_cmd.setFingersForwardSpeed(0.005);
+	hand_cmd.commandFingersFollow();
+	hand_port->writeStrict();
+
 	// perform pushing
 	std::vector<std::string> finger_list = {"index", "middle", "ring"};
 	arm->cartesian()->waitMotionDone(0.03, duration);
+
+	// stop fingers
+	hand_cmd = hand_port->prepare();
+	hand_cmd.clear();
+	hand_cmd.commandStop();
+	hand_port->writeStrict();
 
 	// stop filtering
 	filter_data = port_filter.prepare();
