@@ -419,7 +419,7 @@ public:
 	{
 	    restoreHand("left");
 
-	    waitseconds(5);
+	    waitSeconds(5);
 
 	    ok = left_arm.goHome();
 		
