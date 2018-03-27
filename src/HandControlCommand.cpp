@@ -30,8 +30,8 @@ HandControlCommand::HandControlCommand() : linear_forward_speed(0.0),
 
 bool HandControlCommand::setCommandedHand(const std::string &hand_name)
 {
-    if (commanded_hand != "right" &&
-	commanded_hand != "left")
+    if (hand_name != "right" &&
+	hand_name != "left")
 	return false;
 
     commanded_hand = hand_name;
