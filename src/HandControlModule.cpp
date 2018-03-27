@@ -285,6 +285,8 @@ bool HandControlModule::updateModule()
 	processCommand(*cmd);
 
     performControl();
+
+    return true;
 }
 
 bool HandControlModule::close()
