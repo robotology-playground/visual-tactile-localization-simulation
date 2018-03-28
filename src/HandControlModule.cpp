@@ -95,9 +95,16 @@ void HandControlModule::processCommand(HandControlCommand cmd)
 	cmd.getForwardSpeed(linear_forward_speed);
 
 	if (current_command == Command::Approach)
+	{
 	    // reset detected contacts within the
 	    // hand controller
 	    hand.resetFingersContacts();
+
+	    // remove pending contact points
+	    // from last session
+	    while (port_contacts.getPendingReads() > 0)
+		port_contacts.read(false);
+	}
     }
     else if(current_command == Command::Restore)
     {
