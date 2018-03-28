@@ -14,6 +14,10 @@
 
 // yarp
 #include <yarp/os/RFModule.h>
+#include <yarp/os/RpcServer.h>
+#include <yarp/os/Mutex.h>
+#include <yarp/os/PortReader.h>
+#include <yarp/os/ConnectionReader.h>
 
 // icub-main
 #include <iCub/skinDynLib/skinContactList.h>
@@ -24,7 +28,7 @@
 #include "headers/HandController.h"
 #include "headers/HandControlCommand.h"
 
-class HandControlModule : public yarp::os::RFModule
+class HandControlModule : public yarp::os::RFModule, public yarp::os::PortReader
 {
 private:
     // hand controllers
@@ -38,8 +42,7 @@ private:
     std::string port_contacts_name;
 
     // command port
-    yarp::os::BufferedPort<HandControlCommand> port_cmd;
-    std::string port_cmd_name;
+    std::string port_rpc_name;
 
     // current command
     Command current_command;
@@ -58,6 +61,13 @@ private:
     // period
     double period;
 
+    // rpc server
+    yarp::os::RpcServer rpc_server;
+
+    // mutex required to share data between
+    // the RFModule thread and the PortReader callback
+    yarp::os::Mutex mutex;
+
    /*
     * Return the number of contacts detected for each finger tip
     * as a std::unorderd_map.
@@ -69,8 +79,8 @@ private:
    /*
     * Process a command
     */
-    void processCommand(HandControlCommand cmd);
-
+    void processCommand(HandControlCommand cmd,
+			bool &response);
    /*
     * Perform control according to the current command
     */
@@ -102,6 +112,11 @@ public:
      * Define the cleanup behavior.
      */
     bool close() override;
+
+    /*
+     * Overriden read method of base class yarp::os::PortReader
+     */
+    bool read(yarp::os::ConnectionReader& connection) override;
 };
 
 #endif

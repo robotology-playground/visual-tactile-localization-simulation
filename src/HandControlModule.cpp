@@ -9,6 +9,9 @@
  * @author: Nicola Piga <nicolapiga@gmail.com>
  */
 
+// yarp
+#include <yarp/os/ConnectionWriter.h>
+
 #include "headers/HandControlModule.h"
 
 typedef std::map<iCub::skinDynLib::SkinPart, iCub::skinDynLib::skinContactList> skinPartMap;
@@ -68,8 +71,12 @@ bool HandControlModule::getNumberContacts(iCub::skinDynLib::skinContactList &ski
     return true;
 }
 
-void HandControlModule::processCommand(HandControlCommand cmd)
+void HandControlModule::processCommand(HandControlCommand cmd,
+				       bool &response)
 {
+    // set default response
+    response = true;
+
     // extract command value
     current_command = cmd.getCommand();
 
@@ -117,8 +124,13 @@ void HandControlModule::processCommand(HandControlCommand cmd)
 
 void HandControlModule::performControl()
 {
+    // get command safely
+    mutex.lock();
+    Command cmd = current_command;
+    mutex.unlock();
+
     // switch according to the current command
-    switch(current_command)
+    switch(cmd)
     {
     case Command::Empty:
     case Command::Idle:
@@ -237,11 +249,11 @@ bool HandControlModule::configure(yarp::os::ResourceFinder &rf)
 	port_contacts_name = "/hand-control/" + hand_name + "/contacts:i";
     yInfo() << "HandControlModule: contact points input port name is" << port_contacts_name;
 
-    // get the name of input port
-    port_cmd_name = inner_rf.find("inputPort").asString();
-    if (inner_rf.find("inputPort").isNull())
-	port_cmd_name = "/hand-control/" + hand_name + ":i";
-    yInfo() << "HandControlModule: input port name is" << port_cmd_name;
+    // get the name of rpc port
+    port_rpc_name = inner_rf.find("rpcPort").asString();
+    if (inner_rf.find("rpcPort").isNull())
+	port_rpc_name = "/hand-control/" + hand_name + "/rpc:i";
+    yInfo() << "HandControlModule: rpc port name is" << port_rpc_name;
     
     // open the contact points port
     bool ok = port_contacts.open(port_contacts_name);
@@ -252,16 +264,17 @@ bool HandControlModule::configure(yarp::os::ResourceFinder &rf)
 	return false;
     }
 
-    // open the input command port
-    ok = port_cmd.open(port_cmd_name);
+    // open the rpc server port
+    ok = rpc_server.open(port_rpc_name);
     if (!ok)
     {
 	yError() << "HandControlModule::configure"
-		 << "Error: unable to open the input command port";
+		 << "Error: unable to open the rpc port";
 	return false;
     }
-    // set FIFO policy
-    port_cmd.setStrict();
+
+    // configure callback for rpc
+    rpc_server.setReader(*this);
 
     // configure hand the hand controller
     ok = hand.configure(hand_name);
@@ -287,11 +300,6 @@ double HandControlModule::getPeriod()
 
 bool HandControlModule::updateModule()
 {
-    // try to receive a command from the input port
-    HandControlCommand *cmd = port_cmd.read(false);
-    if (cmd != YARP_NULLPTR)
-	processCommand(*cmd);
-
     performControl();
 
     return true;
@@ -304,7 +312,45 @@ bool HandControlModule::close()
 
     // close ports
     port_contacts.close();
-    port_cmd.close();
+    rpc_server.close();
+}
+
+bool HandControlModule::read(yarp::os::ConnectionReader& connection)
+{
+    // get command from the connection
+    HandControlCommand hand_cmd;
+    bool ok = hand_cmd.read(connection);
+    if (!ok)
+    {
+	yError() << "HandControlModule::read"
+		 << "Error: unable to read the hand control command"
+		 << "from the incoming connection";
+	return false;
+    }
+
+    // process the received commands
+    bool response;
+
+    mutex.lock();
+
+    processCommand(hand_cmd, response);
+
+    mutex.unlock();
+
+    // sends the response back
+    yarp::os::Value reply(response);
+    yarp::os::ConnectionWriter* to_sender = connection.getWriter();
+    if (to_sender == NULL)
+    {
+	yError() << "HandControlModule::read"
+		 << "Error: unable to get a ConnectionWriter from the"
+		 << "incoming connection";
+
+	return false;
+    }
+    reply.write(*to_sender);
+
+    return true;
 }
 
 int main(int argc, char **argv)
