@@ -20,6 +20,7 @@
 #include <yarp/os/RFModule.h>
 #include <yarp/os/Vocab.h>
 #include <yarp/os/LogStream.h>
+#include <yarp/os/RpcClient.h>
 
 // yarp sig
 #include <yarp/sig/Vector.h>
@@ -59,8 +60,8 @@ protected:
     yarp::os::BufferedPort<yarp::sig::FilterCommand> port_filter;
 
     // hand controller modules ports
-    yarp::os::BufferedPort<HandControlCommand> port_hand_right;
-    yarp::os::BufferedPort<HandControlCommand> port_hand_left;
+    yarp::os::RpcClient port_hand_right;
+    yarp::os::RpcClient port_hand_left;
 
     // FrameTransformClient to read published poses
     yarp::dev::PolyDriver drv_transform_client;
@@ -134,7 +135,7 @@ protected:
 
 	// pick the correct arm and hand
 	ArmController* arm;
-	yarp::os::BufferedPort<HandControlCommand>* hand_port;
+	yarp::os::RpcClient* hand_port;
 	if (which_hand == "right")
 	{
 	    arm = &right_arm;
@@ -162,13 +163,14 @@ protected:
 
 	// move fingers towards the object
 	std::vector<std::string> finger_list = {"thumb", "index", "middle", "ring"};
-	HandControlCommand &hand_cmd = hand_port->prepare();
+	HandControlCommand hand_cmd;
+	yarp::os::Value response;
 	hand_cmd.clear();
 	hand_cmd.setCommandedHand(which_hand);
 	hand_cmd.setCommandedFingers(finger_list);
 	hand_cmd.setFingersForwardSpeed(0.009);
 	hand_cmd.commandFingersApproach();
-	hand_port->writeStrict();
+	hand_port->write(hand_cmd, response);
 
 	return true;
     }
@@ -187,7 +189,7 @@ protected:
 
 	// pick the correct arm and hand
 	ArmController* arm;
-	yarp::os::BufferedPort<HandControlCommand>* hand_port;
+	yarp::os::RpcClient* hand_port;
 	if (which_hand == "right")
 	{
 	    arm = &right_arm;
@@ -237,24 +239,24 @@ protected:
 
 	// enable fingers movements towards the object
 	std::vector<std::string> finger_list = {"index", "middle", "ring"};
-	HandControlCommand &hand_cmd = hand_port->prepare();
+	HandControlCommand hand_cmd;
+	yarp::os::Value response;
 	hand_cmd.clear();
 	hand_cmd.setCommandedHand(which_hand);
 	hand_cmd.setCommandedFingers(finger_list);
 	hand_cmd.setFingersForwardSpeed(0.005);
 	hand_cmd.commandFingersFollow();
-	hand_port->writeStrict();
+	hand_port->write(hand_cmd, response);
 
 	// perform pushing
 	arm->cartesian()->waitMotionDone(0.03, duration);
 
 	// stop fingers
-	hand_cmd = hand_port->prepare();
 	hand_cmd.clear();
 	hand_cmd.setCommandedHand(which_hand);
 	hand_cmd.setCommandedFingers(finger_list);
 	hand_cmd.commandStop();
-	hand_port->writeStrict();
+	hand_port->write(hand_cmd, response);
 
 	// stop filtering
 	filter_data = port_filter.prepare();
@@ -275,7 +277,7 @@ protected:
     void restoreHand(const std::string &which_hand)
     {
 	// pick the correct arm and hand
-	yarp::os::BufferedPort<HandControlCommand>* hand_port;
+	yarp::os::RpcClient* hand_port;
 	if (which_hand == "right")
 	    hand_port = &port_hand_right;
 	else
@@ -283,13 +285,14 @@ protected:
 
 	// issue restore command
 	std::vector<std::string> finger_list = {"thumb", "index", "middle", "ring"};
-	HandControlCommand &hand_cmd = hand_port->prepare();
+	HandControlCommand hand_cmd;
+	yarp::os::Value response;
 	hand_cmd.clear();
 	hand_cmd.setCommandedHand(which_hand);
 	hand_cmd.setCommandedFingers(finger_list);
 	hand_cmd.setFingersRestoreSpeed(15.0);
 	hand_cmd.commandFingersRestore();
-	hand_port->writeStrict();
+	hand_port->write(hand_cmd, response);
     }
 
 public:
@@ -303,14 +306,14 @@ public:
             return false;
         }
 
-	ok = port_hand_right.open("/vis_tac_localization/hand-control/right:o");
+	ok = port_hand_right.open("/vis_tac_localization/hand-control/right/rpc:o");
 	if (!ok)
         {
             yError() << "VisTacLocSimModule: unable to open the right hand control module port";
             return false;
         }
 
-	ok = port_hand_left.open("/vis_tac_localization/hand-control/left:o");
+	ok = port_hand_left.open("/vis_tac_localization/hand-control/left/rpc:o");
 	if (!ok)
         {
             yError() << "VisTacLocSimModule: unable to open the left hand control module port";
