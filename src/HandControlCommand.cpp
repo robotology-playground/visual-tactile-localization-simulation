@@ -106,6 +106,16 @@ void HandControlCommand::commandStop()
     cmd = Command::Stop;
 }
 
+void HandControlCommand::requestFingersApproachStatus()
+{
+    cmd = Command::ApproachStatus;
+}
+
+void HandControlCommand::requestFingersRestoreStatus()
+{
+    cmd = Command::RestoreStatus;
+}
+
 void HandControlCommand::clear()
 {
     commanded_hand.clear();

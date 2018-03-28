@@ -21,7 +21,10 @@
 #include <set>
 #include <unordered_map>
 
-enum class Command { Empty = 0, Idle = 1, Stop = 2, Approach = 3, Follow = 4, Restore = 5 };
+enum class Command { Empty = 0, Idle = 1,
+	             Stop = 2, Approach = 3,
+	             Follow = 4, Restore = 5,
+	             ApproachStatus = 6, RestoreStatus = 7};
 
 class HandControlCommand : public yarp::os::Portable
 {
@@ -127,6 +130,16 @@ public:
      * Request the immediate stop of any movement of the fingers
      */
     void commandStop();
+
+    /*
+     * Request the status of the finger approaching phase
+     */
+    void requestFingersApproachStatus();
+
+    /*
+     * Request the status of the finger restore phase
+     */
+    void requestFingersRestoreStatus();
 
     /*
      * Clear the command
