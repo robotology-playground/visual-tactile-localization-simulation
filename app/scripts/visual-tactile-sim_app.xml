@@ -24,13 +24,13 @@
   </connection>
 
   <connection>
-    <from>/vis_tac_localization/hand-control/right:o</from>
-    <to>/hand-control/right:i</to>
+    <from>/vis_tac_localization/hand-control/right/rpc:o</from>
+    <to>/hand-control/right/rpc:i</to>
   </connection>
 
   <connection>
-    <from>/vis_tac_localization/hand-control/left:o</from>
-    <to>/hand-control/left:i</to>
+    <from>/vis_tac_localization/hand-control/left/rpc:o</from>
+    <to>/hand-control/left/rpc:i</to>
   </connection>
 
 </application>
