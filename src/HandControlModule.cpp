@@ -71,21 +71,14 @@ bool HandControlModule::getNumberContacts(iCub::skinDynLib::skinContactList &ski
     return true;
 }
 
-void HandControlModule::processCommand(HandControlCommand cmd,
-				       bool &response)
+void HandControlModule::processCommand(const HandControlCommand &cmd,
+				       HandControlResponse &response)
 {
     // set default response
-    response = true;
+    response.clear();
 
     // extract command value
-    current_command = cmd.getCommand();
-
-    if (current_command == Command::Empty ||
-	current_command == Command::Idle)
-    {
-	// nothing to do here
-	return;
-    }
+    Command command = cmd.getCommand();
 
     // check if the command is for this hand
     // (it should not happen)
@@ -95,27 +88,72 @@ void HandControlModule::processCommand(HandControlCommand cmd,
 	return;
     }
 
-    // get requested speeds if required
-    if (current_command == Command::Approach ||
-	current_command == Command::Follow)
+    if (command == Command::Empty ||
+	command == Command::Idle)
     {
+	// nothing to do here
+	return;
+    }
+
+    switch(command)
+    {
+
+    case Command::ApproachStatus:
+    {
+	// set the status in the response
+	response.setIsApproachDone(is_approach_done);
+
+	break;
+    }
+
+    case Command::RestoreStatus:
+    {
+	// set the status in the response
+	response.setIsRestoreDone(is_restore_done);
+
+	break;
+    }
+
+    case Command::Approach:
+    case Command::Follow:
+    {
+	// change the current command
+	current_command = command;
+
+	// get requested speeds
 	cmd.getForwardSpeed(linear_forward_speed);
 
-	if (current_command == Command::Approach)
+	// remove pending contact points
+	// from last session
+	while (port_contacts.getPendingReads() > 0)
+	    port_contacts.read(false);
+
+	if (command == Command::Approach)
 	{
 	    // reset detected contacts within the
 	    // hand controller
 	    hand.resetFingersContacts();
 
-	    // remove pending contact points
-	    // from last session
-	    while (port_contacts.getPendingReads() > 0)
-		port_contacts.read(false);
+	    // reset status
+	    is_approach_done = false;
 	}
+
+	break;
     }
-    else if(current_command == Command::Restore)
+
+    case Command::Restore:
     {
+	// change the current command
+	current_command = command;
+
+	// get requested joints speeds
 	cmd.getRestoreSpeed(joint_restore_speed);
+
+	// reset status
+	is_restore_done = false;
+
+	break;
+    }
     }
 
     // get commanded fingers
@@ -192,6 +230,12 @@ void HandControlModule::performControl()
 		// approach phase completed
 		// go in Idle
 		current_command = Command::Idle;
+
+		// update flag
+		mutex.lock();
+		is_approach_done = true;
+		mutex.unlock();
+
 	    }
 	}
 
@@ -205,6 +249,13 @@ void HandControlModule::performControl()
 
 	// go in Idle then
 	current_command = Command::Idle;
+
+	// TODO: add check for motion done
+	// update flag
+	// mutex.lock();
+	// is_restore_done = true;
+	// mutex.unlock();
+
 	break;
     }
 
@@ -289,6 +340,10 @@ bool HandControlModule::configure(yarp::os::ResourceFinder &rf)
 
     // reset current command
     current_command = Command::Idle;
+
+    // reset flags
+    is_approach_done = false;
+    is_restore_done = false;
  	
     return true;
 }
@@ -329,7 +384,7 @@ bool HandControlModule::read(yarp::os::ConnectionReader& connection)
     }
 
     // process the received commands
-    bool response;
+    HandControlResponse response;
 
     mutex.lock();
 
@@ -338,7 +393,6 @@ bool HandControlModule::read(yarp::os::ConnectionReader& connection)
     mutex.unlock();
 
     // sends the response back
-    yarp::os::Value reply(response);
     yarp::os::ConnectionWriter* to_sender = connection.getWriter();
     if (to_sender == NULL)
     {
@@ -348,7 +402,7 @@ bool HandControlModule::read(yarp::os::ConnectionReader& connection)
 
 	return false;
     }
-    reply.write(*to_sender);
+    response.write(*to_sender);
 
     return true;
 }

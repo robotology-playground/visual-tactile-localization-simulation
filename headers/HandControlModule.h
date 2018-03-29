@@ -27,6 +27,7 @@
 
 #include "headers/HandController.h"
 #include "headers/HandControlCommand.h"
+#include "headers/HandControlResponse.h"
 
 class HandControlModule : public yarp::os::RFModule, public yarp::os::PortReader
 {
@@ -61,6 +62,10 @@ private:
     // period
     double period;
 
+    // status
+    bool is_approach_done;
+    bool is_restore_done;
+
     // rpc server
     yarp::os::RpcServer rpc_server;
 
@@ -79,8 +84,8 @@ private:
    /*
     * Process a command
     */
-    void processCommand(HandControlCommand cmd,
-			bool &response);
+    void processCommand(const HandControlCommand &cmd,
+			HandControlResponse &response);
    /*
     * Perform control according to the current command
     */
