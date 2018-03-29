@@ -40,6 +40,7 @@ set(headers_main_module
   ${CMAKE_SOURCE_DIR}/headers/ArmController.h
   ${CMAKE_SOURCE_DIR}/headers/ModelHelper.h
   ${CMAKE_SOURCE_DIR}/headers/HandControlCommand.h
+  ${CMAKE_SOURCE_DIR}/headers/HandControlResponse.h
   )
 set(sources_main_module
   ${CMAKE_SOURCE_DIR}/src/filterCommand.cpp
@@ -47,6 +48,7 @@ set(sources_main_module
   ${CMAKE_SOURCE_DIR}/src/ModelHelper.cpp
   ${CMAKE_SOURCE_DIR}/src/main.cpp
   ${CMAKE_SOURCE_DIR}/src/HandControlCommand.cpp
+  ${CMAKE_SOURCE_DIR}/src/HandControlResponse.cpp
   )
 
 set (headers_hand_ctrl_module
@@ -54,6 +56,7 @@ set (headers_hand_ctrl_module
   ${CMAKE_SOURCE_DIR}/headers/HandController.h
   ${CMAKE_SOURCE_DIR}/headers/HandControlModule.h
   ${CMAKE_SOURCE_DIR}/headers/HandControlCommand.h
+  ${CMAKE_SOURCE_DIR}/headers/HandControlResponse.h
   )
 
 set (sources_hand_ctrl_module
@@ -61,6 +64,7 @@ set (sources_hand_ctrl_module
   ${CMAKE_SOURCE_DIR}/src/HandController.cpp
   ${CMAKE_SOURCE_DIR}/src/HandControlModule.cpp
   ${CMAKE_SOURCE_DIR}/src/HandControlCommand.cpp
+  ${CMAKE_SOURCE_DIR}/src/HandControlResponse.cpp
   )
 
 include_directories(${YARP_INCLUDE_DIRS})
