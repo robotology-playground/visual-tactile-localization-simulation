@@ -39,6 +39,7 @@
 #include "headers/ArmController.h"
 #include "headers/ModelHelper.h"
 #include "headers/HandControlCommand.h"
+#include "headers/HandControlResponse.h"
 
 using namespace yarp::math;
 
@@ -164,8 +165,7 @@ protected:
 	// move fingers towards the object
 	std::vector<std::string> finger_list = {"thumb", "index", "middle", "ring"};
 	HandControlCommand hand_cmd;
-	yarp::os::Value response;
-	hand_cmd.clear();
+	HandControlResponse response;
 	hand_cmd.setCommandedHand(which_hand);
 	hand_cmd.setCommandedFingers(finger_list);
 	hand_cmd.setFingersForwardSpeed(0.009);
@@ -240,8 +240,7 @@ protected:
 	// enable fingers movements towards the object
 	std::vector<std::string> finger_list = {"index", "middle", "ring"};
 	HandControlCommand hand_cmd;
-	yarp::os::Value response;
-	hand_cmd.clear();
+	HandControlResponse response;
 	hand_cmd.setCommandedHand(which_hand);
 	hand_cmd.setCommandedFingers(finger_list);
 	hand_cmd.setFingersForwardSpeed(0.005);
@@ -252,9 +251,6 @@ protected:
 	arm->cartesian()->waitMotionDone(0.03, duration);
 
 	// stop fingers
-	hand_cmd.clear();
-	hand_cmd.setCommandedHand(which_hand);
-	hand_cmd.setCommandedFingers(finger_list);
 	hand_cmd.commandStop();
 	hand_port->write(hand_cmd, response);
 
@@ -286,7 +282,7 @@ protected:
 	// issue restore command
 	std::vector<std::string> finger_list = {"thumb", "index", "middle", "ring"};
 	HandControlCommand hand_cmd;
-	yarp::os::Value response;
+	HandControlResponse response;
 	hand_cmd.clear();
 	hand_cmd.setCommandedHand(which_hand);
 	hand_cmd.setCommandedFingers(finger_list);
