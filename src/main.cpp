@@ -110,6 +110,67 @@ protected:
     }
 
     /*
+     * Wait until fingers approaching phase is done
+     * @param which_hand which hand to ask for
+     * @param timeout maximum time to wait for
+     * @return true for success, false for failure and/or timeout expired
+     */
+    bool waitFingersApproachDone(const std::string &which_hand,
+				 const double &period = 0.1,
+				 const double &timeout = 0.0)
+    {
+	HandControlCommand hand_cmd;
+	HandControlResponse response;
+	bool done = false;
+	bool ok;
+
+        // pick the correct hand
+	yarp::os::RpcClient* hand_port;
+	if (which_hand == "right")
+	    hand_port = &port_hand_right;
+	else
+	    hand_port = &port_hand_left;
+
+	// store initial time
+	double t0 = yarp::os::Time::now();
+
+	// check until done or timeout expires
+	while(!done)
+	{
+	    if (timeout != 0)
+	    {
+		if (yarp::os::Time::now() - t0 > timeout)
+		{
+		    // return false in case of timeout expired
+		    return false;
+		}
+	    }
+
+	    // clear messages
+	    hand_cmd.clear();
+	    response.clear();
+
+	    // request for status
+	    hand_cmd.setCommandedHand(which_hand);
+	    hand_cmd.requestFingersApproachStatus();
+	    hand_port->write(hand_cmd, response);
+
+	    // check status
+	    ok = response.isApproachDone(done);
+	    if (!ok)
+	    {
+		yError() << "VisTacLocSimModule::waitFingersApproachDone"
+			 << "Error: unable to get the status of the fingers"
+			 << "phase from the hand control module";
+		return false;
+	    }
+	    yarp::os::Time::delay(period);
+	}
+
+	return true;
+    }
+
+    /*
      * Perform approaching phase.
      * @param which_hand which hand to use
      * @return true/false on success/failure
@@ -171,6 +232,11 @@ protected:
 	hand_cmd.setFingersForwardSpeed(0.009);
 	hand_cmd.commandFingersApproach();
 	hand_port->write(hand_cmd, response);
+
+	// wait for completion
+	ok = waitFingersApproachDone(which_hand);
+	if (!ok)
+	    return false;
 
 	return true;
     }
