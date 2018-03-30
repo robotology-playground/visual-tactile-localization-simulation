@@ -252,19 +252,50 @@ void HandControlModule::performControl()
 
     case Command::Restore:
     {
+	// issue finger restore command
 	hand.restoreFingersPosition(commanded_fingers,
 				    joint_restore_speed);
 
-	// go in Idle when finished
-	// mutex.lock();
-	// current_command = Command::Idle;
-	// mutex.unlock();
+	// go in WaitRestoreDone
+	mutex.lock();
+	current_command = Command::WaitRestoreDone;
+	mutex.unlock();
 
-	// TODO: add check for motion done
+	break;
+    }
+
+    case Command::WaitRestoreDone:
+    {
+	bool is_done;
+	bool ok;
+	ok = hand.isFingersRestoreDone(commanded_fingers,
+				       is_done);
+
+	// this is commented due to issues with Gazebo
+	// if (!ok)
+	// {
+	//     // something went wrong
+	//     // stop finger movements
+	//     stopControl();
+
+	//     // go in Idle
+	//     mutex.lock();
+	//     current_command = Command::Idle;
+	//     mutex.unlock();
+
+	//     return;
+	// }
+
+	mutex.lock();
+
 	// update flag
-	// mutex.lock();
-	// is_restore_done = true;
-	// mutex.unlock();
+	is_restore_done = is_done;
+
+	// go in Idle when done
+	if (is_done)
+	    current_command = Command::Idle;
+
+	mutex.unlock();
 
 	break;
     }
