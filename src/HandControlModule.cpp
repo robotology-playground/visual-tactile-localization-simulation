@@ -95,6 +95,20 @@ void HandControlModule::processCommand(const HandControlCommand &cmd,
 	return;
     }
 
+    // perform actions common to
+    // several commands
+    if (command == Command::Approach ||
+	command == Command::Follow ||
+	command == Command::Restore ||
+	command == Command::Stop)
+    {
+	// change the current command
+	current_command = command;
+
+	// get commanded fingers
+	cmd.getCommandedFingers(commanded_fingers);
+    }
+
     switch(command)
     {
 
@@ -117,9 +131,6 @@ void HandControlModule::processCommand(const HandControlCommand &cmd,
     case Command::Approach:
     case Command::Follow:
     {
-	// change the current command
-	current_command = command;
-
 	// get requested speeds
 	cmd.getForwardSpeed(linear_forward_speed);
 
@@ -143,9 +154,6 @@ void HandControlModule::processCommand(const HandControlCommand &cmd,
 
     case Command::Restore:
     {
-	// change the current command
-	current_command = command;
-
 	// get requested joints speeds
 	cmd.getRestoreSpeed(joint_restore_speed);
 
@@ -155,9 +163,6 @@ void HandControlModule::processCommand(const HandControlCommand &cmd,
 	break;
     }
     }
-
-    // get commanded fingers
-    cmd.getCommandedFingers(commanded_fingers);
 }
 
 void HandControlModule::performControl()
@@ -195,14 +200,14 @@ void HandControlModule::performControl()
 	// command fingers
 	bool done = false;
 	bool ok = false;
-	if (current_command == Command::Approach)
+	if (cmd == Command::Approach)
 	{
 	    ok = hand.moveFingersUntilContact(commanded_fingers,
 					      linear_forward_speed,
 					      number_contacts,
 					      done);
 	}
-	else if (current_command == Command::Follow)
+	else if (cmd == Command::Follow)
 	{
 	    ok = hand.moveFingersMaintainingContact(commanded_fingers,
 						    linear_forward_speed,
@@ -216,26 +221,29 @@ void HandControlModule::performControl()
 	    stopControl();
 
 	    // go in Idle
+	    mutex.lock();
 	    current_command = Command::Idle;
+	    mutex.unlock();
 
 	    return;
 	}
 
 	// in case of Approach
 	// check if contact was reached for all the fingers
-	if (current_command == Command::Approach)
+	if (cmd == Command::Approach)
 	{
 	    if (done)
 	    {
+		mutex.lock();
+
 		// approach phase completed
 		// go in Idle
 		current_command = Command::Idle;
 
 		// update flag
-		mutex.lock();
 		is_approach_done = true;
-		mutex.unlock();
 
+		mutex.unlock();
 	    }
 	}
 
@@ -247,8 +255,10 @@ void HandControlModule::performControl()
 	hand.restoreFingersPosition(commanded_fingers,
 				    joint_restore_speed);
 
-	// go in Idle then
-	current_command = Command::Idle;
+	// go in Idle when finished
+	// mutex.lock();
+	// current_command = Command::Idle;
+	// mutex.unlock();
 
 	// TODO: add check for motion done
 	// update flag
