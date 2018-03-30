@@ -24,7 +24,8 @@
 enum class Command { Empty = 0, Idle = 1,
 	             Stop = 2, Approach = 3,
 	             Follow = 4, Restore = 5,
-	             ApproachStatus = 6, RestoreStatus = 7};
+	             WaitRestoreDone = 6,
+	             ApproachStatus = 7, RestoreStatus = 8};
 
 class HandControlCommand : public yarp::os::Portable
 {
