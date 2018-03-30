@@ -283,27 +283,26 @@ bool HandController::restoreFingersPosition(const std::vector<std::string> &fing
 	    return false;
     }
 
-    // wait for the movement completion
-    // *not working in Gazebo*
-    // bool done = false;
-    // bool finger_done;
-    // while (!done)
-    // {
-    // 	done = true;
-    // 	for (std::string finger_name : fingers_names)
-    // 	{
-    // 	    // get the finger controller
-    // 	    FingerController &ctl = fingers[finger_name];
-
-    // 	    // update done
-    // 	    ok = ctl.isPositionMoveDone(finger_done);
-    // 	    if (!ok)
-    // 		return false;
-    // 	    done &= finger_done;
-    // 	}
-    // }
-
     return true;
+}
+
+bool HandController::isFingersRestoreDone(const std::vector<std::string> &finger_list,
+					  bool &is_done)
+{
+    bool ok;
+    bool finger_done;
+    is_done = true;
+    for (std::string finger_name : fingers_names)
+    {
+	// get the finger controller
+	FingerController &ctl = fingers[finger_name];
+
+	// update done
+	ok = ctl.isPositionMoveDone(finger_done);
+	if (!ok)
+	    return false;
+	is_done &= finger_done;
+    }
 }
 
 bool HandController::stopFingers(const std::vector<std::string> finger_list)

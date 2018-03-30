@@ -112,6 +112,16 @@ public:
 				const double &ref_vel);
 
     /*
+     * Return true if the fingers positions have been restored
+     * @param finger_list the list of fingers to check for
+     * @param is_done whether the restore is done or not for the fingers
+     *        in finger_list
+     * @return true/false con success/failure
+     */
+    bool isFingersRestoreDone(const std::vector<std::string> &finger_list,
+			      bool &is_done);
+
+    /*
      * Stop all the fingers.
      * @param finger_list the list of the fingers to stop
      * @return true/false con success/failure
