@@ -39,6 +39,9 @@ protected:
 
     // cartesian controller initial context
     int startup_cart_context;
+
+    // cartesian controller current context
+    int curr_cart_context;
     
     // home pose
     yarp::sig::Vector home_pos;
@@ -136,6 +139,18 @@ public:
      * hand_attitude.
      */
     void goToPos(const yarp::sig::Vector &pos);
+
+    /*
+     * Store the current context of the cartesian controller
+     *
+     */
+    void storeContext();
+
+    /*
+     * Restore the previously saved context of the cartesian controller
+     *
+     */
+    void restoreContext();
 };
 
 class RightArmController : public ArmController

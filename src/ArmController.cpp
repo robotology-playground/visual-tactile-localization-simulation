@@ -417,3 +417,13 @@ void ArmController::goToPos(const yarp::sig::Vector &pos)
 {
     icart->goToPoseSync(pos, hand_attitude);
 }
+
+void ArmController::storeContext()
+{
+    icart->storeContext(&curr_cart_context);
+}
+
+void ArmController::restoreContext()
+{
+    icart->restoreContext(curr_cart_context);
+}
