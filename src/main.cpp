@@ -43,6 +43,15 @@
 
 using namespace yarp::math;
 
+enum class Status { Idle,
+	            Localize,
+	            ArmApproach, WaitArmApproachDone,
+                    FingersApproach, WaitFingersApproachDone,
+	            Push, WaitPushDone,
+	            ArmRestore, WaitArmRestoreDone,
+	            FingersRestore, WaitFingersRestoreDone,
+	            Stop };
+
 class VisTacLocSimModule: public yarp::os::RFModule
 {
 protected:
@@ -75,16 +84,15 @@ protected:
     // model helper class
     ModelHelper mod_helper;
 
-    /*
-     * Wait approximately for n seconds.
-     * @param seconds the number of seconds to wait for
-     */
-    void waitSeconds(const int &seconds)
-    {
-	double t0 = yarp::os::Time::now();
-	while (yarp::os::Time::now() - t0 < seconds)
-	    yarp::os::Time::delay(1.0);
-    }
+    // status
+    Status status;
+    Status previous_status;
+    std::string current_hand;
+    bool is_approach_done;
+
+    // last time
+    // required to implement timeouts
+    double last_time;
 
     /*
      * Request visual localization to the filtering algorithm.
@@ -110,19 +118,79 @@ protected:
     }
 
     /*
-     * Wait until fingers approaching phase is done
-     * @param which_hand which hand to ask for
-     * @param timeout maximum time to wait for
-     * @return true for success, false for failure and/or timeout expired
+     * Enable tactile filtering
+     * @return true/false on success/failure
      */
-    bool waitFingersApproachDone(const std::string &which_hand,
-				 const double &period = 0.1,
-				 const double &timeout = 0.0)
+    bool enableTactileFiltering()
+    {
+	yarp::sig::FilterCommand &filter_data = port_filter.prepare();
+
+	// clear the storage
+	filter_data.clear();
+
+	// set the command
+	filter_data.setCommand(VOCAB2('O','N'));
+
+	// set the tag
+	filter_data.setTag(VOCAB3('T','A','C'));
+
+	// set command to the filter
+	port_filter.writeStrict();
+
+	return true;
+    }
+
+    /*
+     * Disable tactile filtering
+     * @return true/false on success/failure
+     */
+    bool disableTactileFiltering()
+    {
+	yarp::sig::FilterCommand &filter_data = port_filter.prepare();
+
+	// clear the storage
+	filter_data.clear();
+
+	// set the command
+	filter_data.setCommand(VOCAB3('O','F','F'));
+
+	// send command fo the filter
+	port_filter.writeStrict();
+
+	return true;
+    }
+
+    /*
+     * Check if arm motion is done
+     * @param which_arm which arm to ask for
+     * @param is_done whether the arm motion is done or not
+     * @return true for success, false for failure
+     */
+    bool checkArmMotionDone(const std::string &which_arm,
+			    bool &is_done)
+    {
+	// pick the correct arm
+	ArmController* arm;
+	if (which_arm == "right")
+	    arm = &right_arm;
+	else
+	    arm = &left_arm;
+
+	// check status
+	return arm->cartesian()->checkMotionDone(&is_done);
+    }
+
+    /*
+     * Check if approaching phase with fingers is done
+     * @param which_hand which hand to ask for
+     * @param is_done whether the approach phase is done or not
+     * @return true for success, false for failure
+     */
+    bool checkFingersApproachDone(const std::string &which_hand,
+				  bool &is_done)
     {
 	HandControlCommand hand_cmd;
 	HandControlResponse response;
-	bool done = false;
-	bool ok;
 
         // pick the correct hand
 	yarp::os::RpcClient* hand_port;
@@ -131,62 +199,81 @@ protected:
 	else
 	    hand_port = &port_hand_left;
 
-	// store initial time
-	double t0 = yarp::os::Time::now();
+	// clear messages
+	hand_cmd.clear();
+	response.clear();
 
-	// check until done or timeout expires
-	while(!done)
+	// request for status
+	hand_cmd.setCommandedHand(which_hand);
+	hand_cmd.requestFingersApproachStatus();
+	hand_port->write(hand_cmd, response);
+
+	// check status
+	bool ok = response.isApproachDone(is_done);
+	if (!ok)
 	{
-	    if (timeout != 0)
-	    {
-		if (yarp::os::Time::now() - t0 > timeout)
-		{
-		    // return false in case of timeout expired
-		    return false;
-		}
-	    }
-
-	    // clear messages
-	    hand_cmd.clear();
-	    response.clear();
-
-	    // request for status
-	    hand_cmd.setCommandedHand(which_hand);
-	    hand_cmd.requestFingersApproachStatus();
-	    hand_port->write(hand_cmd, response);
-
-	    // check status
-	    ok = response.isApproachDone(done);
-	    if (!ok)
-	    {
-		yError() << "VisTacLocSimModule::waitFingersApproachDone"
-			 << "Error: unable to get the status of the fingers"
-			 << "phase from the hand control module";
-		return false;
-	    }
-	    yarp::os::Time::delay(period);
+	    yError() << "VisTacLocSimModule::checkFingersApproachDone"
+		     << "Error: unable to get the status of the fingers"
+		     << "phase from the hand control module";
+	    return false;
 	}
 
 	return true;
     }
 
     /*
-     * Perform approaching phase.
-     * @param which_hand which hand to use
+     * Check if restore of initial configuration of fingers is done
+     * @param which_hand which hand to ask for
+     * @param is_done whether the finger restore is done or not
+     * @return true for success, false for failure
+     */
+    bool checkFingersRestoreDone(const std::string &which_hand,
+				bool &is_done)
+    {
+	HandControlCommand hand_cmd;
+	HandControlResponse response;
+
+        // pick the correct hand
+	yarp::os::RpcClient* hand_port;
+	if (which_hand == "right")
+	    hand_port = &port_hand_right;
+	else
+	    hand_port = &port_hand_left;
+
+	// clear messages
+	hand_cmd.clear();
+	response.clear();
+
+	// request for status
+	hand_cmd.setCommandedHand(which_hand);
+	hand_cmd.requestFingersRestoreStatus();
+	hand_port->write(hand_cmd, response);
+
+	// check status
+	bool ok = response.isRestoreDone(is_done);
+	if (!ok)
+	{
+	    yError() << "VisTacLocSimModule::checkFingersRestoreDone"
+		     << "Error: unable to get the status of the fingers"
+		     << "restore phase from the hand control module";
+	    return false;
+	}
+
+	return true;
+    }
+
+    /*
+     * Perform approaching phase with the specified arm
+     * @param which_arm which arm to use
      * @return true/false on success/failure
      */
-    bool approachObject(const std::string &which_hand)
+    bool approachObjectWithArm(const std::string &which_arm)
     {
 	bool ok;
 
 	// check if the estimate is available
     	if (!is_estimate_available)
     	    return false;
-
-        // copy the current estimate of the object
-	mutex.lock();
-	yarp::sig::Matrix estimate = this->estimate;
-	mutex.unlock();
 
 	// evaluate the desired hand pose
 	// according to the current estimate
@@ -195,19 +282,12 @@ protected:
 	yarp::sig::Vector pos(3, 0.0);
 	mod_helper.evalApproachPosition(pos);
 
-	// pick the correct arm and hand
+	// pick the correct arm
 	ArmController* arm;
-	yarp::os::RpcClient* hand_port;
-	if (which_hand == "right")
-	{
+	if (which_arm == "right")
 	    arm = &right_arm;
-	    hand_port = &port_hand_right;
-	}
 	else
-	{
 	    arm = &left_arm;
-	    hand_port = &port_hand_left;
-	}
 
 	// change effector to the middle finger
 	ok = arm->useFingerFrame("middle");
@@ -220,10 +300,24 @@ protected:
         // request pose to the cartesian interface
         arm->goToPos(pos);
 
-        // wait for motion completion
-        arm->cartesian()->waitMotionDone(0.03, 5.0);
+	return true;
+    }
 
-	// move fingers towards the object
+    /*
+     * Perform approaching phase with the fingers of the specified hand
+     * @param which_hand which hand to use
+     * @return true/false on success/failure
+     */
+    bool approachObjectWithFingers(const std::string &which_hand)
+    {
+	// pick the correct hand
+	yarp::os::RpcClient* hand_port;
+	if (which_hand == "right")
+	    hand_port = &port_hand_right;
+	else
+	    hand_port = &port_hand_left;
+
+        // move fingers towards the object
 	std::vector<std::string> finger_list = {"thumb", "index", "middle", "ring"};
 	HandControlCommand hand_cmd;
 	HandControlResponse response;
@@ -233,39 +327,51 @@ protected:
 	hand_cmd.commandFingersApproach();
 	hand_port->write(hand_cmd, response);
 
-	// wait for completion
-	ok = waitFingersApproachDone(which_hand);
-	if (!ok)
-	    return false;
+	return true;
+    }
+
+    /*
+     * Enable fingers following mode
+     * @param which_arm hand arm to use
+     * @return true/false con success/failure
+     */
+    bool enableFingersFollowing(const std::string &which_hand)
+    {
+	// pick the correct hand
+	yarp::os::RpcClient* hand_port;
+	if (which_hand == "right")
+	    hand_port = &port_hand_right;
+	else
+	    hand_port = &port_hand_left;
+
+        // enable fingers movements towards the object
+	std::vector<std::string> finger_list = {"index", "middle", "ring"};
+	HandControlCommand hand_cmd;
+	HandControlResponse response;
+	hand_cmd.setCommandedHand(which_hand);
+	hand_cmd.setCommandedFingers(finger_list);
+	hand_cmd.setFingersForwardSpeed(0.005);
+	hand_cmd.commandFingersFollow();
+	hand_port->write(hand_cmd, response);
 
 	return true;
     }
 
     /*
-     * Pushes the object towards the robot using one of the hands.
-     * @param which_hand which hand to use
+     * Pushes the object towards the robot using one of the arms
+     * @param which_arm which arm to use
      * @return true/false con success/failure
      */
-    bool pushObject(const std::string &which_hand)
+    bool pushObject(const std::string &which_arm)
     {
 	bool ok;
 
-	// add some checks to stop this action
-	// in case approaching has not been done yet
-
-	// pick the correct arm and hand
+	// pick the correct arm
 	ArmController* arm;
-	yarp::os::RpcClient* hand_port;
-	if (which_hand == "right")
-	{
+	if (which_arm == "right")
 	    arm = &right_arm;
-	    hand_port = &port_hand_right;
-	}
 	else
-	{
 	    arm = &left_arm;
-	    hand_port = &port_hand_left;
-	}
 
         // change effector to the middle finger
 	ok = arm->useFingerFrame("middle");
@@ -285,8 +391,7 @@ protected:
 
         // store the current context because we are going
         // to change the trajectory time
-        int context_id;
-        arm->cartesian()->storeContext(&context_id);
+        arm->storeContext();
 
         // set trajectory time
 	double duration = 4.0;
@@ -296,110 +401,33 @@ protected:
         // request pose to the cartesian interface
         arm->goToPos(pos);
 
-	// enable filtering
-	yarp::sig::FilterCommand &filter_data = port_filter.prepare();
-	filter_data.clear();
-	filter_data.setCommand(VOCAB2('O','N'));
-	filter_data.setTag(VOCAB3('T','A','C'));
-	port_filter.writeStrict();
-
-	// enable fingers movements towards the object
-	std::vector<std::string> finger_list = {"index", "middle", "ring"};
-	HandControlCommand hand_cmd;
-	HandControlResponse response;
-	hand_cmd.setCommandedHand(which_hand);
-	hand_cmd.setCommandedFingers(finger_list);
-	hand_cmd.setFingersForwardSpeed(0.005);
-	hand_cmd.commandFingersFollow();
-	hand_port->write(hand_cmd, response);
-
-	// perform pushing
-	arm->cartesian()->waitMotionDone(0.03, duration);
-
-	// stop fingers
-	hand_cmd.commandStop();
-	hand_port->write(hand_cmd, response);
-
-	// stop filtering
-	filter_data = port_filter.prepare();
-	filter_data.clear();
-	filter_data.setCommand(VOCAB3('O','F','F'));
-	port_filter.writeStrict();
-
-        // restore the context
-        arm->cartesian()->restoreContext(context_id);
-
     	return true;
     }
 
     /*
-     * Wait until fingers approaching phase is done
-     * @param which_hand which hand to ask for
-     * @param timeout maximum time to wait for
-     * @return true for success, false for failure and/or timeout expired
+     * Restore the initial configuration of the specified arm
+     * @param which_arm which hand to use
      */
-    bool waitFingersRestoreDone(const std::string &which_hand,
-				const double &period = 0.1,
-				const double &timeout = 0.0)
+    void restoreArm(const std::string &which_arm)
     {
-	HandControlCommand hand_cmd;
-	HandControlResponse response;
-	bool done = false;
-	bool ok;
-
-        // pick the correct hand
-	yarp::os::RpcClient* hand_port;
-	if (which_hand == "right")
-	    hand_port = &port_hand_right;
+	// pick the correct arm
+	ArmController* arm;
+	if (which_arm == "right")
+	    arm = &right_arm;
 	else
-	    hand_port = &port_hand_left;
+	    arm = &left_arm;
 
-	// store initial time
-	double t0 = yarp::os::Time::now();
-
-	// check until done or timeout expires
-	while(!done)
-	{
-	    if (timeout != 0)
-	    {
-		if (yarp::os::Time::now() - t0 > timeout)
-		{
-		    // return false in case of timeout expired
-		    return false;
-		}
-	    }
-
-	    // clear messages
-	    hand_cmd.clear();
-	    response.clear();
-
-	    // request for status
-	    hand_cmd.setCommandedHand(which_hand);
-	    hand_cmd.requestFingersRestoreStatus();
-	    hand_port->write(hand_cmd, response);
-
-	    // check status
-	    ok = response.isRestoreDone(done);
-	    if (!ok)
-	    {
-		yError() << "VisTacLocSimModule::waitFingersApproachDone"
-			 << "Error: unable to get the status of the fingers"
-			 << "restore phase from the hand control module";
-		return false;
-	    }
-	    yarp::os::Time::delay(period);
-	}
-
-	return true;
+	// issue restore command
+	arm->goHome();
     }
 
     /*
-     * Restore the initial configuration of the fingers
+     * Restore the initial configuration of the fingers of the specified hand
      * @param which_hand which hand to use
      */
-    void restoreHand(const std::string &which_hand)
+    void restoreFingers(const std::string &which_hand)
     {
-	// pick the correct arm and hand
+	// pick the correct hand
 	yarp::os::RpcClient* hand_port;
 	if (which_hand == "right")
 	    hand_port = &port_hand_right;
@@ -415,6 +443,62 @@ protected:
 	hand_cmd.setCommandedFingers(finger_list);
 	hand_cmd.setFingersRestoreSpeed(15.0);
 	hand_cmd.commandFingersRestore();
+	hand_port->write(hand_cmd, response);
+    }
+
+    bool restoreArmControllerContext(const std::string &which_arm)
+    {
+	// pick the correct arm
+	ArmController* arm;
+	if (which_arm == "right")
+	    arm = &right_arm;
+	else
+	    arm = &left_arm;
+
+	// restore the context
+	arm->restoreContext();
+
+	return true;
+    }
+
+    /*
+     * Stop control of the specified arm
+     * @param which_arm which arm to stop
+     * @return true/false on success/failure
+     */
+    bool stopArm(const std::string &which_arm)
+    {
+	// pick the correct arm
+	ArmController* arm;
+	if (which_arm == "right")
+	    arm = &right_arm;
+	else
+	    arm = &left_arm;
+
+	return arm->cartesian()->stopControl();
+    }
+
+    /*
+     * Stop control of the fingers of the specified hand
+     * @param which_hand which hand to stop
+     * @return true/false on success/failure
+     */
+    bool stopFingers(const std::string &which_hand)
+    {
+	// pick the correct hand
+	yarp::os::RpcClient* hand_port;
+	if (which_hand == "right")
+	    hand_port = &port_hand_right;
+	else
+	    hand_port = &port_hand_left;
+
+	// stop all the fingers
+	std::vector<std::string> finger_list = {"thumb", "index", "middle", "ring"};
+	HandControlCommand hand_cmd;
+	HandControlResponse response;
+	hand_cmd.setCommandedHand(which_hand);
+	hand_cmd.setCommandedFingers(finger_list);
+	hand_cmd.commandStop();
 	hand_port->write(hand_cmd, response);
     }
 
@@ -465,14 +549,6 @@ public:
 	    return false;
 	}
 
-	// open the rpc server
-	// TODO: take name from config
-        rpc_port.open("/service");
-        attach(rpc_port);
-
-	// set default value of flags
-	is_estimate_available = false;
-
 	// configure arm controllers
 	ok = right_arm.configure();
         if (!ok)
@@ -495,16 +571,44 @@ public:
 	// configure model helper
 	mod_helper.setModelDimensions(0.24, 0.17, 0.037);
 
-        return true;
-    }
+	// set default value of flags
+	is_estimate_available = false;
+	is_approach_done = false;
 
-    bool interruptModule()
-    {
+	// set default status
+	status = Status::Idle;
+	previous_status = Status::Idle;
+	current_hand.clear();
+
+	// open the rpc server
+	// TODO: take name from config
+        rpc_port.open("/service");
+        attach(rpc_port);
+
         return true;
     }
 
     bool close()
     {
+	// stop control of arms
+	stopArm("right");
+	stopArm("left");
+
+	// stop control of fingers
+	stopFingers("right");
+	stopFingers("left");
+
+	// in case pushing was initiated
+	// the previous context of the cartesian controller
+	// has to be restored
+	if (previous_status == Status::Push ||
+	    previous_status == Status::WaitPushDone)
+	{
+	    // restore arm controller context
+	    // that was changed in pushObject(curr_hand)
+	    restoreArmControllerContext(current_hand);
+	}
+
 	// close arm controllers
 	right_arm.close();
 	left_arm.close();
@@ -516,7 +620,8 @@ public:
 
     bool respond(const yarp::os::Bottle &command, yarp::os::Bottle &reply)
     {
-	bool ok;
+	mutex.lock();
+
         std::string cmd = command.get(0).asString();
         if (cmd == "help")
         {
@@ -525,60 +630,91 @@ public:
             reply.addString("- home-right");
             reply.addString("- home-left");
             reply.addString("- localize");
-	    reply.addString("- approach-right");
-	    reply.addString("- push-right");
+	    reply.addString("- approach-with-right");
+	    reply.addString("- push-with-right");
+	    reply.addString("- stop");
             reply.addString("- quit");
         }
 	else if (cmd == "home-right")
 	{
-	    restoreHand("right");
-
-	    ok = waitFingersRestoreDone("right");
-	    
-	    ok &= right_arm.goHome();
-		
-	    if (ok)
-		reply.addString("Go home done for right arm.");
+	    if (status != Status::Idle)
+		reply.addString("Wait for completion of the current phase!");
 	    else
-		reply.addString("Go home failed for right arm.");
+	    {
+		previous_status = status;
+		status = Status::FingersRestore;
+		current_hand = "right";
+
+		reply.addString("Home right issued.");
+	    }
 	}
 	else if (cmd == "home-left")
 	{
-	    restoreHand("left");
-
-	    ok = waitFingersRestoreDone("left");
-
-	    ok &= left_arm.goHome();
-		
-	    if (ok)
-		reply.addString("Go home done for left arm.");
+	    if (status != Status::Idle)
+		reply.addString("Wait for completion of the current phase!");
 	    else
-		reply.addString("Go home failed for left arm.");
+	    {
+		previous_status = status;
+		status = Status::FingersRestore;
+		current_hand = "left";
+
+		reply.addString("Home left issued.");
+	    }
 	}
 	else if (cmd == "localize")
 	{
-	    if (localizeObject())
-	    	reply.addString("Localization using vision done.");
+	    if (status != Status::Idle)
+		reply.addString("Wait for completion of the current phase!");
 	    else
-	    	reply.addString("Localization using vision failed.");
+	    {
+		previous_status = status;
+		status = Status::Localize;
+
+		reply.addString("Localization issued.");
+	    }
 	}
-	else if (cmd == "approach-right")
+	else if (cmd == "approach-with-right")
 	{
-	    if (approachObject("right"))
-	    	reply.addString("Approaching phase done.");
+	    if (status != Status::Idle)
+		reply.addString("Wait for completion of the current phase!");
 	    else
-	    	reply.addString("Approaching phase failed.");
+	    {
+		previous_status = status;
+		status = Status::ArmApproach;
+		current_hand = "right";
+
+		reply.addString("Approach with right-arm issued.");
+	    }
 	}
-	else if (cmd == "push-right")
+	else if (cmd == "push-with-right")
 	{
-	    if (pushObject("right"))
-	    	reply.addString("Pushing with right hand done.");
+	    if (status != Status::Idle)
+		reply.addString("Wait for completion of the current phase!");
 	    else
-	    	reply.addString("Pushing with right hand failed.");
+	    {
+		previous_status = status;
+		status = Status::Push;
+		current_hand = "right";
+
+		reply.addString("Push with right-arm issued.");
+	    }
+	}
+	else if (cmd == "stop")
+	{
+	    previous_status = status;
+	    status = Status::Stop;
+
+	    reply.addString("Stop issued.");
 	}
         else
+	{
+	    mutex.unlock();
+
             // the father class already handles the "quit" command
             return RFModule::respond(command,reply);
+	}
+
+	mutex.unlock();
 
         return true;
     }
@@ -595,13 +731,406 @@ public:
 
 	mutex.lock();
 
+	// get the current and previous status
+	Status curr_status;
+	Status prev_status;
+	curr_status = status;
+	prev_status = previous_status;
+
+	// get the current hand
+	std::string curr_hand = current_hand;
+
+	mutex.unlock();
+
 	// get current estimate from the filter
-	// TODO: get source and target from configuration file
 	std::string source = "/iCub/frame";
 	std::string target = "/box_alt/estimate/frame";
 	is_estimate_available = tf_client->getTransform(target, source, estimate);
 
-	mutex.unlock();
+	switch(curr_status)
+	{
+	case Status::Idle:
+	{
+	    // nothing to do here
+	    break;
+	}
+
+	case Status::Localize:
+	{
+	    // issue localization
+	    localizeObject();
+
+	    // go back to Idle
+	    mutex.lock();
+	    status = Status::Idle;
+	    mutex.unlock();
+
+	    break;
+	}
+
+	case Status::ArmApproach:
+	{
+	    // reset flag
+	    is_approach_done = false;
+
+	    if (curr_hand.empty())
+	    {
+		// this should not happen
+		// go back to Idle
+		mutex.lock();
+		status = Status::Idle;
+		mutex.unlock();
+
+		break;
+	    }
+
+	    // issue approach with arm
+	    approachObjectWithArm(curr_hand);
+
+	    // go to state WaitArmApproachDone
+	    mutex.lock();
+	    status = Status::WaitArmApproachDone;
+	    mutex.unlock();
+
+	    // reset timer
+	    last_time = yarp::os::Time::now();
+
+	    break;
+	}
+
+	case Status::WaitArmApproachDone:
+	{
+	    // timeout
+	    double timeout = 5.0;
+
+	    // check status
+	    bool is_done = false;
+	    bool ok = checkArmMotionDone(curr_hand, is_done);
+
+	    // handle failure and timeout
+	    if (!ok ||
+		((yarp::os::Time::now() - last_time > timeout)))
+	    {
+		// stop control
+		stopArm(curr_hand);
+
+		// go back to Idle
+		mutex.lock();
+		status = Status::Idle;
+		mutex.unlock();
+	    }
+
+	    if (is_done)
+	    {
+		// approach completed
+		yInfo() << "Arm approach done";
+
+		// go to FingersApproach
+		mutex.lock();
+		status = Status::FingersApproach;
+		mutex.unlock();
+	    }
+
+	    break;
+	}
+
+	case Status::FingersApproach:
+	{
+	    if (curr_hand.empty())
+	    {
+		// this should not happen
+		// go back to Idle
+		mutex.lock();
+		status = Status::Idle;
+		mutex.unlock();
+
+		break;
+	    }
+
+	    // issue approach with fingers
+	    approachObjectWithFingers(curr_hand);
+
+	    // go to state WaitFingersApproachDone
+	    mutex.lock();
+	    status = Status::WaitFingersApproachDone;
+	    mutex.unlock();
+
+	    // reset timer
+	    last_time = yarp::os::Time::now();
+
+	    break;
+	}
+
+	case Status::WaitFingersApproachDone:
+	{
+	    // timeout
+	    double timeout = 10.0;
+
+	    // check status
+	    bool is_done = false;
+	    bool ok = checkFingersApproachDone(curr_hand,
+					       is_done);
+	    // handle failure and timeout
+	    if (!ok ||
+		((yarp::os::Time::now() - last_time > timeout)))
+	    {
+		// stop control
+		stopFingers(curr_hand);
+
+		// go back to Idle
+		mutex.lock();
+		status = Status::Idle;
+		mutex.unlock();
+	    }
+
+	    if (is_done)
+	    {
+		// approach completed
+		yInfo() << "Fingers approach done";
+
+		// go to Idle
+		mutex.lock();
+		status = Status::Idle;
+		mutex.unlock();
+
+		// update flag
+		is_approach_done = true;
+	    }
+
+	    break;
+	}
+
+	case Status::Push:
+	{
+	    if (!is_approach_done)
+	    {
+		// push not possible
+		// ignore this command
+
+		// go back to Idle
+		mutex.lock();
+		status = Status::Idle;
+		mutex.unlock();
+	    }
+
+	    // issue push command
+	    pushObject(curr_hand);
+
+	    // enable tactile filtering
+	    enableTactileFiltering();
+
+	    // enable fingers following mode
+	    enableFingersFollowing(curr_hand);
+
+	    // go to state WaitPushDone
+	    mutex.lock();
+	    status = Status::WaitPushDone;
+	    mutex.unlock();
+
+	    // reset timer
+	    last_time = yarp::os::Time::now();
+
+	    break;
+	}
+
+	case Status::WaitPushDone:
+	{
+	    // timeout
+	    double timeout = 5.0;
+
+	    // check status
+	    bool is_done = false;
+	    bool ok = checkArmMotionDone(curr_hand, is_done);
+
+	    // handle failure and timeout
+	    if (!ok ||
+		(yarp::os::Time::now() - last_time > timeout) ||
+		is_done)
+	    {
+		if (is_done)
+		    yInfo() << "Push done";
+
+		// stop control
+		stopArm(curr_hand);
+
+		// stop fingers control
+		stopFingers(curr_hand);
+
+		// disable filtering
+		disableTactileFiltering();
+
+		// restore arm controller context
+		// that was changed in pushObject(curr_hand)
+		restoreArmControllerContext(curr_hand);
+
+		// go back to Idle
+		mutex.lock();
+		status = Status::Idle;
+		mutex.unlock();
+	    }
+
+	    break;
+	}
+
+	case Status::FingersRestore:
+	{
+	    if (curr_hand.empty())
+	    {
+		// this should not happen
+		// go back to Idle
+		mutex.lock();
+		status = Status::Idle;
+		mutex.unlock();
+
+		break;
+	    }
+
+	    // issue fingers restore
+	    restoreFingers(curr_hand);
+
+	    // reset timer
+	    last_time = yarp::os::Time::now();
+
+	    // go to WaitFingersRestoreDone
+	    mutex.lock();
+	    status = Status::WaitFingersRestoreDone;
+	    mutex.unlock();
+
+	    break;
+	}
+
+	case Status::WaitFingersRestoreDone:
+	{
+	    // timeout
+	    double timeout = 10.0;
+
+	    // check status
+	    bool is_done = false;
+	    bool ok = checkFingersRestoreDone(curr_hand,
+					      is_done);
+	    // handle failure and timeout
+	    if (!ok ||
+		((yarp::os::Time::now() - last_time > timeout)))
+	    {
+		// stop control
+		stopFingers(curr_hand);
+
+		// go back to Idle
+		mutex.lock();
+		status = Status::Idle;
+		mutex.unlock();
+	    }
+
+	    if (is_done)
+	    {
+		// approach completed
+		yInfo() << "Fingers restore done";
+
+		// go to ArmRestore
+		mutex.lock();
+		status = Status::ArmRestore;
+		mutex.unlock();
+	    }
+
+	    break;
+	}
+
+	case Status::ArmRestore:
+	{
+	    if (curr_hand.empty())
+	    {
+		// this should not happen
+		// go back to Idle
+		mutex.lock();
+		status = Status::Idle;
+		mutex.unlock();
+
+		break;
+	    }
+
+	    // issue arm restore
+	    restoreArm(curr_hand);
+
+	    // go to state WaitArmApproachDone
+	    mutex.lock();
+	    status = Status::WaitArmRestoreDone;
+	    mutex.unlock();
+
+	    // reset timer
+	    last_time = yarp::os::Time::now();
+
+	    break;
+	}
+
+	case Status::WaitArmRestoreDone:
+	{
+	    // timeout
+	    double timeout = 5.0;
+
+	    // check status
+	    bool is_done = false;
+	    bool ok = checkArmMotionDone(curr_hand, is_done);
+
+	    // handle failure and timeout
+	    if (!ok ||
+		((yarp::os::Time::now() - last_time > timeout)))
+	    {
+		// stop control
+		stopArm(curr_hand);
+
+		// go back to Idle
+		mutex.lock();
+		status = Status::Idle;
+		mutex.unlock();
+	    }
+
+	    if (is_done)
+	    {
+		// restore completed
+		yInfo() << "Arm restore done";
+
+		// go back to Idle
+		mutex.lock();
+		status = Status::Idle;
+		mutex.unlock();
+	    }
+
+	    break;
+	}
+
+	case Status::Stop:
+	{
+	    mutex.lock();
+
+	    // stop control
+	    stopArm(curr_hand);
+	    stopFingers(curr_hand);
+
+	    // disable filtering
+	    disableTactileFiltering();
+
+	    // in case pushing was initiated
+	    // the previous context of the cartesian controller
+	    // has to be restored
+	    if (prev_status == Status::Push ||
+		prev_status == Status::WaitPushDone)
+	    {
+		// restore arm controller context
+		// that was changed in pushObject(curr_hand)
+		restoreArmControllerContext(curr_hand);
+	    }
+
+	    // reset flag
+	    is_approach_done = false;
+
+	    // go back to Idle
+	    status = Status::Idle;
+
+	    mutex.unlock();
+
+	    break;
+	}
+	}
 	
         return true;
     }
