@@ -230,7 +230,7 @@ protected:
     }
 
     /*
-     * Perform approaching phase with the specified arm
+     * Perform approaching phase with the specified arm.
      * @param which_arm which arm to use
      * @return true/false on success/failure
      */
@@ -269,7 +269,7 @@ protected:
     }
 
     /*
-     * Perform approaching phase with the fingers of the specified hand
+     * Perform approaching phase with the fingers of the specified hand.
      * @param which_hand which hand to use
      * @return true/false on success/failure
      */
@@ -294,7 +294,7 @@ protected:
     }
 
     /*
-     * Enable fingers following mode
+     * Enable fingers following mode.
      * @param which_arm hand arm to use
      * @return true/false con success/failure
      */
@@ -321,7 +321,7 @@ protected:
     }
 
     /*
-     * Pushes the object towards the robot using one of the arms
+     * Pushes the object towards the robot using one of the arms.
      * @param which_arm which arm to use
      * @return true/false con success/failure
      */
@@ -368,7 +368,7 @@ protected:
     }
 
     /*
-     * Restore the initial configuration of the specified arm
+     * Restore the initial configuration of the specified arm.
      * @param which_arm which hand to use
      */
     void restoreArm(const std::string &which_arm)
@@ -385,7 +385,7 @@ protected:
     }
 
     /*
-     * Restore the initial configuration of the fingers of the specified hand
+     * Restore the initial configuration of the fingers of the specified hand.
      * @param which_hand which hand to use
      */
     void restoreFingers(const std::string &which_hand)
@@ -425,7 +425,7 @@ protected:
     }
 
     /*
-     * Stop control of the specified arm
+     * Stop control of the specified arm.
      * @param which_arm which arm to stop
      * @return true/false on success/failure
      */
@@ -442,7 +442,7 @@ protected:
     }
 
     /*
-     * Stop control of the fingers of the specified hand
+     * Stop control of the fingers of the specified hand.
      * @param which_hand which hand to stop
      * @return true/false on success/failure
      */
