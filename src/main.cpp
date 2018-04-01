@@ -198,55 +198,17 @@ protected:
      * @param is_done whether the approach phase is done or not
      * @return true for success, false for failure
      */
-    bool checkFingersApproachDone(const std::string &which_hand,
-				  bool &is_done)
-    {
-	HandControlCommand hand_cmd;
-	HandControlResponse response;
-
-        // pick the correct hand
-	yarp::os::RpcClient* hand_port = getHandPort(which_hand);
-	if (hand_port == nullptr)
-	    return false;
-
-	// clear messages
-	hand_cmd.clear();
-	response.clear();
-
-	// request for status
-	hand_cmd.setCommandedHand(which_hand);
-	hand_cmd.requestFingersApproachStatus();
-	hand_port->write(hand_cmd, response);
-
-	// check status
-	bool ok = response.isApproachDone(is_done);
-	if (!ok)
-	{
-	    yError() << "VisTacLocSimModule::checkFingersApproachDone"
-		     << "Error: unable to get the status of the fingers"
-		     << "phase from the hand control module";
-	    return false;
-	}
-
-	return true;
-    }
-
-    /*
-     * Check if restore of initial configuration of fingers is done
-     * @param which_hand which hand to ask for
-     * @param is_done whether the finger restore is done or not
-     * @return true for success, false for failure
-     */
-    bool checkFingersRestoreDone(const std::string &which_hand,
+    bool checkFingersMotionDone(const std::string &which_hand,
+				const std::string &motion_type,
 				bool &is_done)
     {
-	HandControlCommand hand_cmd;
-	HandControlResponse response;
-
         // pick the correct hand
 	yarp::os::RpcClient* hand_port = getHandPort(which_hand);
 	if (hand_port == nullptr)
 	    return false;
+
+	HandControlCommand hand_cmd;
+	HandControlResponse response;
 
 	// clear messages
 	hand_cmd.clear();
@@ -254,16 +216,25 @@ protected:
 
 	// request for status
 	hand_cmd.setCommandedHand(which_hand);
-	hand_cmd.requestFingersRestoreStatus();
+	if (motion_type == "fingers_approach")
+	    hand_cmd.requestFingersApproachStatus();
+	else if (motion_type == "fingers_restore")
+	    hand_cmd.requestFingersRestoreStatus();
+	else
+	    return false;
 	hand_port->write(hand_cmd, response);
 
 	// check status
-	bool ok = response.isRestoreDone(is_done);
+	bool ok;
+	if (motion_type == "fingers_approach")
+	    ok = response.isApproachDone(is_done);
+	else if (motion_type == "fingers_restore")
+	    ok = response.isRestoreDone(is_done);
 	if (!ok)
 	{
-	    yError() << "VisTacLocSimModule::checkFingersRestoreDone"
+	    yError() << "VisTacLocSimModule::checkFingersMotionDone"
 		     << "Error: unable to get the status of the fingers"
-		     << "restore phase from the hand control module";
+		     << "motion from the hand control module";
 	    return false;
 	}
 
@@ -876,8 +847,9 @@ public:
 
 	    // check status
 	    bool is_done = false;
-	    bool ok = checkFingersApproachDone(curr_hand,
-					       is_done);
+	    bool ok = checkFingersMotionDone(curr_hand,
+					     "fingers_approach",
+					     is_done);
 	    // handle failure and timeout
 	    if (!ok ||
 		((yarp::os::Time::now() - last_time > timeout)))
@@ -1014,8 +986,9 @@ public:
 
 	    // check status
 	    bool is_done = false;
-	    bool ok = checkFingersRestoreDone(curr_hand,
-					      is_done);
+	    bool ok = checkFingersMotionDone(curr_hand,
+					     "fingers_restore",
+					     is_done);
 	    // handle failure and timeout
 	    if (!ok ||
 		((yarp::os::Time::now() - last_time > timeout)))
