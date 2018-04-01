@@ -95,48 +95,36 @@ protected:
     double last_time;
 
     /*
-     * Enable filtering.
+     * Send command to the filtering algorithm.
+     * @param enable whether to enable or disable the filtering
      * @param type the type of filtering,
      *        i.e. 'visual' or 'tactile'
      * @return true/false on success/failure
      */
-    bool enableFiltering(const std::string &type)
+    bool sendCommandToFilter(const bool& enable, const std::string &type = "")
     {
+	if (enable && type.empty())
+	    return false;
+
 	yarp::sig::FilterCommand &filter_cmd = port_filter.prepare();
 
 	// clear the storage
 	filter_cmd.clear();
 
 	// enable filtering
-	filter_cmd.enableFiltering();
+	if (enable)
+	    filter_cmd.enableFiltering();
+	else
+	    filter_cmd.disableFiltering();
 
 	// enable the correct type of filtering
-	if (type == "visual")
-	    filter_cmd.enableVisualFiltering();
-	else if (type == "tactile")
-	    filter_cmd.enableTactileFiltering();
-	else
-	    return false;
-
-	// send command to the filter
-	port_filter.writeStrict();
-
-	return true;
-    }
-
-    /*
-     * Disable filtering.
-     * @return true/false on success/failure
-     */
-    bool disableFiltering()
-    {
-	yarp::sig::FilterCommand &filter_cmd = port_filter.prepare();
-
-	// clear the storage
-	filter_cmd.clear();
-
-	// disable filtering
-	filter_cmd.disableFiltering();
+	if (enable)
+	{
+	    if (type == "visual")
+		filter_cmd.enableVisualFiltering();
+	    else if (type == "tactile")
+		filter_cmd.enableTactileFiltering();
+	}
 
 	// send command to the filter
 	port_filter.writeStrict();
@@ -193,7 +181,7 @@ protected:
     }
 
     /*
-     * Check if approaching phase with fingers is done
+     * Check if approaching phase with fingers is done.
      * @param which_hand which hand to ask for
      * @param is_done whether the approach phase is done or not
      * @return true for success, false for failure
@@ -737,7 +725,7 @@ public:
 	case Status::Localize:
 	{
 	    // issue localization
-	    enableFiltering("visual");
+	    sendCommandToFilter(true, "visual");
 
 	    // go back to Idle
 	    mutex.lock();
@@ -897,7 +885,7 @@ public:
 	    pushObject(curr_hand);
 
 	    // enable tactile filtering
-	    enableFiltering("tactile");
+	    sendCommandToFilter(true, "tactile");
 
 	    // enable fingers following mode
 	    enableFingersFollowing(curr_hand);
@@ -937,7 +925,7 @@ public:
 		stopFingers(curr_hand);
 
 		// disable filtering
-		disableFiltering();
+		sendCommandToFilter(false);
 
 		// restore arm controller context
 		// that was changed in pushObject(curr_hand)
@@ -1088,7 +1076,7 @@ public:
 	    stopFingers(curr_hand);
 
 	    // disable filtering
-	    disableFiltering();
+	    sendCommandToFilter(false);
 
 	    // in case pushing was initiated
 	    // the previous context of the cartesian controller
