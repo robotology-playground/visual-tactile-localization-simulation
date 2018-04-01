@@ -106,10 +106,10 @@ protected:
 	filter_data.clear();
 
 	// set the command
-	filter_data.setCommand(VOCAB2('O','N'));
+	filter_data.enableFiltering();
 
 	// set the tag
-	filter_data.setTag(VOCAB3('V','I','S'));
+	filter_data.enableVisualFiltering();
 
 	// send data to the filter
 	port_filter.writeStrict();
@@ -129,10 +129,10 @@ protected:
 	filter_data.clear();
 
 	// set the command
-	filter_data.setCommand(VOCAB2('O','N'));
+	filter_data.enableFiltering();
 
 	// set the tag
-	filter_data.setTag(VOCAB3('T','A','C'));
+	filter_data.enableTactileFiltering();
 
 	// set command to the filter
 	port_filter.writeStrict();
@@ -152,7 +152,7 @@ protected:
 	filter_data.clear();
 
 	// set the command
-	filter_data.setCommand(VOCAB3('O','F','F'));
+	filter_data.disableFiltering();
 
 	// send command fo the filter
 	port_filter.writeStrict();
