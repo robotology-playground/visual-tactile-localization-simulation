@@ -145,23 +145,51 @@ protected:
     }
 
     /*
-     * Check if arm motion is done
-     * @param which_arm which arm to ask for
+     * Get an arm controller.
+     * @param which_arm the required arm controller
+     * @return a pointer to the arm controller in case of success,
+     *         a null pointer in case of failure
+     */
+    ArmController* getArmController(const std::string &which_arm)
+    {
+	if (which_arm == "right")
+	    return &right_arm;
+	else if (which_arm == "left")
+	    return &left_arm;
+	else
+	    return nullptr;
+    }
+
+    /*
+     * Get a port connected to the hand controller module.
+     * @param which_hand the required hand control module
+     * @return true/false on success/failure
+     */
+    yarp::os::RpcClient* getHandPort(const std::string &which_hand)
+    {
+	if (which_hand == "right")
+	    return &port_hand_right;
+	else if (which_hand == "left")
+	    return &port_hand_left;
+	else
+	    return nullptr;
+    }
+
+    /*
+     * Check if arm motion is done.
+     * @param which_arm which arm to ask the status of the motion for
      * @param is_done whether the arm motion is done or not
      * @return true for success, false for failure
      */
     bool checkArmMotionDone(const std::string &which_arm,
 			    bool &is_done)
     {
-	// pick the correct arm
-	ArmController* arm;
-	if (which_arm == "right")
-	    arm = &right_arm;
-	else
-	    arm = &left_arm;
+	ArmController *arm = getArmController(which_arm);
 
-	// check status
-	return arm->cartesian()->checkMotionDone(&is_done);
+	if (arm != nullptr)
+	    return arm->cartesian()->checkMotionDone(&is_done);
+	else
+	    return false;
     }
 
     /*
