@@ -205,11 +205,9 @@ protected:
 	HandControlResponse response;
 
         // pick the correct hand
-	yarp::os::RpcClient* hand_port;
-	if (which_hand == "right")
-	    hand_port = &port_hand_right;
-	else
-	    hand_port = &port_hand_left;
+	yarp::os::RpcClient* hand_port = getHandPort(which_hand);
+	if (hand_port == nullptr)
+	    return false;
 
 	// clear messages
 	hand_cmd.clear();
@@ -246,11 +244,9 @@ protected:
 	HandControlResponse response;
 
         // pick the correct hand
-	yarp::os::RpcClient* hand_port;
-	if (which_hand == "right")
-	    hand_port = &port_hand_right;
-	else
-	    hand_port = &port_hand_left;
+	yarp::os::RpcClient* hand_port = getHandPort(which_hand);
+	if (hand_port == nullptr)
+	    return false;
 
 	// clear messages
 	hand_cmd.clear();
