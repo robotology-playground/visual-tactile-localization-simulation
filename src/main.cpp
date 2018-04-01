@@ -276,11 +276,9 @@ protected:
     bool approachObjectWithFingers(const std::string &which_hand)
     {
 	// pick the correct hand
-	yarp::os::RpcClient* hand_port;
-	if (which_hand == "right")
-	    hand_port = &port_hand_right;
-	else
-	    hand_port = &port_hand_left;
+	yarp::os::RpcClient* hand_port = getHandPort(which_hand);
+	if (hand_port == nullptr)
+	    return false;
 
         // move fingers towards the object
 	std::vector<std::string> finger_list = {"thumb", "index", "middle", "ring"};
