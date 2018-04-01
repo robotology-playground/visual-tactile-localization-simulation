@@ -95,66 +95,50 @@ protected:
     double last_time;
 
     /*
-     * Request visual localization to the filtering algorithm.
+     * Enable filtering.
+     * @param type the type of filtering,
+     *        i.e. 'visual' or 'tactile'
      * @return true/false on success/failure
      */
-    bool localizeObject()
+    bool enableFiltering(const std::string &type)
     {
-	yarp::sig::FilterCommand &filter_data = port_filter.prepare();
+	yarp::sig::FilterCommand &filter_cmd = port_filter.prepare();
 
 	// clear the storage
-	filter_data.clear();
+	filter_cmd.clear();
 
-	// set the command
-	filter_data.enableFiltering();
+	// enable filtering
+	filter_cmd.enableFiltering();
 
-	// set the tag
-	filter_data.enableVisualFiltering();
+	// enable the correct type of filtering
+	if (type == "visual")
+	    filter_cmd.enableVisualFiltering();
+	else if (type == "tactile")
+	    filter_cmd.enableTactileFiltering();
+	else
+	    return false;
 
-	// send data to the filter
+	// send command to the filter
 	port_filter.writeStrict();
 
 	return true;
     }
 
     /*
-     * Enable tactile filtering
+     * Disable filtering.
      * @return true/false on success/failure
      */
-    bool enableTactileFiltering()
+    bool disableFiltering()
     {
-	yarp::sig::FilterCommand &filter_data = port_filter.prepare();
+	yarp::sig::FilterCommand &filter_cmd = port_filter.prepare();
 
 	// clear the storage
-	filter_data.clear();
+	filter_cmd.clear();
 
-	// set the command
-	filter_data.enableFiltering();
+	// disable filtering
+	filter_cmd.disableFiltering();
 
-	// set the tag
-	filter_data.enableTactileFiltering();
-
-	// set command to the filter
-	port_filter.writeStrict();
-
-	return true;
-    }
-
-    /*
-     * Disable tactile filtering
-     * @return true/false on success/failure
-     */
-    bool disableTactileFiltering()
-    {
-	yarp::sig::FilterCommand &filter_data = port_filter.prepare();
-
-	// clear the storage
-	filter_data.clear();
-
-	// set the command
-	filter_data.disableFiltering();
-
-	// send command fo the filter
+	// send command to the filter
 	port_filter.writeStrict();
 
 	return true;
@@ -758,7 +742,7 @@ public:
 	case Status::Localize:
 	{
 	    // issue localization
-	    localizeObject();
+	    enableFiltering("visual");
 
 	    // go back to Idle
 	    mutex.lock();
@@ -917,7 +901,7 @@ public:
 	    pushObject(curr_hand);
 
 	    // enable tactile filtering
-	    enableTactileFiltering();
+	    enableFiltering("tactile");
 
 	    // enable fingers following mode
 	    enableFingersFollowing(curr_hand);
@@ -957,7 +941,7 @@ public:
 		stopFingers(curr_hand);
 
 		// disable filtering
-		disableTactileFiltering();
+		disableFiltering();
 
 		// restore arm controller context
 		// that was changed in pushObject(curr_hand)
@@ -1107,7 +1091,7 @@ public:
 	    stopFingers(curr_hand);
 
 	    // disable filtering
-	    disableTactileFiltering();
+	    disableFiltering();
 
 	    // in case pushing was initiated
 	    // the previous context of the cartesian controller
