@@ -250,11 +250,9 @@ protected:
 	mod_helper.evalApproachPosition(pos);
 
 	// pick the correct arm
-	ArmController* arm;
-	if (which_arm == "right")
-	    arm = &right_arm;
-	else
-	    arm = &left_arm;
+	ArmController* arm = getArmController(which_arm);
+	if (arm == nullptr)
+	    return false;
 
 	// change effector to the middle finger
 	ok = arm->useFingerFrame("middle");
