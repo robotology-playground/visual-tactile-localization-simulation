@@ -37,10 +37,14 @@ private:
      */
     int cmd_value;
 
-public:
     void setTag(int);
     void setCommand(int);
 
+public:
+    void enableFiltering();
+    void disableFiltering();
+    void enableVisualFiltering();
+    void enableTactileFiltering();
     int tag() const;
     int command() const;
 

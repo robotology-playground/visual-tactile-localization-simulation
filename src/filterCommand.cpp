@@ -14,14 +14,24 @@
 
 #include "headers/filterCommand.h"
 
-void yarp::sig::FilterCommand::setTag(int tag)
+void yarp::sig::FilterCommand::enableFiltering()
 {
-    this->tag_value = tag;
+    this->cmd_value = VOCAB2('O', 'N');
 }
 
-void yarp::sig::FilterCommand::setCommand(int cmd)
+void yarp::sig::FilterCommand::disableFiltering()
 {
-    this->cmd_value = cmd;
+    this->cmd_value = VOCAB3('O', 'F', 'F');
+}
+
+void yarp::sig::FilterCommand::enableVisualFiltering()
+{
+    this->tag_value = VOCAB3('V', 'I', 'S');
+}
+
+void yarp::sig::FilterCommand::enableTactileFiltering()
+{
+    this->cmd_value = VOCAB3('T', 'A', 'C');
 }
 
 int yarp::sig::FilterCommand::tag() const
