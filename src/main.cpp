@@ -55,34 +55,34 @@ enum class Status { Idle,
 class VisTacLocSimModule: public yarp::os::RFModule
 {
 protected:
-    // rpc server
-    yarp::os::RpcServer rpc_port;
-
     // arm controllers
     RightArmController right_arm;
     LeftArmController left_arm;
-
-    // mutexes required to share data between
-    // the RFModule thread and the rpc thread
-    yarp::os::Mutex mutex;
-
-    // filter port
-    yarp::os::BufferedPort<yarp::sig::FilterCommand> port_filter;
 
     // hand controller modules ports
     yarp::os::RpcClient port_hand_right;
     yarp::os::RpcClient port_hand_left;
 
-    // FrameTransformClient to read published poses
-    yarp::dev::PolyDriver drv_transform_client;
-    yarp::dev::IFrameTransform* tf_client;
+    // filter port
+    yarp::os::BufferedPort<yarp::sig::FilterCommand> port_filter;
 
     // last estimate published by the filter
     yarp::sig::Matrix estimate;
     bool is_estimate_available;
 
+    // FrameTransformClient to read published poses
+    yarp::dev::PolyDriver drv_transform_client;
+    yarp::dev::IFrameTransform* tf_client;
+
     // model helper class
     ModelHelper mod_helper;
+
+    // rpc server
+    yarp::os::RpcServer rpc_port;
+
+    // mutexes required to share data between
+    // the RFModule thread and the rpc thread
+    yarp::os::Mutex mutex;
 
     // status
     Status status;
