@@ -875,6 +875,8 @@ public:
 		mutex.lock();
 		status = Status::Idle;
 		mutex.unlock();
+
+		break;
 	    }
 
 	    // issue push command
