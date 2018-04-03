@@ -900,7 +900,7 @@ public:
 	case Status::WaitPushDone:
 	{
 	    // timeout
-	    double timeout = 5.0;
+	    double timeout = 4.0;
 
 	    // check status
 	    bool is_done = false;
