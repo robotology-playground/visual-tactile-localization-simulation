@@ -31,7 +31,7 @@ void yarp::sig::FilterCommand::enableVisualFiltering()
 
 void yarp::sig::FilterCommand::enableTactileFiltering()
 {
-    this->cmd_value = VOCAB3('T', 'A', 'C');
+    this->tag_value = VOCAB3('T', 'A', 'C');
 }
 
 int yarp::sig::FilterCommand::tag() const
