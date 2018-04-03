@@ -564,8 +564,8 @@ public:
 	// in case pushing was initiated
 	// the previous context of the cartesian controller
 	// has to be restored
-	if (previous_status == Status::Push ||
-	    previous_status == Status::WaitPushDone)
+	if (status == Status::Push ||
+	    status == Status::WaitPushDone)
 	{
 	    // restore arm controller context
 	    // that was changed in pushObject(curr_hand)
