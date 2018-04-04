@@ -879,6 +879,9 @@ public:
 		break;
 	    }
 
+	    // reset flag
+	    is_approach_done = false;
+
 	    // issue push command
 	    pushObject(curr_hand);
 
