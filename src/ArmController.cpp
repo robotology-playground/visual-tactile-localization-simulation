@@ -80,17 +80,6 @@ bool ArmController::configure(const std::string &which_arm)
     // it can be restored when the controller closes
     icart->storeContext(&startup_cart_context);
 
-    // use also the torso
-    yarp::sig::Vector newDoF, curDoF;
-    icart->getDOF(curDoF);
-    newDoF = curDoF;
-
-    newDoF[0] = 1;
-    newDoF[1] = 1;
-    newDoF[2] = 1;
-
-    icart->setDOF(newDoF, curDoF);
-
     // set a default trajectory time
     icart->setTrajTime(2.0);
 
@@ -340,6 +329,40 @@ bool ArmController::removeFingerFrame()
     {
 	yError() << "ArmController::removeFingerFrame"
 		 << "Error: unable to remove finger tip from the"
+		 << which_arm << "arm chain";
+	return false;
+    }
+
+    return true;
+}
+
+bool ArmController::enableTorso()
+{
+    yarp::sig::Vector newDoF, curDoF;
+    bool ok;
+
+    // get the current DOFs
+    ok = icart->getDOF(curDoF);
+    if (!ok)
+    {
+	yError() << "ArmController::enableTorso"
+		 << "Error: unable to get the current DOF configuration for the"
+		 << which_arm << "arm chain";
+	return false;
+    }
+
+    // enable torso
+    newDoF = curDoF;
+    newDoF[0] = 1;
+    newDoF[1] = 1;
+    newDoF[2] = 1;
+
+    // set the new DOFs
+    ok = icart->setDOF(newDoF, curDoF);
+    if (!ok)
+    {
+	yError() << "ArmController::enableTorso"
+		 << "Error: unable set the new DOF configuration for the"
 		 << which_arm << "arm chain";
 	return false;
     }

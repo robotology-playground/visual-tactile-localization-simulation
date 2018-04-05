@@ -128,6 +128,12 @@ public:
     bool removeFingerFrame();
 
     /*
+     * Enable use of the torso.
+     * @return true/false on success/failure
+     */
+    bool enableTorso();
+
+    /*
      * This function restore the initial pose of the arm.
      * @return true/false on success/failure
      */
