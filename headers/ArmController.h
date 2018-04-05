@@ -47,7 +47,7 @@ protected:
     yarp::sig::Vector home_pos;
     yarp::sig::Vector home_att;
 
-    // hand attitude used during pushing phase
+    // hand attitude
     yarp::sig::Vector hand_attitude;
 
     // chain for forward kinematics computation
