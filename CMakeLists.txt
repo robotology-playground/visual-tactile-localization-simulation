@@ -41,6 +41,7 @@ set(headers_main_module
   ${CMAKE_SOURCE_DIR}/headers/ModelHelper.h
   ${CMAKE_SOURCE_DIR}/headers/HandControlCommand.h
   ${CMAKE_SOURCE_DIR}/headers/HandControlResponse.h
+  ${CMAKE_SOURCE_DIR}/headers/TrajectoryGenerator.h
   )
 set(sources_main_module
   ${CMAKE_SOURCE_DIR}/src/filterCommand.cpp
@@ -49,6 +50,7 @@ set(sources_main_module
   ${CMAKE_SOURCE_DIR}/src/main.cpp
   ${CMAKE_SOURCE_DIR}/src/HandControlCommand.cpp
   ${CMAKE_SOURCE_DIR}/src/HandControlResponse.cpp
+  ${CMAKE_SOURCE_DIR}/src/TrajectoryGenerator.cpp
   )
 
 set (headers_hand_ctrl_module
