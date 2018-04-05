@@ -15,7 +15,7 @@
     <!-- Table -->
     <include>
       <uri>model://table_alt</uri>
-      <pose>0.530772 0.5 0 0 0 0</pose>
+      <pose>0.530772 0 0 0 0 -1.57</pose>
     </include>
 
     <!-- Shelf -->        
@@ -23,7 +23,7 @@
       <uri>model://shelf_alt</uri>
       <!-- Put the model frame on top of the table -->
       <!-- Warning: The z coordinate should be changed if table/model.rsdf changes -->
-      <pose>0.159608 0.376388 0.38 0 0 0.0</pose>
+      <pose>0.359608 0 0.38 0 0 -1.57</pose>
     </include>
 
     <!-- Book -->    
@@ -32,20 +32,20 @@
     <!-- Put the model frame on top of the shelf -->
     <!-- Warning: The z coordinate should be changed if table_alt/model.sdf -->
     <!-- or shelf_alt/model.sdf changes -->
-    <pose>0.0 0.4 0.55 0 0 0.6</pose>
+    <pose>0.4 0.0 0.55 0 0 -0.97</pose>
     </include>
 
     <!-- Observer origin represented as a sphere -->    
     <!-- <include> -->
     <!--   <uri>model://observer_origin</uri> -->
-    <!--   <pose>0 0.07 0.93 0 0 0</pose> -->
+    <!--   <pose>0.07 0 0.93 0 0 0</pose> -->
     <!-- </include> -->
     
     <!-- iCub with hands and fixed  -->
     <model name="iCub">
       <include>
     	<uri>model://icub_with_hands</uri>
-    	<pose>0 0 0.6 0 0 -1.57</pose>
+	<pose>0 0 0.6 0 0 -3.14</pose>
       </include>
 
       <joint name="fixed to ground" type="revolute">
@@ -65,7 +65,7 @@
     <!-- default camera -->
     <gui>
       <camera name='user_camera'>
-        <pose frame=''>-1.14825 1.71337 1.73287 0 0.607643 -0.98299</pose>
+        <pose frame=''>2.54724 -0.953577 1.71618 0 0.469796 2.62419</pose>
         <view_controller>fps</view_controller>
         <projection_type>perspective</projection_type>
       </camera>
