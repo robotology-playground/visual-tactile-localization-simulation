@@ -441,7 +441,7 @@ protected:
 	hand_cmd.clear();
 	hand_cmd.setCommandedHand(which_hand);
 	hand_cmd.setCommandedFingers(finger_list);
-	hand_cmd.setFingersRestoreSpeed(15.0);
+	hand_cmd.setFingersRestoreSpeed(25.0);
 	hand_cmd.commandFingersRestore();
 	hand_port->write(hand_cmd, response);
 
