@@ -309,11 +309,9 @@ protected:
     bool enableFingersFollowing(const std::string &which_hand)
     {
 	// pick the correct hand
-	yarp::os::RpcClient* hand_port;
-	if (which_hand == "right")
-	    hand_port = &port_hand_right;
-	else
-	    hand_port = &port_hand_left;
+	yarp::os::RpcClient* hand_port = getHandPort(which_hand);
+	if (hand_port == nullptr)
+	    return false;
 
         // enable fingers movements towards the object
 	std::vector<std::string> finger_list = {"index", "middle", "ring"};
@@ -338,11 +336,9 @@ protected:
 	bool ok;
 
 	// pick the correct arm
-	ArmController* arm;
-	if (which_arm == "right")
-	    arm = &right_arm;
-	else
-	    arm = &left_arm;
+	ArmController* arm = getArmController(which_arm);
+	if (arm == nullptr)
+	    return false;
 
         // change effector to the middle finger
 	ok = arm->useFingerFrame("middle");
@@ -382,46 +378,43 @@ protected:
 			      const yarp::sig::Vector &velocity)
     {
 	// pick the correct arm
-	ArmController *arm = getArmController(which_arm);
+	ArmController* arm = getArmController(which_arm);
+	if (arm == nullptr)
+	    return false;
 
 	// compose null attitude velocity
 	yarp::sig::Vector att_dot(4, 0.0);
 
-	if (arm != nullptr)
-	    return arm->cartesian()->setTaskVelocities(velocity, att_dot);
-	else
-	    return false;
+	return arm->cartesian()->setTaskVelocities(velocity, att_dot);
     }
 
     /*
      * Restore the initial configuration of the specified arm.
      * @param which_arm which hand to use
      */
-    void restoreArm(const std::string &which_arm)
+    bool restoreArm(const std::string &which_arm)
     {
 	// pick the correct arm
-	ArmController* arm;
-	if (which_arm == "right")
-	    arm = &right_arm;
-	else
-	    arm = &left_arm;
+	ArmController* arm = getArmController(which_arm);
+	if (arm == nullptr)
+	    return false;
 
 	// issue restore command
 	arm->goHome();
+
+	return true;
     }
 
     /*
      * Restore the initial configuration of the fingers of the specified hand.
      * @param which_hand which hand to use
      */
-    void restoreFingers(const std::string &which_hand)
+    bool restoreFingers(const std::string &which_hand)
     {
 	// pick the correct hand
-	yarp::os::RpcClient* hand_port;
-	if (which_hand == "right")
-	    hand_port = &port_hand_right;
-	else
-	    hand_port = &port_hand_left;
+	yarp::os::RpcClient* hand_port = getHandPort(which_hand);
+	if (hand_port == nullptr)
+	    return false;
 
 	// issue restore command
 	std::vector<std::string> finger_list = {"thumb", "index", "middle", "ring"};
@@ -433,16 +426,16 @@ protected:
 	hand_cmd.setFingersRestoreSpeed(15.0);
 	hand_cmd.commandFingersRestore();
 	hand_port->write(hand_cmd, response);
+
+	return true;
     }
 
     bool restoreArmControllerContext(const std::string &which_arm)
     {
 	// pick the correct arm
-	ArmController* arm;
-	if (which_arm == "right")
-	    arm = &right_arm;
-	else
-	    arm = &left_arm;
+	ArmController* arm = getArmController(which_arm);
+	if (arm == nullptr)
+	    return false;
 
 	// restore the context
 	arm->restoreContext();
@@ -458,11 +451,9 @@ protected:
     bool stopArm(const std::string &which_arm)
     {
 	// pick the correct arm
-	ArmController* arm;
-	if (which_arm == "right")
-	    arm = &right_arm;
-	else
-	    arm = &left_arm;
+	ArmController* arm = getArmController(which_arm);
+	if (arm == nullptr)
+	    return false;
 
 	return arm->cartesian()->stopControl();
     }
@@ -475,11 +466,9 @@ protected:
     bool stopFingers(const std::string &which_hand)
     {
 	// pick the correct hand
-	yarp::os::RpcClient* hand_port;
-	if (which_hand == "right")
-	    hand_port = &port_hand_right;
-	else
-	    hand_port = &port_hand_left;
+	yarp::os::RpcClient* hand_port = getHandPort(which_hand);
+	if (hand_port == nullptr)
+	    return false;
 
 	// stop all the fingers
 	std::vector<std::string> finger_list = {"thumb", "index", "middle", "ring"};
@@ -489,6 +478,8 @@ protected:
 	hand_cmd.setCommandedFingers(finger_list);
 	hand_cmd.commandStop();
 	hand_port->write(hand_cmd, response);
+
+	return true;
     }
 
 public:
