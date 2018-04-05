@@ -545,7 +545,7 @@ public:
 	}
 
 	// set default hands orientation
-	right_arm.setHandAttitude(0, 15, -90);
+	right_arm.setHandAttitude(0, 15, 0);
 	left_arm.setHandAttitude(0, 15, 0);
 
 	// configure model helper
