@@ -40,6 +40,7 @@
 #include "headers/ModelHelper.h"
 #include "headers/HandControlCommand.h"
 #include "headers/HandControlResponse.h"
+#include "headers/TrajectoryGenerator.h"
 
 using namespace yarp::math;
 
@@ -47,7 +48,7 @@ enum class Status { Idle,
 	            Localize,
 	            ArmApproach, WaitArmApproachDone,
                     FingersApproach, WaitFingersApproachDone,
-	            Push, WaitPushDone,
+	            PreparePush, PerformPush,
 	            ArmRestore, WaitArmRestoreDone,
 	            FingersRestore, WaitFingersRestoreDone,
 	            Stop };
@@ -77,6 +78,12 @@ protected:
     // model helper class
     ModelHelper mod_helper;
 
+    // trajectory generator
+    TrajectoryGenerator traj_gen;
+
+    // default trajectory length
+    double trajectory_duration;
+
     // rpc server
     yarp::os::RpcServer rpc_port;
 
@@ -89,6 +96,7 @@ protected:
     Status previous_status;
     std::string current_hand;
     bool is_approach_done;
+    bool is_push_started;
 
     // last time
     // required to implement timeouts
@@ -321,11 +329,11 @@ protected:
     }
 
     /*
-     * Pushes the object towards the robot using one of the arms.
+     * Configure cartesian controller for pushing phase.
      * @param which_arm which arm to use
      * @return true/false con success/failure
      */
-    bool pushObject(const std::string &which_arm)
+    bool preparePushObject(const std::string &which_arm)
     {
 	bool ok;
 
@@ -341,30 +349,48 @@ protected:
 	if (!ok)
 	    return false;
 
-	// get the current position of the hand
+	// get the current position of the finger
 	yarp::sig::Vector pos;
 	yarp::sig::Vector att;
 	arm->cartesian()->getPose(pos, att);
 
-        // final position
-	// TODO: this should be evaluated within
-	// the model helper taking into account the geometry of the shelf
-	// and should be used to perform closed loop control
-	pos[0] += 0.20;
+	// set final position
+	yarp::sig::Vector pos_f(3, 0.0);
+	pos_f = pos;
+	pos_f[0] += 0.17;
+
+	// configure trajectory generator
+	traj_gen.setInitialPosition(pos);
+	traj_gen.setFinalPosition(pos_f);
+	traj_gen.setDuration(trajectory_duration);
+	traj_gen.init();
 
         // store the current context because we are going
         // to change the trajectory time
         arm->storeContext();
 
         // set trajectory time
-	double duration = 4.0;
-	double traj_time = 4.0;
+	// which determines the responsiveness
+	// of the cartesian controller
+	double traj_time = 0.6;
         arm->cartesian()->setTrajTime(traj_time);
 
-        // request pose to the cartesian interface
-        arm->goToPos(pos);
-
     	return true;
+    }
+
+    bool setArmLinearVelocity(const std::string &which_arm,
+			      const yarp::sig::Vector &velocity)
+    {
+	// pick the correct arm
+	ArmController *arm = getArmController(which_arm);
+
+	// compose null attitude velocity
+	yarp::sig::Vector att_dot(4, 0.0);
+
+	if (arm != nullptr)
+	    return arm->cartesian()->setTaskVelocities(velocity, att_dot);
+	else
+	    return false;
     }
 
     /*
@@ -537,6 +563,10 @@ public:
 	// set default value of flags
 	is_estimate_available = false;
 	is_approach_done = false;
+	is_push_started = false;
+
+	// set default trajectory duration
+	trajectory_duration = 3.0;
 
 	// set default status
 	status = Status::Idle;
@@ -564,8 +594,8 @@ public:
 	// in case pushing was initiated
 	// the previous context of the cartesian controller
 	// has to be restored
-	if (status == Status::Push ||
-	    status == Status::WaitPushDone)
+	if (status == Status::PreparePush ||
+	    status == Status::PerformPush)
 	{
 	    // restore arm controller context
 	    // that was changed in pushObject(curr_hand)
@@ -656,7 +686,7 @@ public:
 	    else
 	    {
 		previous_status = status;
-		status = Status::Push;
+		status = Status::PreparePush;
 		current_hand = "right";
 
 		reply.addString("Push with right-arm issued.");
@@ -684,7 +714,7 @@ public:
 
     double getPeriod()
     {
-        return 0.01;
+        return 0.02;
     }
 
     bool updateModule()
@@ -864,7 +894,7 @@ public:
 	    break;
 	}
 
-	case Status::Push:
+	case Status::PreparePush:
 	{
 	    if (!is_approach_done)
 	    {
@@ -879,11 +909,12 @@ public:
 		break;
 	    }
 
-	    // reset flag
+	    // reset flags
 	    is_approach_done = false;
+	    is_push_started = false;
 
-	    // issue push command
-	    pushObject(curr_hand);
+	    // prepare controller for push
+	    preparePushObject(curr_hand);
 
 	    // enable tactile filtering
 	    sendCommandToFilter(true, "tactile");
@@ -891,36 +922,41 @@ public:
 	    // enable fingers following mode
 	    enableFingersFollowing(curr_hand);
 
-	    // go to state WaitPushDone
+	    // go to state PerformPush
 	    mutex.lock();
-	    status = Status::WaitPushDone;
+	    status = Status::PerformPush;
 	    mutex.unlock();
-
-	    // reset timer
-	    last_time = yarp::os::Time::now();
 
 	    break;
 	}
 
-	case Status::WaitPushDone:
+	case Status::PerformPush:
 	{
-	    // timeout
-	    double timeout = 4.0;
-
-	    // check status
-	    bool is_done = false;
-	    bool ok = checkArmMotionDone(curr_hand, is_done);
-
-	    // handle failure and timeout
-	    if (!ok ||
-		(yarp::os::Time::now() - last_time > timeout) ||
-		is_done)
+	    if (!is_push_started)
 	    {
-		if (is_done)
-		    yInfo() << "Push done";
+		is_push_started = true;
 
-		// stop control
-		stopArm(curr_hand);
+		// reset time
+		last_time = yarp::os::Time::now();
+	    }
+
+	    // eval elapsed time
+	    double elapsed = yarp::os::Time::now() - last_time;
+
+	    // get current trajectory
+	    yarp::sig::Vector pos(3, 0.0);
+	    yarp::sig::Vector vel(3, 0.0);
+	    traj_gen.getTrajectory(elapsed, pos, vel);
+
+	    // issue velocity command
+	    setArmLinearVelocity(curr_hand, vel);
+
+	    // check for trajectory completion
+	    if (elapsed > trajectory_duration)
+	    {
+		// issue zero velocities
+		vel = 0;
+		setArmLinearVelocity(curr_hand, vel);
 
 		// stop fingers control
 		stopFingers(curr_hand);
@@ -929,7 +965,7 @@ public:
 		sendCommandToFilter(false);
 
 		// restore arm controller context
-		// that was changed in pushObject(curr_hand)
+		// that was changed in preparePushObject(curr_hand)
 		restoreArmControllerContext(curr_hand);
 
 		// go back to Idle
@@ -1082,8 +1118,8 @@ public:
 	    // in case pushing was initiated
 	    // the previous context of the cartesian controller
 	    // has to be restored
-	    if (prev_status == Status::Push ||
-		prev_status == Status::WaitPushDone)
+	    if (prev_status == Status::PreparePush ||
+		prev_status == Status::PerformPush)
 	    {
 		// restore arm controller context
 		// that was changed in pushObject(curr_hand)
