@@ -5,7 +5,7 @@
 # Geometry
 w = 0.7
 d = 0.4
-h = 0.15
+h = 0.10
 surface_h = 0.02;
 surface_z0 = h + surface_h / 2.0;
 support_w = 0.02;

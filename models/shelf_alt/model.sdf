@@ -5,7 +5,7 @@
     <static>true</static>
     <link name="shelf_root_link">
       <collision name="shelf_surface_collision">
-	<pose>0 0 0.16 0 0 0</pose>
+	<pose>0 0 0.11 0 0 0</pose>
 	<geometry>
           <box>
             <size>0.7 0.4 0.02</size>
@@ -21,7 +21,7 @@
 	</surface>
       </collision>
       <visual name="shelf_surface_visual">
-	<pose>0 0 0.16 0 0 0</pose>
+	<pose>0 0 0.11 0 0 0</pose>
 	<geometry>
           <box>
             <size>0.7 0.4 0.02</size>
@@ -35,10 +35,10 @@
 	</material>
       </visual>
       <visual name="left_support_visual">
-	<pose>-0.33999999999999997 0.0 0.075 0 0 0</pose>
+	<pose>-0.33999999999999997 0.0 0.05 0 0 0</pose>
 	<geometry>
           <box>
-            <size>0.02 0.4 0.15</size>
+            <size>0.02 0.4 0.1</size>
           </box>
 	</geometry>
 	<material>
@@ -49,10 +49,10 @@
 	</material>
       </visual>
       <visual name="right_support_visual">
-	<pose>0.33999999999999997 0.0 0.075 0 0 0</pose>
+	<pose>0.33999999999999997 0.0 0.05 0 0 0</pose>
 	<geometry>
           <box>
-            <size>0.02 0.4 0.15</size>
+            <size>0.02 0.4 0.1</size>
           </box>
 	</geometry>
 	<material>
