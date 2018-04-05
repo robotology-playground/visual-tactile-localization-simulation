@@ -93,5 +93,6 @@
       <showPointCloud>true</showPointCloud>
       <pointCloudColour>Gazebo/RedTransparent</pointCloudColour>
     </plugin>
+    <plugin name="model_reset" filename='libgazebo_yarp_modelreset.so'></plugin>
   </model>
 </sdf>
