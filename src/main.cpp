@@ -571,7 +571,7 @@ public:
 
 	// enable tracking mode on the left arm
 	left_arm.cartesian()->setTrackingMode(true);
-	left_arm.cartesian()->setTrajTime(1.0);
+	left_arm.cartesian()->setTrajTime(0.5);
 
 	// configure model helper
 	mod_helper.setModelDimensions(0.24, 0.17, 0.037);
