@@ -35,7 +35,8 @@ public:
     void setModelPosition(const yarp::sig::Vector &pos);
     void setModelPose(const yarp::sig::Matrix &pose);
     double evalApproachYawAttitude();
-    void evalApproachPosition(yarp::sig::Vector &pos);
+    void evalApproachPosition(yarp::sig::Vector &pos,
+			      const std::string &edge_shift = "center");
 };
 
 #endif

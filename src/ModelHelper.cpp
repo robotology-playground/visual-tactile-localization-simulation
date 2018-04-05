@@ -15,6 +15,9 @@
 #include <yarp/math/Math.h>
 #include <yarp/os/LogStream.h>
 
+// std
+#include <string>
+
 #include "headers/ModelHelper.h"
 
 #include <cmath>
@@ -115,7 +118,8 @@ double ModelHelper::evalApproachYawAttitude()
 	return attitude;
 }
 
-void ModelHelper::evalApproachPosition(yarp::sig::Vector &pos)
+void ModelHelper::evalApproachPosition(yarp::sig::Vector &pos,
+				       const std::string &edge_shift)
 {
     // assign the center of model
     pos = model_center;
@@ -132,26 +136,41 @@ void ModelHelper::evalApproachPosition(yarp::sig::Vector &pos)
     if (attitude >= (M_PI / 4.0) &&
 	attitude < (M_PI / 4.0 + M_PI / 2.0))
     {
-	direction = x_dir;
 	length = model_width / 2.0 + offset_x_y;
+	direction = x_dir * length;
+
+	if (edge_shift == "left")
+	    direction += y_dir * model_depth / 4.0;
+	else if (edge_shift == "right")
+	    direction += -1.0 * y_dir * model_depth / 4.0;
 
     }
     else if (attitude >= (M_PI / 4.0 + M_PI / 2.0) &&
 	     attitude <= M_PI)
     {
-	direction = -1 * y_dir;
 	length = model_depth / 2.0 + offset_x_y;
+	direction = -1 * y_dir * length;
+
+	if (edge_shift == "left")
+	    direction += x_dir * model_width / 4.0;
+	else if (edge_shift == "right")
+	    direction += -1.0 * x_dir * model_width / 4.0;
     }
     else
     {
-	direction = y_dir;
 	length = model_depth / 2.0 + offset_x_y;
+	direction = y_dir * length;
+
+	if (edge_shift == "left")
+	    direction += -1.0 * x_dir * model_width / 4.0;
+	else if (edge_shift == "right")
+	    direction += x_dir * model_width / 4.0;
     }
 
     // add position offset
     yarp::sig::Vector direction_3d(3, 0.0);
     direction_3d.setSubvector(0, direction);
-    pos += rob_2_work_frame * direction_3d * length;
+    pos += rob_2_work_frame * direction_3d;
 
     // add height offset
     pos[2] += model_height / 2.0 + offset_h;
