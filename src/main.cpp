@@ -46,6 +46,7 @@ using namespace yarp::math;
 
 enum class Status { Idle,
 	            Localize,
+	            MoveLeftUpward,
 	            ArmApproach, WaitArmApproachDone,
                     FingersApproach, WaitFingersApproachDone,
 	            PreparePush, PerformPush,
@@ -235,6 +236,23 @@ protected:
 	}
 
 	return true;
+    }
+
+    /*
+     * Move the left arm upward with respect to its current position.
+     */
+    bool moveLeftArmUpward()
+    {
+	// get the current position of the arm
+	yarp::sig::Vector pos;
+	yarp::sig::Vector att;
+	left_arm.cartesian()->getPose(pos, att);
+
+	// shift position upward
+	pos[2] += 0.1;
+
+	// issue command
+	left_arm.cartesian()->goToPose(pos, att);
     }
 
     /*
@@ -548,6 +566,13 @@ public:
 	right_arm.setHandAttitude(0, 15, 0);
 	left_arm.setHandAttitude(0, 15, 0);
 
+	// enable torso on the right arm only
+	right_arm.enableTorso();
+
+	// enable tracking mode on the left arm
+	left_arm.cartesian()->setTrackingMode(true);
+	left_arm.cartesian()->setTrajTime(1.0);
+
 	// configure model helper
 	mod_helper.setModelDimensions(0.24, 0.17, 0.037);
 
@@ -611,14 +636,26 @@ public:
         {
             reply.addVocab(yarp::os::Vocab::encode("many"));
             reply.addString("Available commands:");
+	    reply.addString("- move-left-upward");
             reply.addString("- home-right");
-            reply.addString("- home-left");
             reply.addString("- localize");
 	    reply.addString("- approach-with-right");
 	    reply.addString("- push-with-right");
 	    reply.addString("- stop");
             reply.addString("- quit");
         }
+	else if (cmd == "move-left-upward")
+	{
+	    if (status != Status::Idle)
+		reply.addString("Wait for completion of the current phase!");
+	    else
+	    {
+		previous_status = status;
+		status = Status::MoveLeftUpward;
+
+		reply.addString("Command issued.");
+	    }
+	}
 	else if (cmd == "home-right")
 	{
 	    if (status != Status::Idle)
@@ -743,6 +780,19 @@ public:
 	{
 	    // issue localization
 	    sendCommandToFilter(true, "visual");
+
+	    // go back to Idle
+	    mutex.lock();
+	    status = Status::Idle;
+	    mutex.unlock();
+
+	    break;
+	}
+
+	case Status::MoveLeftUpward:
+	{
+	    // issue command
+	    moveLeftArmUpward();
 
 	    // go back to Idle
 	    mutex.lock();
@@ -1100,7 +1150,8 @@ public:
 	    mutex.lock();
 
 	    // stop control
-	    stopArm(curr_hand);
+	    stopArm("right");
+	    stopArm("left");
 	    stopFingers(curr_hand);
 
 	    // disable filtering
