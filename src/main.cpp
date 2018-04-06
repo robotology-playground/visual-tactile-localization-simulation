@@ -41,6 +41,7 @@
 #include "headers/HandControlCommand.h"
 #include "headers/HandControlResponse.h"
 #include "headers/TrajectoryGenerator.h"
+#include "headers/RotationTrajectoryGenerator.h"
 
 using namespace yarp::math;
 
@@ -49,6 +50,7 @@ enum class Status { Idle,
 	            MoveLeftUpward,
 	            ArmApproach, WaitArmApproachDone,
                     FingersApproach, WaitFingersApproachDone,
+	            PrepareRotation, PerformRotation,
 	            PreparePush, PerformPush,
 	            ArmRestore, WaitArmRestoreDone,
 	            FingersRestore, WaitFingersRestoreDone,
@@ -81,6 +83,7 @@ protected:
 
     // trajectory generator
     TrajectoryGenerator traj_gen;
+    RotationTrajectoryGenerator rot_traj_gen;
 
     // default trajectory length
     double trajectory_duration;
@@ -97,7 +100,8 @@ protected:
     Status previous_status;
     std::string current_hand;
     bool is_approach_done;
-    bool is_push_started;
+    bool is_timer_started;
+    bool approach_corner;
 
     // last time
     // required to implement timeouts
@@ -258,9 +262,11 @@ protected:
     /*
      * Perform approaching phase with the specified arm.
      * @param which_arm which arm to use
+     * @param approach_corner whether to approach the corner of the object
      * @return true/false on success/failure
      */
-    bool approachObjectWithArm(const std::string &which_arm)
+    bool approachObjectWithArm(const std::string &which_arm,
+			       const bool &approach_corner)
     {
 	bool ok;
 
@@ -273,7 +279,10 @@ protected:
 	mod_helper.setModelPose(estimate);
 	double yaw = mod_helper.evalApproachYawAttitude();
 	yarp::sig::Vector pos(3, 0.0);
-	mod_helper.evalApproachPosition(pos);
+	if (!approach_corner)
+	    mod_helper.evalApproachPosition(pos);
+	else
+	    mod_helper.evalApproachPosition(pos, "right");
 
 	// pick the correct arm
 	ArmController* arm = getArmController(which_arm);
@@ -390,6 +399,48 @@ protected:
         arm->cartesian()->setTrajTime(traj_time);
 
     	return true;
+    }
+
+    bool prepareRotateObject(const std::string &which_arm)
+    {
+	// check if the estimate is available
+	if (!is_estimate_available)
+	    return false;
+
+	bool ok;
+
+	// pick the correct arm
+	ArmController* arm = getArmController(which_arm);
+	if (arm == nullptr)
+	    return false;
+
+        // change effector to the middle finger
+	ok = arm->useFingerFrame("middle");
+	if (!ok)
+	    return false;
+
+	// get the current position of the finger
+	yarp::sig::Vector finger_pos;
+	yarp::sig::Vector attitude;
+	arm->cartesian()->getPose(finger_pos, attitude);
+
+	// get the current estimate of the center of the object
+	yarp::sig::Vector object_center = estimate.getCol(3).subVector(0, 2);
+
+	// configure the trajectory generator
+	rot_traj_gen.setYawRate(-20 * M_PI / 180);
+	rot_traj_gen.setObjectCenter(object_center);
+	rot_traj_gen.setPushingPoint(finger_pos);
+
+        // store the current context because we are going
+        // to change the trajectory time
+        arm->storeContext();
+
+        // set trajectory time
+	// which determines the responsiveness
+	// of the cartesian controller
+	double traj_time = 0.6;
+        arm->cartesian()->setTrajTime(traj_time);
     }
 
     bool setArmLinearVelocity(const std::string &which_arm,
@@ -579,10 +630,10 @@ public:
 	// set default value of flags
 	is_estimate_available = false;
 	is_approach_done = false;
-	is_push_started = false;
+	is_timer_started = false;
 
 	// set default trajectory duration
-	trajectory_duration = 3.0;
+	trajectory_duration = 4.0;
 
 	// set default status
 	status = Status::Idle;
@@ -639,8 +690,10 @@ public:
 	    reply.addString("- move-left-upward");
             reply.addString("- home-right");
             reply.addString("- localize");
+	    reply.addString("- approach-corner-with-right");
 	    reply.addString("- approach-with-right");
 	    reply.addString("- push-with-right");
+	    reply.addString("- rotate-with-right");
 	    reply.addString("- stop");
             reply.addString("- quit");
         }
@@ -694,7 +747,8 @@ public:
 		reply.addString("Localization issued.");
 	    }
 	}
-	else if (cmd == "approach-with-right")
+	else if (cmd == "approach-with-right"
+		 || cmd == "approach-corner-with-right")
 	{
 	    if (status != Status::Idle)
 		reply.addString("Wait for completion of the current phase!");
@@ -703,6 +757,9 @@ public:
 		previous_status = status;
 		status = Status::ArmApproach;
 		current_hand = "right";
+
+		if (cmd == "approach-corner-with-right")
+		    approach_corner = true;
 
 		reply.addString("Approach with right-arm issued.");
 	    }
@@ -718,6 +775,19 @@ public:
 		current_hand = "right";
 
 		reply.addString("Push with right-arm issued.");
+	    }
+	}
+	else if (cmd == "rotate-with-right")
+	{
+	    if (status != Status::Idle)
+		reply.addString("Wait for completion of the current phase!");
+	    else
+	    {
+		previous_status = status;
+		status = Status::PrepareRotation;
+		current_hand = "right";
+
+		reply.addString("Rotation with right-arm issued.");
 	    }
 	}
 	else if (cmd == "stop")
@@ -819,7 +889,10 @@ public:
 	    }
 
 	    // issue approach with arm
-	    approachObjectWithArm(curr_hand);
+	    approachObjectWithArm(curr_hand, approach_corner);
+
+	    // reset approach_corner flag
+	    approach_corner = false;
 
 	    // go to state WaitArmApproachDone
 	    mutex.lock();
@@ -952,7 +1025,7 @@ public:
 
 	    // reset flags
 	    is_approach_done = false;
-	    is_push_started = false;
+	    is_timer_started = false;
 
 	    // prepare controller for push
 	    preparePushObject(curr_hand);
@@ -973,9 +1046,9 @@ public:
 
 	case Status::PerformPush:
 	{
-	    if (!is_push_started)
+	    if (!is_timer_started)
 	    {
-		is_push_started = true;
+		is_timer_started = true;
 
 		// reset time
 		last_time = yarp::os::Time::now();
@@ -1007,6 +1080,86 @@ public:
 
 		// restore arm controller context
 		// that was changed in preparePushObject(curr_hand)
+		restoreArmControllerContext(curr_hand);
+
+		// go back to Idle
+		mutex.lock();
+		status = Status::Idle;
+		mutex.unlock();
+	    }
+
+	    break;
+	}
+
+	case Status::PrepareRotation:
+	{
+	    if (curr_hand.empty())
+	    {
+		// this should not happen
+		// go back to Idle
+		mutex.lock();
+		status = Status::Idle;
+		mutex.unlock();
+
+		break;
+	    }
+
+	    // reset flags
+	    is_approach_done = false;
+	    is_timer_started = false;
+
+	    // prepare controller for rotation
+	    prepareRotateObject(curr_hand);
+
+	    // enable tactile filtering
+	    sendCommandToFilter(true, "tactile");
+
+	    // enable fingers following mode
+	    enableFingersFollowing(curr_hand);
+
+	    // go to state PerformRotation
+	    mutex.lock();
+	    status = Status::PerformRotation;
+	    mutex.unlock();
+
+	    break;
+	}
+
+	case Status::PerformRotation:
+	{
+	    if (!is_timer_started)
+	    {
+		is_timer_started = true;
+
+		// reset time
+		last_time = yarp::os::Time::now();
+	    }
+
+	    // eval elapsed time
+	    double elapsed = yarp::os::Time::now() - last_time;
+
+	    // get current trajectory
+	    yarp::sig::Vector vel(3, 0.0);
+	    rot_traj_gen.getVelocity(elapsed, vel);
+
+	    // issue velocity command
+	    setArmLinearVelocity(curr_hand, vel);
+
+	    // check for trajectory completion
+	    if (elapsed > trajectory_duration)
+	    {
+		// issue zero velocities
+		vel = 0;
+		setArmLinearVelocity(curr_hand, vel);
+
+		// stop fingers control
+		stopFingers(curr_hand);
+
+		// disable filtering
+		sendCommandToFilter(false);
+
+		// restore arm controller context
+		// that was changed in prepareRotateObject(curr_hand)
 		restoreArmControllerContext(curr_hand);
 
 		// go back to Idle
