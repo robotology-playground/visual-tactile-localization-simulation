@@ -18,7 +18,7 @@ Gazebo based simulation scenario for a visual-tactile localization algorithm.
 The plugin `FakePointCloud` uses the header-only library [VCG](http://vcg.isti.cnr.it/vcglib/) to sample point clouds. It is provided within the header files of the plugin.
 
 ## Configure the environment
-It is supposed that you have already installed `yarp` using two directories one for code, i.e. `$ROBOT_CODE`, and one for installed stuff, i.e. `$ROBOT-INSTALL` (this is not strictly required but it helps in setting the environment variables required for Gazebo within yarpmanager). Also it is supposed that `Gazebo 7` has already been installed.
+It is supposed that you have already installed `yarp` using two directories one for code, i.e. `$ROBOT_CODE`, and one for installed stuff, i.e. `$ROBOT-INSTALL` (this is not strictly required but it helps in setting the environment variables required for Gazebo within yarpmanager). Also it is supposed that `Gazebo 8` has already been installed.
 
 ### Get the code
 ```
@@ -78,6 +78,7 @@ The module `visual-tactile-localization-sim` opens a RPC port `/service` where t
 - `localize` perform localization using visual information;
 - `approach-with-right` perform an approaching phase consisting in 
    - moving the right hand near a box taking into account the current estimate;
+   - closing the fingers of the right-hand until contacts are detected between the fingers and the border of the box;
 - `approach-corner-with-right` perform an approaching phase consisting in 
    - moving the right hand near the right corner of a box taking into account the current estimate;
    - closing the fingers of the right-hand until contacts are detected between the fingers and the border of the box;
