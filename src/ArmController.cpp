@@ -21,11 +21,12 @@ bool ArmController::configure(const std::string &robot_name,
     yarp::os::Property prop;
     bool ok;
 
-    // set default value for flag
-    is_tip_attached = false;
-
     // store which arm
     this->arm_name = arm_name;
+
+    /**
+     * Drivers configuration
+     */
 
     // prepare properties for the CartesianController
     prop.put("device", "cartesiancontrollerclient");
@@ -33,7 +34,6 @@ bool ArmController::configure(const std::string &robot_name,
     prop.put("local", "/" + arm_name + "_arm_controller/cartesian_client");
 
     // let's give the controller some time to warm up
-    // here use real time and not simulation time
     ok = false;
     double t0 = yarp::os::SystemClock::nowSystem();
     while (yarp::os::SystemClock::nowSystem() - t0 < 10.0)
@@ -67,21 +67,6 @@ bool ArmController::configure(const std::string &robot_name,
         return false;
     }
 
-    // store the current context so that
-    // it can be restored when the controller closes
-    icart->storeContext(&startup_cart_context);
-
-    // set a default trajectory time
-    icart->setTrajTime(5.0);
-
-    // store home pose
-    // wait until the pose is available
-    while(!icart->getPose(home_pos, home_att))
-        yarp::os::Time::yield();
-
-    // configure default hand attitude
-    setHandAttitude(0, 0, 0);
-
     // prepare properties for the Encoders
     // these are required to retrieve fingers forward kinematics
     prop.put("device", "remote_controlboard");
@@ -97,7 +82,7 @@ bool ArmController::configure(const std::string &robot_name,
         return false;
     }
 
-    // try to retrieve the views
+    // try to retrieve the view
     ok = drv_enc_arm.view(ienc_arm);
     if (!ok || ienc_arm == 0)
     {
@@ -107,6 +92,45 @@ bool ArmController::configure(const std::string &robot_name,
                  << "arm";
         return false;
     }
+
+    /*
+     *
+     */
+
+    /*
+     * Cartesian Controller configuration
+     */
+
+    // store the current context so that
+    // it can be restored when the controller closes
+    icart->storeContext(&startup_cart_context);
+
+    // set a default trajectory time
+    icart->setTrajTime(5.0);
+
+    // store home pose
+    // wait until the pose is available
+    while(!icart->getPose(home_pos, home_att))
+        yarp::os::Time::yield();
+
+    /*
+     *
+     */
+
+    /**
+     * Defaults
+     */
+
+    // hand attitude
+    setHandAttitude(0, 0, 0);
+
+    // this flag is true when a tip
+    // is attached to the cartesian chain
+    is_tip_attached = false;
+
+    /*
+     *
+     */
 
     return true;
 }
