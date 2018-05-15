@@ -578,7 +578,7 @@ public:
 
 	// prepare properties for the FrameTransformClient
 	yarp::os::Property propTfClient;
-	propTfClient.put("device", "transformClient");
+	propTfClient.put("device", "FrameTransformClient");
 	propTfClient.put("local", "/vis_tac_localization/transformClient");
 	propTfClient.put("remote", "/transformServer");
 
