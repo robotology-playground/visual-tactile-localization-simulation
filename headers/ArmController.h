@@ -157,16 +157,4 @@ public:
     void restoreContext();
 };
 
-class RightArmController : public ArmController
-{
-public:
-    bool configure();
-};
-
-class LeftArmController : public ArmController
-{
-public:
-    bool configure();
-};
-
 #endif
