@@ -685,17 +685,6 @@ public:
         stopFingers("right");
         stopFingers("left");
 
-        // in case pushing was initiated
-        // the previous context of the cartesian controller
-        // has to be restored
-        if (status == Status::PreparePush ||
-            status == Status::PerformPush)
-        {
-            // restore arm controller context
-            // that was changed in pushObject(curr_hand)
-            restoreArmControllerContext(current_hand);
-        }
-
         // close arm controllers
         right_arm.close();
         left_arm.close();
