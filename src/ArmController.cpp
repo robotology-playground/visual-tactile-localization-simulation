@@ -318,20 +318,17 @@ bool ArmController::goHome()
 {
     bool ok;
 
-    // store the context
+    // remove finger tip in case it is attached
+    ok = detachFingerTip();
+    if (!ok)
+        return false;
+
+    // store the context since the IK solver configuration
+    // will be changed
     int current_context;
     ok = icart->storeContext(&current_context);
     if (!ok)
         return false;
-
-    // remove finger tip in case it is attached
-    bool tip_status = is_tip_attached;
-    if (is_tip_attached)
-    {
-        ok = detachFingerTip();
-        if (!ok)
-            return false;
-    }
 
     // since this function may be called for both
     // right and left arms it should be taken into account
@@ -370,9 +367,6 @@ bool ArmController::goHome()
                  << arm_name << "arm";
         return false;
     }
-    // the restoreContext also restore the finger tip if it was attached
-    // hence it is required to restore the original state
-    is_tip_attached = tip_status;
 
     return true;
 }
