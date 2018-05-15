@@ -83,8 +83,7 @@ bool ArmController::configure(const std::string &robot_name,
     setHandAttitude(0, 0, 0);
 
     // prepare properties for the Encoders
-    // these are required to retrieve forward kinematics of the hand
-    // without relying on the cartesian controller
+    // these are required to retrieve fingers forward kinematics
     prop.put("device", "remote_controlboard");
     prop.put("remote", "/" + robot_name + "/" + arm_name + "_arm");
     prop.put("local", "/" + arm_name + "_arm_controller/encoder/arm");
