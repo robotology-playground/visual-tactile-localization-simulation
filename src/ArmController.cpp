@@ -165,7 +165,7 @@ void ArmController::setHandAttitude(const double &yaw = 0,
     //
     // one solution to obtain the final attitude w.r.t to the waist frame
     // is to compose a rotation of pi about the z-axis and a rotation
-    // of -pi/2 (pi/2) about the x-axis (after the first rotation)
+    // of -pi/2  about the x-axis
 
     yarp::sig::Vector axis_angle(4);
     yarp::sig::Matrix dcm;
@@ -224,7 +224,7 @@ bool ArmController::useFingerFrame(const std::string& finger_name)
         if (!ok)
             return false;
     }
-    
+
     // update tip status
     is_tip_attached = true;
 
