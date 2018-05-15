@@ -72,7 +72,7 @@ bool ArmController::configure(const std::string &robot_name,
     icart->storeContext(&startup_cart_context);
 
     // set a default trajectory time
-    icart->setTrajTime(2.0);
+    icart->setTrajTime(5.0);
 
     // store home pose
     // wait until the pose is available
