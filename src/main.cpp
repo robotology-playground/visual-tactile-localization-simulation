@@ -302,6 +302,9 @@ protected:
         // set desired attitude
         arm->setHandAttitude(yaw * 180 / M_PI, 15, -90);
 
+        // set trajectory time
+        arm->cartesian()->setTrajTime(4.0);
+
         // request pose to the cartesian interface
         arm->goToPos(pos);
 
