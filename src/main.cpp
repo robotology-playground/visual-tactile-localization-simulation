@@ -60,8 +60,8 @@ class VisTacLocSimModule: public yarp::os::RFModule
 {
 protected:
     // arm controllers
-    RightArmController right_arm;
-    LeftArmController left_arm;
+    ArmController right_arm;
+    ArmController left_arm;
 
     // hand controller modules ports
     yarp::os::RpcClient port_hand_right;
@@ -599,14 +599,14 @@ public:
 	}
 
 	// configure arm controllers
-	ok = right_arm.configure();
+	ok = right_arm.configure("icubSim", "right");
         if (!ok)
 	{
             yError() << "VisTacLocSimModule: unable to configure the right arm controller";
             return false;
 	}
 
-	ok = left_arm.configure();
+	ok = left_arm.configure("icubSim", "left");
         if (!ok)
 	{
             yError() << "VisTacLocSimModule: unable to configure the left arm controller";
