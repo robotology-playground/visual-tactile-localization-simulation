@@ -98,8 +98,8 @@ public:
      * @param roll the amount of roll rotation in degrees
      */
     void setHandAttitude(const double &yaw,
-			 const double &pitch,
-			 const double &roll);
+                         const double &pitch,
+                         const double &roll);
     /*
      * Get the pose of the frame attached to palm of the hand.
      * @param pos position of the frame
@@ -108,7 +108,7 @@ public:
      * @return true/false on success/failure
      */
     bool getHandPose(yarp::sig::Vector& pos,
-		     yarp::sig::Matrix& rot);
+                     yarp::sig::Matrix& rot);
 
     /*
      * This function attach a tip to the end effector

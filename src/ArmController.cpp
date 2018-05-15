@@ -38,33 +38,33 @@ bool ArmController::configure(const std::string &robot_name,
     double t0 = yarp::os::SystemClock::nowSystem();
     while (yarp::os::SystemClock::nowSystem() - t0 < 10.0)
     {
-	// this might fail if controller
-	// is not connected to solver yet
-	if (drv_cart.open(prop))
-	{
-	    ok = true;
-	    break;
-	}
-	yarp::os::SystemClock::delaySystem(1.0);
+        // this might fail if controller
+        // is not connected to solver yet
+        if (drv_cart.open(prop))
+        {
+            ok = true;
+            break;
+        }
+        yarp::os::SystemClock::delaySystem(1.0);
     }
     if (!ok)
     {
-	yError() << "ArmController: Unable to open the Cartesian Controller driver"
-		 << "for the"
-		 << arm_name
-		 << "arm.";
-	return false;
+        yError() << "ArmController: Unable to open the Cartesian Controller driver"
+                 << "for the"
+                 << arm_name
+                 << "arm.";
+        return false;
     }
 
     // try to retrieve the view
     ok = drv_cart.view(icart);
     if (!ok || icart == 0)
     {
-	yError() << "ArmController: Unable to retrieve the CartesianController view"
-		 << "for the"
-		 << arm_name
-		 << "arm.";
-	return false;
+        yError() << "ArmController: Unable to retrieve the CartesianController view"
+                 << "for the"
+                 << arm_name
+                 << "arm.";
+        return false;
     }
 
     // store the current context so that
@@ -77,7 +77,7 @@ bool ArmController::configure(const std::string &robot_name,
     // store home pose
     // wait until the pose is available
     while(!icart->getPose(home_pos, home_att))
-	yarp::os::Time::yield();
+        yarp::os::Time::yield();
 
     // configure default hand attitude
     setHandAttitude(0, 0, 0);
@@ -91,22 +91,22 @@ bool ArmController::configure(const std::string &robot_name,
     ok = drv_enc_arm.open(prop);
     if (!ok)
     {
-	yError() << "ArmController: unable to open the Remote Control Board driver"
-		 << "for the"
-		 << arm_name
-		 << "arm";
-	return false;
+        yError() << "ArmController: unable to open the Remote Control Board driver"
+                 << "for the"
+                 << arm_name
+                 << "arm";
+        return false;
     }
 
     // try to retrieve the views
     ok = drv_enc_arm.view(ienc_arm);
     if (!ok || ienc_arm == 0)
     {
-	yError() << "ArmController: Unable to retrieve the Encoders view."
-		 << "for the"
-		 << arm_name
-		 << "arm";
-	return false;
+        yError() << "ArmController: Unable to retrieve the Encoders view."
+                 << "for the"
+                 << arm_name
+                 << "arm";
+        return false;
     }
 
     return true;
@@ -131,8 +131,8 @@ yarp::dev::ICartesianControl* ArmController::cartesian()
 }
 
 void ArmController::setHandAttitude(const double &yaw = 0,
-				    const double &pitch = 0,
-				    const double &roll = 0)
+                                    const double &pitch = 0,
+                                    const double &roll = 0)
 {
     // given the reference frame convention for the hands of iCub
     // in order to place the right (left) hand in the standard configuration
@@ -195,11 +195,11 @@ bool ArmController::useFingerFrame(const std::string& finger_name)
 
     if (is_tip_attached)
     {
-	// since a tip is already attached
-	// first it is required to detach it
-	ok = removeFingerFrame();
-	if (!ok)
-	    return false;
+        // since a tip is already attached
+        // first it is required to detach it
+        ok = removeFingerFrame();
+        if (!ok)
+            return false;
     }
     
     // update tip status
@@ -209,12 +209,12 @@ bool ArmController::useFingerFrame(const std::string& finger_name)
     int n_encs;
     ok = ienc_arm->getAxes(&n_encs);
     if(!ok)
-	return false;
+        return false;
 
     yarp::sig::Vector encs(n_encs);
     ok = ienc_arm->getEncoders(encs.data());
     if(!ok)
-	return false;
+        return false;
 
     // get the transformation between the standard
     // effector and the desired finger
@@ -222,7 +222,7 @@ bool ArmController::useFingerFrame(const std::string& finger_name)
     iCub::iKin::iCubFinger finger(arm_name + "_" + finger_name);
     ok = finger.getChainJoints(encs,joints);
     if (!ok)
-	return false;
+        return false;
     yarp::sig::Matrix tip_frame = finger.getH((M_PI/180.0)*joints);
 
     // attach the tip taking into account only the positional part
@@ -232,7 +232,7 @@ bool ArmController::useFingerFrame(const std::string& finger_name)
     yarp::sig::Vector tip_a = yarp::math::dcm2axis(identity);
     ok = icart->attachTipFrame(tip_x, tip_a);
     if(!ok)
-	return false;
+        return false;
 
     return true;
 }
@@ -246,10 +246,10 @@ bool ArmController::removeFingerFrame()
     ok = icart->removeTipFrame();
     if (!ok)
     {
-	yError() << "ArmController::removeFingerFrame"
-		 << "Error: unable to remove finger tip from the"
-		 << arm_name << "arm chain";
-	return false;
+        yError() << "ArmController::removeFingerFrame"
+                 << "Error: unable to remove finger tip from the"
+                 << arm_name << "arm chain";
+        return false;
     }
 
     return true;
@@ -264,10 +264,10 @@ bool ArmController::enableTorso()
     ok = icart->getDOF(curDoF);
     if (!ok)
     {
-	yError() << "ArmController::enableTorso"
-		 << "Error: unable to get the current DOF configuration for the"
-		 << arm_name << "arm chain";
-	return false;
+        yError() << "ArmController::enableTorso"
+                 << "Error: unable to get the current DOF configuration for the"
+                 << arm_name << "arm chain";
+        return false;
     }
 
     // enable torso
@@ -280,10 +280,10 @@ bool ArmController::enableTorso()
     ok = icart->setDOF(newDoF, curDoF);
     if (!ok)
     {
-	yError() << "ArmController::enableTorso"
-		 << "Error: unable set the new DOF configuration for the"
-		 << arm_name << "arm chain";
-	return false;
+        yError() << "ArmController::enableTorso"
+                 << "Error: unable set the new DOF configuration for the"
+                 << arm_name << "arm chain";
+        return false;
     }
 
     return true;
@@ -304,15 +304,15 @@ bool ArmController::goHome()
     int current_context;
     ok = icart->storeContext(&current_context);
     if (!ok)
-	return false;
+        return false;
 
     // remove finger tip in case it is attached
     bool tip_status = is_tip_attached;
     if (is_tip_attached)
     {
-	ok = removeFingerFrame();
-	if (!ok)
-	    return false;
+        ok = removeFingerFrame();
+        if (!ok)
+            return false;
     }
 
     // force the IK to use 0, 0, 0
@@ -322,20 +322,20 @@ bool ArmController::goHome()
     ok &= icart->setLimits(2,0.0,0.0);
     if (!ok)
     {
-	yError() << "ArmController::goHome"
-		 << "Error: unable to force torso solution to 0 for the"
-		 << arm_name << "arm";
-	return false;
+        yError() << "ArmController::goHome"
+                 << "Error: unable to force torso solution to 0 for the"
+                 << arm_name << "arm";
+        return false;
     }
 
     // restore home position
     ok = icart->goToPoseSync(home_pos, home_att);
     if (!ok)
     {
-	yError() << "ArmController::goHome"
-		 << "Error: unable to command home position for the"
-		 << arm_name << "arm";
-	return false;
+        yError() << "ArmController::goHome"
+                 << "Error: unable to command home position for the"
+                 << arm_name << "arm";
+        return false;
     }
     icart->waitMotionDone(0.03, 5.0);
 
@@ -343,10 +343,10 @@ bool ArmController::goHome()
     ok = icart->restoreContext(current_context);
     if (!ok)
     {
-	yError() << "ArmController::goHome"
-		 << "Error: unable to restore the previous context for the"
-		 << arm_name << "arm";
-	return false;
+        yError() << "ArmController::goHome"
+                 << "Error: unable to restore the previous context for the"
+                 << arm_name << "arm";
+        return false;
     }
     // the restoreContext also restore the finger tip if it was attached
     // hence it is required to restore the original state
