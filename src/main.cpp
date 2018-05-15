@@ -1109,6 +1109,19 @@ public:
 
         case Status::PrepareRotation:
         {
+            if (!is_approach_done)
+            {
+                // push not possible
+                // ignore this command
+
+                // go back to Idle
+                mutex.lock();
+                status = Status::Idle;
+                mutex.unlock();
+
+                break;
+            }
+
             // reset flags
             is_approach_done = false;
             is_timer_started = false;
