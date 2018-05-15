@@ -255,6 +255,9 @@ protected:
         // shift position upward
         pos[2] += 0.1;
 
+        // set trajectory time
+        left_arm.cartesian()->setTrajTime(4.0);
+
         // issue command
         left_arm.cartesian()->goToPose(pos, att);
     }
