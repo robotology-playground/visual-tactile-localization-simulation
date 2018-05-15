@@ -247,6 +247,8 @@ protected:
      */
     bool moveLeftArmUpward()
     {
+        bool ok;
+
         // get the current position of the arm
         yarp::sig::Vector pos;
         yarp::sig::Vector att;
@@ -256,7 +258,9 @@ protected:
         pos[2] += 0.1;
 
         // set trajectory time
-        left_arm.cartesian()->setTrajTime(4.0);
+        ok = left_arm.cartesian()->setTrajTime(4.0);
+        if (!ok)
+            return false;
 
         // issue command
         left_arm.cartesian()->goToPose(pos, att);
@@ -306,7 +310,9 @@ protected:
         arm->setHandAttitude(yaw * 180 / M_PI, 15, -90);
 
         // set trajectory time
-        arm->cartesian()->setTrajTime(4.0);
+        ok = arm->cartesian()->setTrajTime(4.0);
+        if (!ok)
+            return false;
 
         // request pose to the cartesian interface
         arm->goToPos(pos);
