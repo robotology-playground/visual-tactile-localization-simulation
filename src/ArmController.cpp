@@ -15,16 +15,6 @@
 
 using namespace yarp::math;
 
-bool RightArmController::configure()
-{
-    return ArmController::configure("right");
-}
-
-bool LeftArmController::configure()
-{
-    return ArmController::configure("left");
-}
-
 bool ArmController::configure(const std::string &robot_name,
                               const std::string &which_arm)
 {
