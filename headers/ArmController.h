@@ -64,7 +64,8 @@ public:
      * @param which_arm which arm to be used, right or left
      * @return true/false on success/fail
      */
-    bool configure(const std::string& which_arm);
+    bool configure(const std::string& robot_name,
+                   const std::string& which_arm);
 
     /*
      * Stop the controller, restore the startup context,

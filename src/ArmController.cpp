@@ -25,7 +25,8 @@ bool LeftArmController::configure()
     return ArmController::configure("left");
 }
 
-bool ArmController::configure(const std::string &which_arm)
+bool ArmController::configure(const std::string &robot_name,
+                              const std::string &which_arm)
 {
     yarp::os::Property prop;
     bool ok;
@@ -38,7 +39,7 @@ bool ArmController::configure(const std::string &which_arm)
 
     // prepare properties for the CartesianController
     prop.put("device", "cartesiancontrollerclient");
-    prop.put("remote", "/icubSim/cartesianController/" + which_arm + "_arm");
+    prop.put("remote", "/" + robot_name + "/cartesianController/" + which_arm + "_arm");
     prop.put("local", "/" + which_arm + "_arm_controller/cartesian_client");
 
     // let's give the controller some time to warm up
@@ -95,7 +96,7 @@ bool ArmController::configure(const std::string &which_arm)
     // these are required to retrieve forward kinematics of the hand
     // without relying on the cartesian controller
     prop.put("device", "remote_controlboard");
-    prop.put("remote", "/icubSim/" + which_arm + "_arm");
+    prop.put("remote", "/" + robot_name + "/" + which_arm + "_arm");
     prop.put("local", "/" + which_arm + "_arm_controller/encoder/arm");
     ok = drv_enc_arm.open(prop);
     if (!ok)
