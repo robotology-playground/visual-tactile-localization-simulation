@@ -12,7 +12,7 @@
 // yarp
 #include <yarp/os/Vocab.h>
 
-#include "headers/filterCommand.h"
+#include "filterCommand.h"
 
 void yarp::sig::FilterCommand::enableFiltering()
 {

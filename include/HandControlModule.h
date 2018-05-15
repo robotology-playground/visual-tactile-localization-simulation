@@ -25,9 +25,9 @@
 // std
 #include <string>
 
-#include "headers/HandController.h"
-#include "headers/HandControlCommand.h"
-#include "headers/HandControlResponse.h"
+#include "HandController.h"
+#include "HandControlCommand.h"
+#include "HandControlResponse.h"
 
 class HandControlModule : public yarp::os::RFModule, public yarp::os::PortReader
 {

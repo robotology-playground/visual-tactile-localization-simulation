@@ -9,7 +9,7 @@
  * @author: Nicola Piga <nicolapiga@gmail.com>
  */
 
-#include "headers/FingerController.h"
+#include "FingerController.h"
 
 using namespace yarp::math;
 

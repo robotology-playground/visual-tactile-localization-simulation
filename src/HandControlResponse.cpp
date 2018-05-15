@@ -9,7 +9,7 @@
  * @author: Nicola Piga <nicolapiga@gmail.com>
  */
 
-#include "headers/HandControlResponse.h"
+#include "HandControlResponse.h"
 
 HandControlResponse::HandControlResponse() : is_approach_done(false),
 					     is_restore_done(false),

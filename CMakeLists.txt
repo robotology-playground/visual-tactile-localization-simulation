@@ -33,17 +33,7 @@ include(ICUBcontribHelpers)
 # specify to install in $ICUBcontrib_DIR/bin
 icubcontrib_set_default_prefix()
 
-# set headers and sources
-set(headers_main_module
-  ${CMAKE_SOURCE_DIR}/headers/PointCloud.h
-  ${CMAKE_SOURCE_DIR}/headers/filterCommand.h
-  ${CMAKE_SOURCE_DIR}/headers/ArmController.h
-  ${CMAKE_SOURCE_DIR}/headers/ModelHelper.h
-  ${CMAKE_SOURCE_DIR}/headers/HandControlCommand.h
-  ${CMAKE_SOURCE_DIR}/headers/HandControlResponse.h
-  ${CMAKE_SOURCE_DIR}/headers/TrajectoryGenerator.h
-  ${CMAKE_SOURCE_DIR}/headers/RotationTrajectoryGenerator.h
-  )
+# set sources 
 set(sources_main_module
   ${CMAKE_SOURCE_DIR}/src/filterCommand.cpp
   ${CMAKE_SOURCE_DIR}/src/ArmController.cpp
@@ -53,14 +43,6 @@ set(sources_main_module
   ${CMAKE_SOURCE_DIR}/src/HandControlResponse.cpp
   ${CMAKE_SOURCE_DIR}/src/TrajectoryGenerator.cpp
   ${CMAKE_SOURCE_DIR}/src/RotationTrajectoryGenerator.cpp
-  )
-
-set (headers_hand_ctrl_module
-  ${CMAKE_SOURCE_DIR}/headers/FingerController.h
-  ${CMAKE_SOURCE_DIR}/headers/HandController.h
-  ${CMAKE_SOURCE_DIR}/headers/HandControlModule.h
-  ${CMAKE_SOURCE_DIR}/headers/HandControlCommand.h
-  ${CMAKE_SOURCE_DIR}/headers/HandControlResponse.h
   )
 
 set (sources_hand_ctrl_module
@@ -74,12 +56,13 @@ set (sources_hand_ctrl_module
 include_directories(${YARP_INCLUDE_DIRS})
 include_directories(${ICUB_INCLUDE_DIRS})
 include_directories(${PROJECT_SOURCE_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/include)
 
-add_executable(${PROJECT_NAME} ${headers_main_module} ${sources_main_module})
+add_executable(${PROJECT_NAME} ${sources_main_module})
 target_link_libraries(${PROJECT_NAME} ${YARP_LIBRARIES} ${ICUB_LIBRARIES})
 install(TARGETS ${PROJECT_NAME} DESTINATION bin)
 
-add_executable("hand_ctrl_module" ${headers_hand_ctrl_module} ${sources_hand_ctrl_module})
+add_executable("hand_ctrl_module" ${sources_hand_ctrl_module})
 target_link_libraries("hand_ctrl_module" ${YARP_LIBRARIES} ${ICUB_LIBRARIES})
 install(TARGETS "hand_ctrl_module" DESTINATION bin)
 

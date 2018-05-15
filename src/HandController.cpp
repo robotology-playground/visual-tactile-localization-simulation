@@ -13,7 +13,7 @@
 #include <yarp/os/Property.h>
 #include <yarp/math/Math.h>
 
-#include "headers/HandController.h"
+#include "HandController.h"
 
 #include <cmath>
 

@@ -15,7 +15,7 @@
 
 #include <cmath>
 
-#include "headers/TrajectoryGenerator.h"
+#include "TrajectoryGenerator.h"
 
 using namespace yarp::math;
 

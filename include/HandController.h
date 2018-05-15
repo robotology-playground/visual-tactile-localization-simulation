@@ -29,7 +29,7 @@
 #include <vector>
 #include <unordered_map>
 
-#include <headers/FingerController.h>
+#include "FingerController.h"
 
 class HandController
 {

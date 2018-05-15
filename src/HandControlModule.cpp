@@ -12,7 +12,7 @@
 // yarp
 #include <yarp/os/ConnectionWriter.h>
 
-#include "headers/HandControlModule.h"
+#include "HandControlModule.h"
 
 typedef std::map<iCub::skinDynLib::SkinPart, iCub::skinDynLib::skinContactList> skinPartMap;
 

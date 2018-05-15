@@ -35,13 +35,13 @@
 
 #include <cmath>
 
-#include "headers/filterCommand.h"
-#include "headers/ArmController.h"
-#include "headers/ModelHelper.h"
-#include "headers/HandControlCommand.h"
-#include "headers/HandControlResponse.h"
-#include "headers/TrajectoryGenerator.h"
-#include "headers/RotationTrajectoryGenerator.h"
+#include "filterCommand.h"
+#include "ArmController.h"
+#include "ModelHelper.h"
+#include "HandControlCommand.h"
+#include "HandControlResponse.h"
+#include "TrajectoryGenerator.h"
+#include "RotationTrajectoryGenerator.h"
 
 using namespace yarp::math;
 

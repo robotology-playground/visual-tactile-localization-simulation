@@ -9,7 +9,7 @@
  * @author: Nicola Piga <nicolapiga@gmail.com>
  */
 
-#include "headers/ArmController.h"
+#include "ArmController.h"
 
 #include <cmath>
 

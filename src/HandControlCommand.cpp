@@ -15,7 +15,7 @@
 // std
 #include <algorithm>
 
-#include "headers/HandControlCommand.h"
+#include "HandControlCommand.h"
 
 HandControlCommand::HandControlCommand() : linear_forward_speed(0.0),
 					   joint_restore_speed(0.0),
