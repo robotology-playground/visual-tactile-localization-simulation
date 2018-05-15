@@ -116,14 +116,14 @@ public:
      * @param finger_name the name of the finger
      * @return true/false on success/failure
      */
-    bool useFingerFrame(const std::string& finger_name);
+    bool attachFingerTip(const std::string& finger_name);
 
     /*
      * This function remove the tool tip added to the end effector
      * using the function useFinger.
      * @return true/false on success/failure
      */
-    bool removeFingerFrame();
+    bool detachFingerTip();
 
     /*
      * Enable use of the torso.

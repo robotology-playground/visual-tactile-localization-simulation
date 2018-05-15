@@ -212,7 +212,7 @@ void ArmController::setHandAttitude(const double &yaw = 0,
     hand_attitude = yarp::math::dcm2axis(dcm);
 }
 
-bool ArmController::useFingerFrame(const std::string& finger_name)
+bool ArmController::attachFingerTip(const std::string& finger_name)
 {
     bool ok;
 
@@ -220,9 +220,7 @@ bool ArmController::useFingerFrame(const std::string& finger_name)
     {
         // since a tip is already attached
         // first it is required to detach it
-        ok = removeFingerFrame();
-        if (!ok)
-            return false;
+        return false;
     }
 
     // update tip status
@@ -260,19 +258,23 @@ bool ArmController::useFingerFrame(const std::string& finger_name)
     return true;
 }
 
-bool ArmController::removeFingerFrame()
+bool ArmController::detachFingerTip()
 {
     bool ok;
 
-    is_tip_attached = false;
-
-    ok = icart->removeTipFrame();
-    if (!ok)
+    if (is_tip_attached)
     {
-        yError() << "ArmController::removeFingerFrame"
-                 << "Error: unable to remove finger tip from the"
-                 << arm_name << "arm chain";
-        return false;
+        ok = icart->removeTipFrame();
+
+        if (!ok)
+        {
+            yError() << "ArmController::removeFingerFrame"
+                     << "Error: unable to remove finger tip from the"
+                     << arm_name << "arm chain";
+            return false;
+        }
+
+        is_tip_attached = false;
     }
 
     return true;
@@ -316,13 +318,6 @@ bool ArmController::goHome()
 {
     bool ok;
 
-    // since this function may be called for both
-    // right and left arms it should be taken into account
-    // the fact that different IK solutions for the torso
-    // may be obtained
-    // solution is to force the solution for the torso to
-    // 0, 0, 0
-
     // store the context
     int current_context;
     ok = icart->storeContext(&current_context);
@@ -333,13 +328,17 @@ bool ArmController::goHome()
     bool tip_status = is_tip_attached;
     if (is_tip_attached)
     {
-        ok = removeFingerFrame();
+        ok = detachFingerTip();
         if (!ok)
             return false;
     }
 
-    // force the IK to use 0, 0, 0
-    // as solution for the torso
+    // since this function may be called for both
+    // right and left arms it should be taken into account
+    // the fact that different IK solutions for the torso
+    // may be obtained
+    // solution is to force the solution for the torso to
+    // 0, 0, 0
     ok = icart->setLimits(0,0.0,0.0);
     ok &= icart->setLimits(1,0.0,0.0);
     ok &= icart->setLimits(2,0.0,0.0);
