@@ -16,7 +16,7 @@
 using namespace yarp::math;
 
 bool ArmController::configure(const std::string &robot_name,
-                              const std::string &which_arm)
+                              const std::string &arm_name)
 {
     yarp::os::Property prop;
     bool ok;
@@ -25,12 +25,12 @@ bool ArmController::configure(const std::string &robot_name,
     is_tip_attached = false;
 
     // store which arm
-    this->which_arm = which_arm;
+    this->arm_name = arm_name;
 
     // prepare properties for the CartesianController
     prop.put("device", "cartesiancontrollerclient");
-    prop.put("remote", "/" + robot_name + "/cartesianController/" + which_arm + "_arm");
-    prop.put("local", "/" + which_arm + "_arm_controller/cartesian_client");
+    prop.put("remote", "/" + robot_name + "/cartesianController/" + arm_name + "_arm");
+    prop.put("local", "/" + arm_name + "_arm_controller/cartesian_client");
 
     // let's give the controller some time to warm up
     // here use real time and not simulation time
@@ -51,7 +51,7 @@ bool ArmController::configure(const std::string &robot_name,
     {
 	yError() << "ArmController: Unable to open the Cartesian Controller driver"
 		 << "for the"
-		 << which_arm
+		 << arm_name
 		 << "arm.";
 	return false;
     }
@@ -62,7 +62,7 @@ bool ArmController::configure(const std::string &robot_name,
     {
 	yError() << "ArmController: Unable to retrieve the CartesianController view"
 		 << "for the"
-		 << which_arm
+		 << arm_name
 		 << "arm.";
 	return false;
     }
@@ -86,14 +86,14 @@ bool ArmController::configure(const std::string &robot_name,
     // these are required to retrieve forward kinematics of the hand
     // without relying on the cartesian controller
     prop.put("device", "remote_controlboard");
-    prop.put("remote", "/" + robot_name + "/" + which_arm + "_arm");
-    prop.put("local", "/" + which_arm + "_arm_controller/encoder/arm");
+    prop.put("remote", "/" + robot_name + "/" + arm_name + "_arm");
+    prop.put("local", "/" + arm_name + "_arm_controller/encoder/arm");
     ok = drv_enc_arm.open(prop);
     if (!ok)
     {
 	yError() << "ArmController: unable to open the Remote Control Board driver"
 		 << "for the"
-		 << which_arm
+		 << arm_name
 		 << "arm";
 	return false;
     }
@@ -104,7 +104,7 @@ bool ArmController::configure(const std::string &robot_name,
     {
 	yError() << "ArmController: Unable to retrieve the Encoders view."
 		 << "for the"
-		 << which_arm
+		 << arm_name
 		 << "arm";
 	return false;
     }
@@ -219,7 +219,7 @@ bool ArmController::useFingerFrame(const std::string& finger_name)
     // get the transformation between the standard
     // effector and the desired finger
     yarp::sig::Vector joints;
-    iCub::iKin::iCubFinger finger(which_arm + "_" + finger_name);
+    iCub::iKin::iCubFinger finger(arm_name + "_" + finger_name);
     ok = finger.getChainJoints(encs,joints);
     if (!ok)
 	return false;
@@ -248,7 +248,7 @@ bool ArmController::removeFingerFrame()
     {
 	yError() << "ArmController::removeFingerFrame"
 		 << "Error: unable to remove finger tip from the"
-		 << which_arm << "arm chain";
+		 << arm_name << "arm chain";
 	return false;
     }
 
@@ -266,7 +266,7 @@ bool ArmController::enableTorso()
     {
 	yError() << "ArmController::enableTorso"
 		 << "Error: unable to get the current DOF configuration for the"
-		 << which_arm << "arm chain";
+		 << arm_name << "arm chain";
 	return false;
     }
 
@@ -282,7 +282,7 @@ bool ArmController::enableTorso()
     {
 	yError() << "ArmController::enableTorso"
 		 << "Error: unable set the new DOF configuration for the"
-		 << which_arm << "arm chain";
+		 << arm_name << "arm chain";
 	return false;
     }
 
@@ -324,7 +324,7 @@ bool ArmController::goHome()
     {
 	yError() << "ArmController::goHome"
 		 << "Error: unable to force torso solution to 0 for the"
-		 << which_arm << "arm";
+		 << arm_name << "arm";
 	return false;
     }
 
@@ -334,7 +334,7 @@ bool ArmController::goHome()
     {
 	yError() << "ArmController::goHome"
 		 << "Error: unable to command home position for the"
-		 << which_arm << "arm";
+		 << arm_name << "arm";
 	return false;
     }
     icart->waitMotionDone(0.03, 5.0);
@@ -345,7 +345,7 @@ bool ArmController::goHome()
     {
 	yError() << "ArmController::goHome"
 		 << "Error: unable to restore the previous context for the"
-		 << which_arm << "arm";
+		 << arm_name << "arm";
 	return false;
     }
     // the restoreContext also restore the finger tip if it was attached

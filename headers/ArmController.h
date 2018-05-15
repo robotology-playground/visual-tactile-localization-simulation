@@ -52,7 +52,7 @@ protected:
 
     // string that indicates which arm
     // this controller uses
-    std::string which_arm;
+    std::string arm_name;
 
     // whether the finger tip is attached to the chain or not
     bool is_tip_attached;
@@ -61,11 +61,11 @@ public:
     
     /*
      * Configure the arm.
-     * @param which_arm which arm to be used, right or left
+     * @param arm_name which arm to be used, right or left
      * @return true/false on success/fail
      */
     bool configure(const std::string& robot_name,
-                   const std::string& which_arm);
+                   const std::string& arm_name);
 
     /*
      * Stop the controller, restore the startup context,
