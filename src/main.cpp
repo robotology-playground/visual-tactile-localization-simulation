@@ -255,7 +255,7 @@ protected:
         left_arm.cartesian()->getPose(pos, att);
 
         // shift position upward
-        pos[2] += 0.1;
+        pos[2] += 0.05;
 
         // set trajectory time
         ok = left_arm.cartesian()->setTrajTime(4.0);
