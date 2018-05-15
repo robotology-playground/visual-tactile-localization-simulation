@@ -50,9 +50,6 @@ protected:
     // hand attitude
     yarp::sig::Vector hand_attitude;
 
-    // chain for forward kinematics computation
-    iCub::iKin::iCubArm arm_chain;
-
     // string that indicates which arm
     // this controller uses
     std::string which_arm;

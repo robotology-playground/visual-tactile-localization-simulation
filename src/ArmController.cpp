@@ -107,16 +107,6 @@ bool ArmController::configure(const std::string &which_arm)
 	return false;
     }
 
-    prop.put("remote", "/icubSim/torso");
-    prop.put("local", "/" + which_arm + "_arm_controller/encoder/torso");
-    ok = drv_enc_torso.open(prop);
-    if (!ok)
-    {
-	yError() << "ArmController: unable to open the Remote Control Board driver"
-		 << "for the torso.";
-	return false;
-    }
-
     // try to retrieve the views
     ok = drv_enc_arm.view(ienc_arm);
     if (!ok || ienc_arm == 0)
@@ -127,24 +117,6 @@ bool ArmController::configure(const std::string &which_arm)
 		 << "arm";
 	return false;
     }
-
-    ok = drv_enc_torso.view(ienc_torso);
-    if (!ok || ienc_torso == 0)
-    {
-	yError() << "ArmController: Unable to retrieve the Encoders view."
-		 << "for the torso";
-	return false;
-    }
-
-    // instantiate arm chain
-    arm_chain = iCub::iKin::iCubArm(which_arm);
-    // limits update is not required to evaluate the forward kinematics
-    // using angles from the encoders
-    arm_chain.setAllConstraints(false);
-    // torso can be moved in general so its links have to be released
-    arm_chain.releaseLink(0);
-    arm_chain.releaseLink(1);
-    arm_chain.releaseLink(2);
 
     return true;
 }
@@ -160,7 +132,6 @@ void ArmController::close()
     // close drivers
     drv_cart.close();
     drv_enc_arm.close();
-    drv_enc_torso.close();
 }
 
 yarp::dev::ICartesianControl* ArmController::cartesian()
@@ -225,49 +196,6 @@ void ArmController::setHandAttitude(const double &yaw = 0,
 
     // store orientation
     hand_attitude = yarp::math::dcm2axis(dcm);
-}
-
-bool ArmController::getHandPose(yarp::sig::Vector& pos,
-				yarp::sig::Matrix& rot)
-{
-    // get current value of encoders
-    yarp::sig::Vector encs_torso(3);
-    yarp::sig::Vector encs_arm(16);
-
-    bool ok = ienc_arm->getEncoders(encs_arm.data());
-    if(!ok)
-	return false;
-
-    ok = ienc_torso->getEncoders(encs_torso.data());
-    if(!ok)
-	return false;
-
-    // fill in the vector of degrees of freedom
-    yarp::sig::Vector joints_angles(arm_chain.getDOF());
-    joints_angles[0] = encs_torso[2];
-    joints_angles[1] = encs_torso[1];
-    joints_angles[2] = encs_torso[0];
-    joints_angles[3] = encs_arm[0];
-    joints_angles[4] = encs_arm[1];
-    joints_angles[5] = encs_arm[2];
-    joints_angles[6] = encs_arm[3];
-    joints_angles[7] = encs_arm[4];
-    joints_angles[8] = encs_arm[5];
-    joints_angles[9] = encs_arm[6];
-
-    // set the current values of the joints
-    // iKin uses radians
-    arm_chain.setAng((M_PI/180) * joints_angles);
-
-    // get the transform from the robot root frame
-    // to the frame attached to the plam of the hand
-    yarp::sig::Matrix inertial_to_hand = arm_chain.getH();
-
-    // extract position and rotation matrix
-    pos = inertial_to_hand.getCol(3).subVector(0,2);
-    rot = inertial_to_hand.submatrix(0, 2, 0, 2);
-
-    return true;
 }
 
 bool ArmController::useFingerFrame(const std::string& finger_name)
