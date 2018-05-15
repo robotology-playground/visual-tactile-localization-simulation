@@ -289,8 +289,13 @@ protected:
 	if (arm == nullptr)
 	    return false;
 
+        // remove a previously attached finger tip
+        ok = arm->detachFingerTip();
+        if (!ok)
+            return false;
+
 	// change effector to the middle finger
-	ok = arm->useFingerFrame("middle");
+	ok = arm->attachFingerTip("middle");
         if (!ok)
 	    return false;
 
@@ -367,8 +372,13 @@ protected:
 	if (arm == nullptr)
 	    return false;
 
+        // remove a previously attached finger tip
+        ok = arm->detachFingerTip();
+        if (!ok)
+            return false;
+
         // change effector to the middle finger
-	ok = arm->useFingerFrame("middle");
+	ok = arm->attachFingerTip("middle");
 	if (!ok)
 	    return false;
 
@@ -414,8 +424,13 @@ protected:
 	if (arm == nullptr)
 	    return false;
 
+        // remove a previously attached finger tip
+        ok = arm->detachFingerTip();
+        if (!ok)
+            return false;
+
         // change effector to the middle finger
-	ok = arm->useFingerFrame("middle");
+	ok = arm->attachFingerTip("middle");
 	if (!ok)
 	    return false;
 
