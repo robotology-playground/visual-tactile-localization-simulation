@@ -26,12 +26,15 @@ list(APPEND CMAKE_MODULE_PATH ${ICUB_MODULE_PATH})
 list(APPEND CMAKE_MODULE_PATH ${ICUBCONTRIB_MODULE_PATH})
 
 # helpers
+include(YarpIDL)
 include(YarpInstallationHelpers)
 include(ICUBcontribHelpers)
 #include(ICUBcontribOptions)
 
 # specify to install in $ICUBcontrib_DIR/bin
 icubcontrib_set_default_prefix()
+
+yarp_idl_to_dir(idl.thrift ${CMAKE_SOURCE_DIR})
 
 # set sources 
 set(sources_main_module
@@ -43,6 +46,7 @@ set(sources_main_module
   ${CMAKE_SOURCE_DIR}/src/HandControlResponse.cpp
   ${CMAKE_SOURCE_DIR}/src/TrajectoryGenerator.cpp
   ${CMAKE_SOURCE_DIR}/src/RotationTrajectoryGenerator.cpp
+  ${CMAKE_SOURCE_DIR}/src/VIS_TAC_IDL.cpp
   )
 
 set (sources_hand_ctrl_module
@@ -53,6 +57,7 @@ set (sources_hand_ctrl_module
   ${CMAKE_SOURCE_DIR}/src/HandControlResponse.cpp
   )
 
+include(idl_thrift.cmake)
 include_directories(${YARP_INCLUDE_DIRS})
 include_directories(${ICUB_INCLUDE_DIRS})
 include_directories(${PROJECT_SOURCE_DIR})
