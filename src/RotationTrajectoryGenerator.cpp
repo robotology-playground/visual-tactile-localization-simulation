@@ -30,7 +30,7 @@ void RotationTrajectoryGenerator::setObjectCenter(const yarp::sig::Vector &point
     object_center = point;
 }
 
-void RotationTrajectoryGenerator::setPushingPoint(const yarp::sig::Vector &point)
+void RotationTrajectoryGenerator::setPullingPoint(const yarp::sig::Vector &point)
 {
     push_point = point;
 }
@@ -47,7 +47,7 @@ bool RotationTrajectoryGenerator::getVelocity(const double &time,
 	return false;
     
     // evaluate displacement
-    // from object center to pushing point
+    // from object center to pulling point
     yarp::sig::Vector diff = push_point - object_center;
 
     // evaluate yaw
@@ -67,7 +67,7 @@ bool RotationTrajectoryGenerator::getVelocity(const double &time,
     yarp::sig::Vector angular_velocity(3, 0.0);
     angular_velocity[2] = yaw_rate;
 
-    // evaluate linear velocity of pushing point
+    // evaluate linear velocity of pulling point
     // assuming zero velocity of the center of the object
     velocity = yarp::math::cross(angular_velocity, diff_rotated);
 

@@ -33,7 +33,7 @@ public:
     bool getVelocity(const double &time,
 		     yarp::sig::Vector &velocity);
     void setObjectCenter(const yarp::sig::Vector &point);
-    void setPushingPoint(const yarp::sig::Vector &point);
+    void setPullingPoint(const yarp::sig::Vector &point);
 };
 
 #endif
