@@ -119,7 +119,7 @@ double ModelHelper::evalApproachYawAttitude()
 }
 
 void ModelHelper::evalApproachPosition(yarp::sig::Vector &pos,
-				       const std::string &edge_shift)
+				       const std::string &object_position_name)
 {
     // assign the center of model
     pos = model_center;
@@ -139,9 +139,9 @@ void ModelHelper::evalApproachPosition(yarp::sig::Vector &pos,
 	length = model_width / 2.0 + offset_x_y;
 	direction = x_dir * length;
 
-	if (edge_shift == "left")
+	if (object_position_name == "left")
 	    direction += y_dir * model_depth / 4.0;
-	else if (edge_shift == "right")
+	else if (object_position_name == "right")
 	    direction += -1.0 * y_dir * model_depth / 4.0;
 
     }
@@ -151,9 +151,9 @@ void ModelHelper::evalApproachPosition(yarp::sig::Vector &pos,
 	length = model_depth / 2.0 + offset_x_y;
 	direction = -1 * y_dir * length;
 
-	if (edge_shift == "left")
+	if (object_position_name == "left")
 	    direction += x_dir * model_width / 4.0;
-	else if (edge_shift == "right")
+	else if (object_position_name == "right")
 	    direction += -1.0 * x_dir * model_width / 4.0;
     }
     else
@@ -161,9 +161,9 @@ void ModelHelper::evalApproachPosition(yarp::sig::Vector &pos,
 	length = model_depth / 2.0 + offset_x_y;
 	direction = y_dir * length;
 
-	if (edge_shift == "left")
+	if (object_position_name == "left")
 	    direction += -1.0 * x_dir * model_width / 4.0;
-	else if (edge_shift == "right")
+	else if (object_position_name == "right")
 	    direction += x_dir * model_width / 4.0;
     }
 
