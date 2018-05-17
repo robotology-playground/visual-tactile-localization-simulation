@@ -9,8 +9,8 @@
  * @author: Nicola Piga <nicolapiga@gmail.com>
  */
 
-#ifndef FILTER_DATA_H
-#define FILTER_DATA_H
+#ifndef FILTER_COMMAND_H
+#define FILTER_COMMAND_H
 
 // yarp
 #include <yarp/os/Portable.h>
@@ -22,7 +22,7 @@ namespace yarp {
     }
 }
 
-class YARP_sig_API yarp::sig::FilterCommand : public yarp::os::Portable
+class yarp::sig::FilterCommand : public yarp::os::Portable
 {
 private:
     /*
