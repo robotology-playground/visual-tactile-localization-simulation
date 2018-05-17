@@ -12,6 +12,7 @@
     <name>visual-tactile-localization-sim</name>
     <node>localhost</node>    
     <environment>YARP_CLOCK=/clock;YARP_FORWARD_LOG_ENABLE=1</environment>
+    <parameters>--context simVisualTactileLocalization</parameters>    
     <dependencies>
       <port timeout="5.0">/yarplogger</port>      
       <port timeout="5.0">/clock</port>      

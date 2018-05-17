@@ -61,6 +61,7 @@ class VisTacLocSimModule: public yarp::os::RFModule,
                           public VIS_TAC_IDL
 {
 protected:
+    double module_period;
 
     /**
      * Controllers
@@ -78,6 +79,26 @@ protected:
     double default_traj_time;
     double tracking_traj_time;
 
+    // move_hand_upward shift
+    double move_hand_upward_shift;
+
+    // length of the positive shift
+    // along x direction for pulling action
+    double pull_x_shift;
+
+    // open loop yaw rate used for rotation action
+    double rot_yaw_rate;
+
+    // pitch and roll angle used during
+    // approaching phase
+    double hand_approach_pitch;
+    double hand_approach_roll;
+
+    // fingers opening and closing speeds
+    double finger_opening_speed;
+    double finger_closing_speed;
+    double finger_following_speed;
+
     /**
      * Filter
      */
@@ -92,6 +113,8 @@ protected:
     // FrameTransformClient to read published poses
     yarp::dev::PolyDriver drv_transform_client;
     yarp::dev::IFrameTransform* tf_client;
+    std::string est_tf_source;
+    std::string est_tf_target;
 
     /**
      * Trajectory generation and helpers
@@ -107,6 +130,9 @@ protected:
 
     // model helper class
     ModelHelper mod_helper;
+    double model_width;
+    double model_depth;
+    double model_height;
 
     /**
      * Rpc server
@@ -564,7 +590,7 @@ protected:
         arm->cartesian()->getPose(pos, att);
 
         // shift position upward
-        pos[2] += 0.05;
+        pos[2] += move_hand_upward_shift;
 
         // set trajectory time
         ok = arm->cartesian()->setTrajTime(default_traj_time);
@@ -622,7 +648,9 @@ protected:
             return false;
 
         // set desired attitude
-        arm->setHandAttitude(yaw * 180 / M_PI, 15, -90);
+        arm->setHandAttitude(yaw * 180 / M_PI,
+                             hand_approach_pitch,
+                             hand_approach_roll);
 
         // set trajectory time
         ok = arm->cartesian()->setTrajTime(default_traj_time);
@@ -658,7 +686,7 @@ protected:
         HandControlResponse response;
         hand_cmd.setCommandedHand(hand_name);
         hand_cmd.setCommandedFingers(finger_list);
-        hand_cmd.setFingersForwardSpeed(0.009);
+        hand_cmd.setFingersForwardSpeed(finger_closing_speed);
         hand_cmd.commandFingersApproach();
         hand_port->write(hand_cmd, response);
 
@@ -688,7 +716,7 @@ protected:
         HandControlResponse response;
         hand_cmd.setCommandedHand(hand_name);
         hand_cmd.setCommandedFingers(finger_list);
-        hand_cmd.setFingersForwardSpeed(0.005);
+        hand_cmd.setFingersForwardSpeed(finger_following_speed);
         hand_cmd.commandFingersFollow();
         hand_port->write(hand_cmd, response);
 
@@ -732,7 +760,9 @@ protected:
         // set final position
         yarp::sig::Vector pos_f(3, 0.0);
         pos_f = pos;
-        pos_f[0] += 0.17;
+        pos_f[0] += pull_x_shift;
+        // pos_f[1] += pull_y_shift;
+        // pos_f[2] += pull_z_shift;
 
         // configure trajectory generator
         traj_gen.setInitialPosition(pos);
@@ -789,7 +819,7 @@ protected:
         yarp::sig::Vector object_center = estimate.getCol(3).subVector(0, 2);
 
         // configure the trajectory generator
-        rot_traj_gen.setYawRate(-20 * M_PI / 180);
+        rot_traj_gen.setYawRate(rot_yaw_rate * M_PI / 180);
         rot_traj_gen.setObjectCenter(object_center);
         rot_traj_gen.setPullingPoint(finger_pos);
 
@@ -871,7 +901,7 @@ protected:
         hand_cmd.clear();
         hand_cmd.setCommandedHand(hand_name);
         hand_cmd.setCommandedFingers(finger_list);
-        hand_cmd.setFingersRestoreSpeed(25.0);
+        hand_cmd.setFingersRestoreSpeed(finger_opening_speed);
         hand_cmd.commandFingersRestore();
         hand_port->write(hand_cmd, response);
 
@@ -950,23 +980,160 @@ public:
     bool configure(yarp::os::ResourceFinder &rf)
     {
         /**
+         * Parameters from configuration
+         */
+
+        // port names
+        std::string filter_port_name = rf.find("filterPort").asString();
+        if (rf.find("filterPortName").isNull())
+            filter_port_name = "/vis_tac_localization/filter:o";
+
+        std::string right_ctl_port_name = rf.find("rightHandCtlPort").asString();
+        if (rf.find("rightHandCtlPort").isNull())
+            right_ctl_port_name = "/vis_tac_localization/hand-control/right/rpc:o";
+
+        std::string left_ctl_port_name = rf.find("leftHandCtlPort").asString();
+        if (rf.find("leftHandCtlPort").isNull())
+            left_ctl_port_name = "/vis_tac_localization/hand-control/left/rpc:o";
+
+        std::string tfclient_local_port_name = rf.find("tfClientLocalPort").asString();
+        if (rf.find("tfClientLocalPort").isNull())
+            tfclient_local_port_name = "/vis_tac_localization/transformClient";
+
+        // robot name
+        std::string robot_name = rf.find("robotName").asString();
+        if (rf.find("robotName").isNull())
+            robot_name = "icub";
+
+        // default trajectory times for Cartesian Controller
+        default_traj_time = rf.find("cartDefaultTrajTime").asDouble();
+        if (rf.find("cartDefaultTrajTime").isNull())
+            default_traj_time = 4.0;
+        // print since important
+        yInfo() << "VisTacLocSimModule: Cartesian default trajectory time is"
+                << default_traj_time;
+
+        tracking_traj_time = rf.find("cartTrackingTrajTime").asDouble();
+        if (rf.find("cartTrackingTrajTime").isNull())
+            tracking_traj_time = 0.6;
+        // print since important
+        yInfo() << "VisTacLocSimModule: Cartesian tracking trajectory time is"
+                << tracking_traj_time;
+
+        // set default trajectory durations
+        pull_traj_duration = rf.find("pullTrajDuration").asDouble();
+        if (rf.find("pullTrajDuration").isNull())
+            pull_traj_duration = 4.0;
+        // print since important
+        yInfo() << "VisTacLocSimModule: Pulling trajectory duration is"
+                << pull_traj_duration;
+
+        rot_traj_duration = rf.find("rotTrajDuration").asDouble();
+        if (rf.find("rotTrajDuration").isNull())
+            rot_traj_duration = 4.0;
+        // print since important
+        yInfo() << "VisTacLocSimModule: Rotation trajectory duration is"
+                << rot_traj_duration;
+
+        // set default timeouts
+        arm_approach_timeout = rf.find("armApproachTimeout").asDouble();
+        if (rf.find("armApproachTimeout").isNull())
+            arm_approach_timeout = 7.0;
+
+        arm_restore_timeout = rf.find("armRestoreTimeout").asDouble();
+        if (rf.find("armRestoreTimeout").isNull())
+            arm_restore_timeout = 7.0;
+
+        fingers_approach_timeout = rf.find("fingersApproachTimeout").asDouble();
+        if (rf.find("fingersApproachTimeout").isNull())
+            fingers_approach_timeout = 10.0;
+
+        fingers_restore_timeout = rf.find("fingersRestoreTimeout").asDouble();
+        if (rf.find("fingersRestoreTimeout").isNull())
+            fingers_restore_timeout = 10.0;
+
+        // hand pitch and roll used in approaching phase
+        hand_approach_pitch = rf.find("handApproachPitch").asDouble();
+        if (rf.find("handApproachPitch").isNull())
+            hand_approach_pitch = 15.0;
+
+        hand_approach_roll = rf.find("handApproachRoll").asDouble();
+        if (rf.find("handApproachRoll").isNull())
+            hand_approach_roll = -90.0;
+
+        // finger speeds
+        finger_opening_speed = rf.find("fingerOpeningSpeed").asDouble();
+        if (rf.find("fingerOpeningSpeed").isNull())
+            finger_opening_speed = 25.0;
+
+        finger_closing_speed = rf.find("fingerClosingSpeed").asDouble();
+        if (rf.find("fingerClosingSpeed").isNull())
+            finger_closing_speed = 0.009;
+
+        finger_following_speed = rf.find("fingerFollowingSpeed").asDouble();
+        if (rf.find("fingerFollowingSpeed").isNull())
+            finger_closing_speed = 0.005;
+
+        // sizes of the object model
+        model_width = rf.find("modelWidth").asDouble();
+        if (rf.find("modelWidth").isNull())
+            model_width = 0.24;
+
+        model_depth = rf.find("modelDepth").asDouble();
+        if (rf.find("modelDepth").isNull())
+            model_depth = 0.17;
+
+        model_height = rf.find("modelHeight").asDouble();
+        if (rf.find("modelHeight").isNull())
+            model_height = 0.037;
+
+        // module period
+        module_period = rf.find("modulePeriod").asDouble();
+        if (rf.find("modulePeriod").isNull())
+            module_period = 0.02;
+
+        // shift used for move hand upward action
+        move_hand_upward_shift = rf.find("moveHandUpwardShift").asDouble();
+        if (rf.find("moveHandUpwardShift").isNull())
+            move_hand_upward_shift = 0.05;
+
+        // shift used during pulling action
+        pull_x_shift = rf.find("pullXShift").asDouble();
+        if (rf.find("pullXShift").isNull())
+            pull_x_shift = 0.17;
+
+        // yaw rate used during rotation action
+        rot_yaw_rate = rf.find("rotYawRate").asDouble();
+        if (rf.find("rotYawRate").isNull())
+            rot_yaw_rate = -20.0;
+
+        // filter transform source and target frame
+        est_tf_source = rf.find("estimateTfSource").asString();
+        if (rf.find("estimateTfSource").isNull())
+            est_tf_source = "/iCub/frame";
+
+        est_tf_target = rf.find("estimateTfTarget").asString();
+        if (rf.find("estimateTfTarget").isNull())
+            est_tf_target = "/box_alt/estimate/frame";
+
+        /**
          * Ports
          */
-        bool ok = port_filter.open("/vis_tac_localization/filter:o");
+        bool ok = port_filter.open(filter_port_name);
         if (!ok)
         {
             yError() << "VisTacLocSimModule: unable to open the filter port";
             return false;
         }
 
-        ok = port_hand_right.open("/vis_tac_localization/hand-control/right/rpc:o");
+        ok = port_hand_right.open(right_ctl_port_name);
         if (!ok)
         {
             yError() << "VisTacLocSimModule: unable to open the right hand control module port";
             return false;
         }
 
-        ok = port_hand_left.open("/vis_tac_localization/hand-control/left/rpc:o");
+        ok = port_hand_left.open(left_ctl_port_name);
         if (!ok)
         {
             yError() << "VisTacLocSimModule: unable to open the left hand control module port";
@@ -980,7 +1147,7 @@ public:
         // prepare properties for the FrameTransformClient
         yarp::os::Property propTfClient;
         propTfClient.put("device", "FrameTransformClient");
-        propTfClient.put("local", "/vis_tac_localization/transformClient");
+        propTfClient.put("local", tfclient_local_port_name);
         propTfClient.put("remote", "/transformServer");
 
         // try to open the driver
@@ -1004,45 +1171,23 @@ public:
          */
 
         // configure arm controllers
-        ok = right_arm.configure("icubSim", "right");
+        ok = right_arm.configure(robot_name, "right");
         if (!ok)
         {
             yError() << "VisTacLocSimModule: unable to configure the right arm controller";
             return false;
         }
 
-        ok = left_arm.configure("icubSim", "left");
+        ok = left_arm.configure(robot_name, "left");
         if (!ok)
         {
             yError() << "VisTacLocSimModule: unable to configure the left arm controller";
             return false;
         }
 
-        // default trajectory times for Cartesian Controller
-        default_traj_time = 4.0;
-        tracking_traj_time = 0.6;
-
-        /**
-         * Trajectory times
-         */
-
-        // set default trajectory times
-        pull_traj_duration = 4.0;
-        rot_traj_duration = 4.0;
-
-        // set default timeouts
-        arm_approach_timeout = 7.0;
-        arm_restore_timeout = 7.0;
-        fingers_approach_timeout = 10.0;
-        fingers_restore_timeout = 10.0;
-
         /**
          * Defaults
          */
-
-        // set default hands orientation
-        right_arm.setHandAttitude(0, 15, 0);
-        left_arm.setHandAttitude(0, 15, 0);
 
         // set default value of flags
         is_estimate_available = false;
@@ -1054,8 +1199,9 @@ public:
         previous_status = Status::Idle;
 
         // configure model helper
-        mod_helper.setModelDimensions(0.24, 0.17, 0.037);
-
+        mod_helper.setModelDimensions(model_width,
+                                      model_depth,
+                                      model_height);
         // clear arm names
         seq_action_arm_name.clear();
         single_action_arm_name.clear();
@@ -1096,7 +1242,7 @@ public:
 
     double getPeriod()
     {
-        return 0.02;
+        return module_period;
     }
 
     bool updateModule()
@@ -1121,8 +1267,8 @@ public:
         std::string single_act_arm = single_action_arm_name;
 
         // get current estimate from the filter
-        std::string source = "/iCub/frame";
-        std::string target = "/box_alt/estimate/frame";
+        std::string source = est_tf_source;
+        std::string target = est_tf_target;
         is_estimate_available = tf_client->getTransform(target, source, estimate);
 
         mutex.unlock();
@@ -1824,7 +1970,7 @@ public:
     }
 };
 
-int main()
+int main(int argc, char** argv)
 {
     yarp::os::Network yarp;
     if (!yarp.checkNetwork())
@@ -1835,6 +1981,9 @@ int main()
 
     VisTacLocSimModule mod;
     yarp::os::ResourceFinder rf;
+    rf.setDefaultConfigFile("module_config.ini");
+    rf.configure(argc,argv);    
+    
     return mod.runModule(rf);
 
 }
