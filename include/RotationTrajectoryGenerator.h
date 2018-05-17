@@ -26,12 +26,12 @@ private:
 
     // yaw rate
     double yaw_rate;
-    
+
 public:
     RotationTrajectoryGenerator();
     void setYawRate(const double &rate);
     bool getVelocity(const double &time,
-		     yarp::sig::Vector &velocity);
+                     yarp::sig::Vector &velocity);
     void setObjectCenter(const yarp::sig::Vector &point);
     void setPullingPoint(const yarp::sig::Vector &point);
 };
