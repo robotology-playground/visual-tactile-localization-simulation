@@ -1079,9 +1079,9 @@ public:
         if (rf_module.find("fingerClosingSpeed").isNull())
             finger_closing_speed = 0.009;
 
-        finger_following_speed = rf_module.find("fingerf_moduleollowingSpeed").asDouble();
-        if (rf_module.find("fingerf_moduleollowingSpeed").isNull())
-            finger_closing_speed = 0.005;
+        finger_following_speed = rf_module.find("fingerFollowingSpeed").asDouble();
+        if (rf_module.find("fingerFollowingSpeed").isNull())
+            finger_following_speed = 0.005;
 
         // module period
         module_period = rf_module.find("modulePeriod").asDouble();
