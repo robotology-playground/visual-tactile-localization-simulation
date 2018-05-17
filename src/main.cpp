@@ -597,6 +597,9 @@ protected:
         // issue command
         arm->cartesian()->goToPose(pos, att);
 
+        // stop control
+        stopArm(hand_name);
+
         return true;
     }
 
