@@ -22,7 +22,7 @@ private:
     yarp::sig::Vector object_center;
 
     // pushing point
-    yarp::sig::Vector push_point;
+    yarp::sig::Vector pull_point;
 
     // yaw rate
     double yaw_rate;

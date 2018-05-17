@@ -19,7 +19,7 @@ RotationTrajectoryGenerator::RotationTrajectoryGenerator()
 {
     // clear vectors
     object_center.resize(3, 0.0);
-    push_point.resize(3, 0.0);
+    pull_point.resize(3, 0.0);
 
     // clear angular rate
     yaw_rate = 0;
@@ -32,7 +32,7 @@ void RotationTrajectoryGenerator::setObjectCenter(const yarp::sig::Vector &point
 
 void RotationTrajectoryGenerator::setPullingPoint(const yarp::sig::Vector &point)
 {
-    push_point = point;
+    pull_point = point;
 }
 
 void RotationTrajectoryGenerator::setYawRate(const double &rate)
@@ -48,7 +48,7 @@ bool RotationTrajectoryGenerator::getVelocity(const double &time,
 
     // evaluate displacement
     // from object center to pulling point
-    yarp::sig::Vector diff = push_point - object_center;
+    yarp::sig::Vector diff = pull_point - object_center;
 
     // evaluate yaw
     double yaw = yaw_rate * time;
