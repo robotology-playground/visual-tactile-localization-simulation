@@ -25,7 +25,7 @@
 using namespace yarp::math;
 
 ModelHelper::ModelHelper() : x_dir(2, 0.0),
-			     y_dir(2, 0.0)
+                             y_dir(2, 0.0)
 {
     // precompute the rotation between the robot root frame and
     // and the working frame used within this helper class
@@ -40,8 +40,8 @@ ModelHelper::ModelHelper() : x_dir(2, 0.0),
 }
 
 void ModelHelper::setModelDimensions(const double &width,
-			const double &depth,
-			const double &height)
+                        const double &depth,
+                        const double &height)
 {
     model_width = width;
     model_depth = depth;
@@ -59,10 +59,10 @@ void ModelHelper::setModelAttitude(const yarp::sig::Matrix &rot)
     double cosine = yarp::math::dot(z_down, transformed_rot.getCol(2));
     if (cosine >= 0)
     {
-	// in this case the z and y cosine director
-	// are rotated so that the z axis points upwards
-	transformed_rot.setCol(1, transformed_rot.getCol(1) * -1.0);
-	transformed_rot.setCol(2, transformed_rot.getCol(2) * -1.0);
+        // in this case the z and y cosine director
+        // are rotated so that the z axis points upwards
+        transformed_rot.setCol(1, transformed_rot.getCol(1) * -1.0);
+        transformed_rot.setCol(2, transformed_rot.getCol(2) * -1.0);
     }
 
     // pick the first column of the rotation matrix
@@ -89,9 +89,9 @@ void ModelHelper::setModelAttitude(const yarp::sig::Matrix &rot)
     // by 180 degrees
     if (attitude < 0)
     {
-	attitude += M_PI;
-	x_dir *= -1;
-	y_dir *= -1;
+        attitude += M_PI;
+        x_dir *= -1;
+        y_dir *= -1;
     }
 }
 
@@ -109,17 +109,17 @@ void ModelHelper::setModelPose(const yarp::sig::Matrix &pose)
 double ModelHelper::evalApproachYawAttitude()
 {
     if (attitude >= (M_PI / 4.0) &&
-	attitude < (M_PI / 4.0 + M_PI / 2.0))
-	return (attitude - M_PI / 2.0);
+        attitude < (M_PI / 4.0 + M_PI / 2.0))
+        return (attitude - M_PI / 2.0);
     else if (attitude >= (M_PI / 4.0 + M_PI / 2.0) &&
-	     attitude <= M_PI)
-	return (attitude - M_PI);
+             attitude <= M_PI)
+        return (attitude - M_PI);
     else
-	return attitude;
+        return attitude;
 }
 
 void ModelHelper::evalApproachPosition(yarp::sig::Vector &pos,
-				       const std::string &object_position_name)
+                                       const std::string &object_position_name)
 {
     // assign the center of model
     pos = model_center;
@@ -134,37 +134,37 @@ void ModelHelper::evalApproachPosition(yarp::sig::Vector &pos,
     yarp::sig::Vector direction;
     double length;
     if (attitude >= (M_PI / 4.0) &&
-	attitude < (M_PI / 4.0 + M_PI / 2.0))
+        attitude < (M_PI / 4.0 + M_PI / 2.0))
     {
-	length = model_width / 2.0 + offset_x_y;
-	direction = x_dir * length;
+        length = model_width / 2.0 + offset_x_y;
+        direction = x_dir * length;
 
-	if (object_position_name == "left")
-	    direction += y_dir * model_depth / 4.0;
-	else if (object_position_name == "right")
-	    direction += -1.0 * y_dir * model_depth / 4.0;
+        if (object_position_name == "left")
+            direction += y_dir * model_depth / 4.0;
+        else if (object_position_name == "right")
+            direction += -1.0 * y_dir * model_depth / 4.0;
 
     }
     else if (attitude >= (M_PI / 4.0 + M_PI / 2.0) &&
-	     attitude <= M_PI)
+             attitude <= M_PI)
     {
-	length = model_depth / 2.0 + offset_x_y;
-	direction = -1 * y_dir * length;
+        length = model_depth / 2.0 + offset_x_y;
+        direction = -1 * y_dir * length;
 
-	if (object_position_name == "left")
-	    direction += x_dir * model_width / 4.0;
-	else if (object_position_name == "right")
-	    direction += -1.0 * x_dir * model_width / 4.0;
+        if (object_position_name == "left")
+            direction += x_dir * model_width / 4.0;
+        else if (object_position_name == "right")
+            direction += -1.0 * x_dir * model_width / 4.0;
     }
     else
     {
-	length = model_depth / 2.0 + offset_x_y;
-	direction = y_dir * length;
+        length = model_depth / 2.0 + offset_x_y;
+        direction = y_dir * length;
 
-	if (object_position_name == "left")
-	    direction += -1.0 * x_dir * model_width / 4.0;
-	else if (object_position_name == "right")
-	    direction += x_dir * model_width / 4.0;
+        if (object_position_name == "left")
+            direction += -1.0 * x_dir * model_width / 4.0;
+        else if (object_position_name == "right")
+            direction += x_dir * model_width / 4.0;
     }
 
     // add position offset
