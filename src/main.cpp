@@ -986,7 +986,7 @@ public:
         rf_module = rf.findNestedResourceFinder("module");
 
         yarp::os::ResourceFinder rf_mod_helper;
-        rf_mod_helper = rf.findNestedResourceFinder("module_helper");
+        rf_mod_helper = rf.findNestedResourceFinder("model_helper");
 
         /**
          * Parameters from configuration
