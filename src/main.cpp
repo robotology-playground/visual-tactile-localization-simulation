@@ -350,6 +350,33 @@ protected:
         return reply;
     }
 
+    std::string fingers_restore(const std::string &hand_name)
+    {
+        mutex.lock();
+
+        std::string reply;
+
+        if (status != Status::Idle)
+            reply = "[FAILED] Wait for completion of the current phase";
+        else if ((hand_name != "right") && (hand_name != "left"))
+            reply = "[FAILED] You should specify a valid hand name";
+        else
+        {
+            // change status
+            previous_status = status;
+            status = Status::FingersRestore;
+
+            // set current hand
+            single_action_arm_name = hand_name;
+
+            reply = "[OK] Command issued";
+        }
+
+        mutex.unlock();
+
+        return reply;
+    }
+
     std::string stop()
     {
         mutex.lock();
@@ -546,6 +573,8 @@ protected:
 
         // issue command
         arm->cartesian()->goToPose(pos, att);
+
+        return true;
     }
 
     /*
@@ -771,7 +800,11 @@ protected:
         // set trajectory time
         // which determines the responsiveness
         // of the cartesian controller
-        arm->cartesian()->setTrajTime(tracking_traj_time);
+        ok = arm->cartesian()->setTrajTime(tracking_traj_time);
+        if (!ok)
+            return false;
+
+        return true;
     }
 
     bool setArmLinearVelocity(const std::string &arm_name,
@@ -987,7 +1020,7 @@ public:
 
         // default trajectory times for Cartesian Controller
         default_traj_time = 4.0;
-        tracking_traj_time = 1.0;
+        tracking_traj_time = 0.6;
 
         /**
          * Trajectory times
@@ -998,8 +1031,8 @@ public:
         rot_traj_duration = 4.0;
 
         // set default timeouts
-        arm_approach_timeout = 5.0;
-        arm_restore_timeout = 5.0;
+        arm_approach_timeout = 7.0;
+        arm_restore_timeout = 7.0;
         fingers_approach_timeout = 10.0;
         fingers_restore_timeout = 10.0;
 
@@ -1214,9 +1247,14 @@ public:
                 // approach completed
                 yInfo() << "[WAIT ARM APPROACH DONE] done";
 
-                // go to Idle
                 mutex.lock();
+
+                // go to Idle
                 status = Status::Idle;
+
+                // update flag
+                is_approach_done = true;
+
                 mutex.unlock();
             }
 
@@ -1295,15 +1333,9 @@ public:
                 // approach completed
                 yInfo() << "[WAIT FINGERS APPROACH DONE] done";
 
-
-                mutex.lock();
-
                 // go to Idle
+                mutex.lock();
                 status = Status::Idle;
-
-                // update flag
-                is_approach_done = true;
-
                 mutex.unlock();
             }
 
@@ -1353,7 +1385,7 @@ public:
             sendCommandToFilter(true, "tactile");
 
             // enable fingers following mode
-            // enableFingersFollowing(seq_act_arm);
+            enableFingersFollowing(seq_act_arm);
 
             // reset flag
             is_timer_started = false;
@@ -1421,7 +1453,7 @@ public:
                 setArmLinearVelocity(seq_act_arm, vel);
 
                 // stop fingers control
-                // stopFingers(seq_act_arm);
+                stopFingers(seq_act_arm);
 
                 // disable filtering
                 sendCommandToFilter(false);
@@ -1487,7 +1519,7 @@ public:
             sendCommandToFilter(true, "tactile");
 
             // enable fingers following mode
-            // enableFingersFollowing(seq_act_arm);
+            enableFingersFollowing(seq_act_arm);
 
             // reset flags
             is_timer_started = false;
@@ -1554,7 +1586,7 @@ public:
                 setArmLinearVelocity(seq_act_arm, vel);
 
                 // stop fingers control
-                // stopFingers(seq_act_arm);
+                stopFingers(seq_act_arm);
 
                 // disable filtering
                 sendCommandToFilter(false);
@@ -1647,7 +1679,7 @@ public:
             if (is_done)
             {
                 // restore completed
-                yError() << "[WAIT FINGERS RESTORE] done";
+                yInfo() << "[WAIT FINGERS RESTORE] done";
 
                 mutex.lock();
 
@@ -1734,7 +1766,7 @@ public:
             if (is_done)
             {
                 // restore completed
-                yError() << "[WAIT ARM RESTORE] done";
+                yInfo() << "[WAIT ARM RESTORE] done";
 
                 // go back to Idle
                 mutex.lock();
