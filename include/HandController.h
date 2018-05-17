@@ -129,16 +129,4 @@ public:
     bool stopFingers(const std::vector<std::string> finger_list);
 };
 
-class RightHandController : public HandController
-{
-public:
-    bool configure();
-};
-
-class LeftHandController : public HandController
-{
-public:
-    bool configure();
-};
-
 #endif

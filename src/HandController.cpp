@@ -19,16 +19,6 @@
 
 using namespace yarp::math;
 
-bool RightHandController::configure()
-{
-    return HandController::configure("right");
-}
-
-bool LeftHandController::configure()
-{
-    return HandController::configure("left");
-}
-
 bool HandController::configure(const std::string &hand_name)
 {
     // store name of the hand
