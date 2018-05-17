@@ -325,10 +325,11 @@ bool ArmController::goHome()
 
     // store the context since the IK solver configuration
     // will be changed
-    int current_context;
-    ok = icart->storeContext(&current_context);
-    if (!ok)
-        return false;
+    // int current_context;
+    // ok = icart->storeContext(&current_context);
+    // if (!ok)
+    //     return false;
+    storeContext();
 
     // since this function may be called for both
     // right and left arms it should be taken into account
@@ -344,6 +345,9 @@ bool ArmController::goHome()
         yError() << "ArmController::goHome"
                  << "Error: unable to force torso solution to 0 for the"
                  << arm_name << "arm";
+
+        restoreContext();
+
         return false;
     }
 
@@ -354,19 +358,22 @@ bool ArmController::goHome()
         yError() << "ArmController::goHome"
                  << "Error: unable to command home position for the"
                  << arm_name << "arm";
-        return false;
-    }
-    icart->waitMotionDone(0.03, 5.0);
 
-    // restore the context
-    ok = icart->restoreContext(current_context);
-    if (!ok)
-    {
-        yError() << "ArmController::goHome"
-                 << "Error: unable to restore the previous context for the"
-                 << arm_name << "arm";
+        restoreContext();
+
         return false;
     }
+    // icart->waitMotionDone(0.03, 5.0);
+
+    // // restore the context
+    // ok = icart->restoreContext(current_context);
+    // if (!ok)
+    // {
+    //     yError() << "ArmController::goHome"
+    //              << "Error: unable to restore the previous context for the"
+    //              << arm_name << "arm";
+    //     return false;
+    // }
 
     return true;
 }

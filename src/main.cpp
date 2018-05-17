@@ -1750,6 +1750,8 @@ public:
                 // stop control
                 stopArm(single_act_arm);
 
+                restoreArmControllerContext(seq_act_arm);
+
                 mutex.lock();
 
                 // go to Idle
@@ -1767,6 +1769,8 @@ public:
             {
                 // restore completed
                 yInfo() << "[WAIT ARM RESTORE] done";
+
+                restoreArmControllerContext(seq_act_arm);
 
                 // go back to Idle
                 mutex.lock();
@@ -1796,7 +1800,9 @@ public:
             if (prev_status == Status::PreparePull   ||
                 prev_status == Status::PerformPull   ||
                 prev_status == Status::PrepareRotation ||
-                prev_status == Status::PerformRotation)
+                prev_status == Status::PerformRotation ||
+                prev_status == Status::ArmRestore ||
+                prev_status == Status::WaitArmRestoreDone)
             {
                 // restore arm controller context
                 restoreArmControllerContext(seq_act_arm);
