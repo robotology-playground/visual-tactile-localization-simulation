@@ -30,17 +30,17 @@
 #include <cmath>
 
 class FingerController
-{    
+{
 private:
     //
     iCub::iKin::iCubFinger finger;
-    
+
     // name of the finger
     std::string finger_name;
 
     // name of the hand
     std::string hand_name;
-    
+
     // joints values
     yarp::sig::Vector joints;
 
@@ -71,8 +71,8 @@ private:
 
     // control mode interface
     // common to all fingers
-    yarp::dev::IControlMode2 *imod;    
-        
+    yarp::dev::IControlMode2 *imod;
+
 public:
     /*
      * Initialize the controller.
@@ -85,10 +85,10 @@ public:
      * @return true/false on success/failure
      */
     bool configure(const std::string &hand_name,
-		   const std::string &finger_name,
-		   yarp::dev::IControlMode2 *imod,
-		   yarp::dev::IPositionControl2 *ipos,
-		   yarp::dev::IVelocityControl2 *ivel);
+                   const std::string &finger_name,
+                   yarp::dev::IControlMode2 *imod,
+                   yarp::dev::IPositionControl2 *ipos,
+                   yarp::dev::IVelocityControl2 *ivel);
 
     /*
      * Set a given control mode for all the joints of the finger.
@@ -96,7 +96,7 @@ public:
      * @return true/false on success/failure
      */
     bool setControlMode(const int &mode);
-    
+
     /*
      * Close the controller.
      *
@@ -180,7 +180,7 @@ public:
      * velocity along the y-axis of the root frame of the finger.
      * The instantaneous velocity along the x-axis is not zero and
      * depends on the value of the inverse jacobian operator,
-     * mapping the cartesian velocity to the joints velocity, 
+     * mapping the cartesian velocity to the joints velocity,
      * in the current configuration.
      *
      * To be used in "streaming" mode.
