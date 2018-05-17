@@ -56,11 +56,11 @@ void ModelHelper::configure(const yarp::os::ResourceFinder &rf)
 
     offset_x_y = rf.find("offsetXY").asDouble();
     if (rf.find("offsetXY").isNull())
-        offset_x_y = 0.037;
+        offset_x_y = 0.06;
 
     offset_h = rf.find("offsetHeight").asDouble();
     if (rf.find("offsetHeight").isNull())
-        offset_h = 0.037;
+        offset_h = 0.021;
 }
 
 void ModelHelper::setModelDimensions(const double &width,
