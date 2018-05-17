@@ -21,6 +21,9 @@ bool FingerController::configure(const std::string &hand_name,
 {
     bool ok;
 
+    // reset current control mode
+    control_mode = -1;
+
     // store pointer to ControlMode2 instance
     this->imod = imod;
 
@@ -156,6 +159,9 @@ bool FingerController::setControlMode(const int &mode)
             }
         }
     }
+
+    // if all joints were set store the current control mode
+    control_mode = mode;
 
     return true;
 }
@@ -414,14 +420,17 @@ bool FingerController::setJointsVelocities(const yarp::sig::Vector &vels)
     bool ok;
 
     // switch to velocity control
-    ok = setControlMode(VOCAB_CM_VELOCITY);
-    if (!ok)
+    if (control_mode != VOCAB_CM_VELOCITY)
     {
-        yInfo() << "FingerController::setJointsVelocites Error:"
-                << "unable to set Velocity control mode for finger"
-                << finger_name;
+        ok = setControlMode(VOCAB_CM_VELOCITY);
+        if (!ok)
+        {
+            yInfo() << "FingerController::setJointsVelocites Error:"
+                    << "unable to set Velocity control mode for finger"
+                    << finger_name;
 
-        return false;
+            return false;
+        }
     }
 
     // convert velocities to deg/s

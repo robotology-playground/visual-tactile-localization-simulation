@@ -73,6 +73,9 @@ private:
     // common to all fingers
     yarp::dev::IControlMode2 *imod;
 
+    // current control mode
+    int control_mode;
+
 public:
     /*
      * Initialize the controller.
