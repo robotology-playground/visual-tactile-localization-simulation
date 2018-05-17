@@ -29,14 +29,14 @@ private:
 public:
     ModelHelper();
     void setModelDimensions(const double &width,
-			    const double &depth,
-			    const double &height);
+                            const double &depth,
+                            const double &height);
     void setModelAttitude(const yarp::sig::Matrix &rot);
     void setModelPosition(const yarp::sig::Vector &pos);
     void setModelPose(const yarp::sig::Matrix &pose);
     double evalApproachYawAttitude();
     void evalApproachPosition(yarp::sig::Vector &pos,
-			      const std::string &object_position_name);
+                              const std::string &object_position_name);
 };
 
 #endif
