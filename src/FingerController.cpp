@@ -58,9 +58,6 @@ bool FingerController::configure(const std::string &hand_name,
     else if (finger_name == "ring")
     {
         ctl_joints.push_back(15);
-        // FIX ME :the forward kinematics of the ring finger is not available
-        // using the forward kinematics of the index finger
-        finger = iCub::iKin::iCubFinger(hand_name + "_index");
     }
     else
     {
@@ -320,39 +317,39 @@ bool FingerController::getJacobianFingerFrame(yarp::sig::Matrix &jacobian)
     jacobian = jacobian * coupling;
 }
 
-bool FingerController::getFingerTipPoseFingerFrame(yarp::sig::Vector &pose)
-{
-    // get the position of the finger tip
-    yarp::sig::Vector finger_tip = finger.EndEffPosition();
+// bool FingerController::getFingerTipPoseFingerFrame(yarp::sig::Vector &pose)
+// {
+//     // get the position of the finger tip
+//     yarp::sig::Vector finger_tip = finger.EndEffPosition();
 
-    // evaluate the vector from the root frame of the finger
-    // to the finger tip
-    yarp::sig::Vector diff = finger_tip - finger_root_pos;
+//     // evaluate the vector from the root frame of the finger
+//     // to the finger tip
+//     yarp::sig::Vector diff = finger_tip - finger_root_pos;
 
-    // express it in the root frame of the finger
-    diff = finger_root_att.transposed() * diff;
+//     // express it in the root frame of the finger
+//     diff = finger_root_att.transposed() * diff;
 
-    // evaluate the sum of the controlled joints
-    // representing the attitude of the planar chain
-    double att = 0;
+//     // evaluate the sum of the controlled joints
+//     // representing the attitude of the planar chain
+//     double att = 0;
 
-    // only opposition if thumb
-    if (finger_name == "thumb")
-        att = joints[0];
-    // neglect abduction if index or ring
-    else if (finger_name == "index" || finger_name == "ring")
-        att = joints[1] + joints[2] + joints[3];
-    // middle finger
-    else
-        att = joints[0] + joints[1] + joints[2];
+//     // only opposition if thumb
+//     if (finger_name == "thumb")
+//         att = joints[0];
+//     // neglect abduction if index or ring
+//     else if (finger_name == "index" || finger_name == "ring")
+//         att = joints[1] + joints[2] + joints[3];
+//     // middle finger
+//     else
+//         att = joints[0] + joints[1] + joints[2];
 
-    pose.resize(3);
-    pose[0] = diff[0];
-    pose[1] = diff[1];
-    pose[2] = att;
+//     pose.resize(3);
+//     pose[0] = diff[0];
+//     pose[1] = diff[1];
+//     pose[2] = att;
 
-    return true;
-}
+//     return true;
+// }
 
 bool FingerController::goHome(const double &ref_vel)
 {

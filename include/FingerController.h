@@ -141,7 +141,7 @@ public:
      * @param pose a vector containing the pose of the finger tip
      * @return true/false on success/failure
      */
-    bool getFingerTipPoseFingerFrame(yarp::sig::Vector &pose);
+    /* bool getFingerTipPoseFingerFrame(yarp::sig::Vector &pose); */
 
     /*
      * Restore the initial position of the finger.
