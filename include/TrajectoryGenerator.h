@@ -33,7 +33,7 @@ private:
 
     // trajectory duration
     double traj_duration;
-    
+
 public:
     /**
      * Constructor
@@ -46,7 +46,7 @@ public:
      * @return true/false on success/failure
      */
     bool setInitialPosition(const yarp::sig::Vector &pos);
-    
+
     /**
      * Set the final position.
      * @param pos the 3x1 final position
@@ -74,8 +74,8 @@ public:
      * @return true/false on success/failure
      */
     bool getTrajectory(const double &time,
-		       yarp::sig::Vector &position,
-		       yarp::sig::Vector &velocity);
+                       yarp::sig::Vector &position,
+                       yarp::sig::Vector &velocity);
 };
 
 #endif
