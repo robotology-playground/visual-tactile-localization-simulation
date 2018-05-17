@@ -600,7 +600,7 @@ protected:
         arm->cartesian()->goToPose(pos, att);
 
         // stop control
-        stopArm(hand_name);
+        arm->cartesian()->stopControl();
 
         return true;
     }
@@ -875,9 +875,7 @@ protected:
             return false;
 
         // issue restore command
-        arm->goHome();
-
-        return true;
+        return arm->goHome();
     }
 
     /*
@@ -1893,7 +1891,7 @@ public:
                 // stop control
                 stopArm(single_act_arm);
 
-                restoreArmControllerContext(seq_act_arm);
+                restoreArmControllerContext(single_act_arm);
 
                 mutex.lock();
 
@@ -1913,7 +1911,7 @@ public:
                 // restore completed
                 yInfo() << "[WAIT ARM RESTORE] done";
 
-                restoreArmControllerContext(seq_act_arm);
+                restoreArmControllerContext(single_act_arm);
 
                 // go back to Idle
                 mutex.lock();
