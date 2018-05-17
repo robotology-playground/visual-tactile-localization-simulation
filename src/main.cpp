@@ -38,7 +38,7 @@
 #include <ArmController.h>
 #include <HandControlCommand.h>
 #include <HandControlResponse.h>
-#include <filterCommand.h>
+#include <FilterCommand.h>
 #include <TrajectoryGenerator.h>
 #include <RotationTrajectoryGenerator.h>
 #include <ModelHelper.h>

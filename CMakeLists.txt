@@ -38,7 +38,7 @@ yarp_idl_to_dir(idl.thrift ${CMAKE_SOURCE_DIR})
 
 # set sources 
 set(sources_main_module
-  ${CMAKE_SOURCE_DIR}/src/filterCommand.cpp
+  ${CMAKE_SOURCE_DIR}/src/FilterCommand.cpp
   ${CMAKE_SOURCE_DIR}/src/ArmController.cpp
   ${CMAKE_SOURCE_DIR}/src/ModelHelper.cpp
   ${CMAKE_SOURCE_DIR}/src/main.cpp
