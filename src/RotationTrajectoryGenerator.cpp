@@ -11,7 +11,7 @@
 
 #include <yarp/math/Math.h>
 
-#include "RotationTrajectoryGenerator.h"
+#include <RotationTrajectoryGenerator.h>
 
 using namespace yarp::math;
 
