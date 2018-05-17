@@ -18,7 +18,7 @@
 
 namespace yarp {
     namespace sig {
-	class FilterCommand;
+        class FilterCommand;
     }
 }
 
