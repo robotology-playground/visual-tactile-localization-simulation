@@ -1,0 +1,3 @@
+include/VIS_TAC_IDL.h
+src/VIS_TAC_IDL.cpp
+idl_thrift.cmake
