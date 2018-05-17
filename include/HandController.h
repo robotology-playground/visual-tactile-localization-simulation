@@ -36,7 +36,7 @@ class HandController
 private:
     // hand name
     std::string hand_name;
-    
+
     // driver
     yarp::dev::PolyDriver drv_arm;
 
@@ -51,7 +51,7 @@ private:
     std::vector<std::string> fingers_names;
     std::unordered_map<std::string, FingerController> fingers;
     std::unordered_map<std::string, bool> contacts;
-    
+
 public:
     /*
      * Configure the hand controller.
@@ -85,31 +85,31 @@ public:
      * is detected for a given finger the finger stops moving forward.
      *
      * To be used in "streaming" mode by providing tactile feedback using the
-     * input number_contacts. 
+     * input number_contacts.
      *
      * @param names list of fingers involved in the movement
-     * @param speed the desired speed in the positive y direction 
+     * @param speed the desired speed in the positive y direction
      *              of the root frame of the finger
      * @param number_contacts the current number of contacts for each finger
      * @param done true if all fingers reached contact, false otherwise
      * @return true/false con success/failure
      */
     bool moveFingersUntilContact(const std::vector<std::string> names,
-				 const double &speed,
-				 const std::unordered_map<std::string, int> &number_contacts,
-				 bool &done);
+                                 const double &speed,
+                                 const std::unordered_map<std::string, int> &number_contacts,
+                                 bool &done);
 
     bool moveFingersMaintainingContact(const std::vector<std::string> names,
-				       const double &speed,
-				       const std::unordered_map<std::string, int> &number_contacts);
-    
+                                       const double &speed,
+                                       const std::unordered_map<std::string, int> &number_contacts);
+
     /* Restore the initial configuration for the specified fingers
      * @param ref_vel reference joints velocity used during movement
      * @param finger_list the list of fingers to be commanded
      * @return true/false con success/failure
      */
     bool restoreFingersPosition(const std::vector<std::string> &finger_list,
-				const double &ref_vel);
+                                const double &ref_vel);
 
     /*
      * Return true if the fingers positions have been restored
@@ -119,7 +119,7 @@ public:
      * @return true/false con success/failure
      */
     bool isFingersRestoreDone(const std::vector<std::string> &finger_list,
-			      bool &is_done);
+                              bool &is_done);
 
     /*
      * Stop all the fingers.
