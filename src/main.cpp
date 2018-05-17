@@ -57,7 +57,7 @@ enum class Status { Idle,
                     FingersRestore, WaitFingersRestoreDone,
                     Stop };
 
-class VisTacLocSimModule: public yarp::os::RFModule,
+class VisuoTactileLocalizer: public yarp::os::RFModule,
                           public VIS_TAC_IDL
 {
 protected:
@@ -558,7 +558,7 @@ protected:
             ok = response.isRestoreDone(is_done);
         if (!ok)
         {
-            yError() << "VisTacLocSimModule::checkFingersMotionDone"
+            yError() << "VisuoTactileLocalizer::checkFingersMotionDone"
                      << "Error: unable to get the status of the fingers"
                      << "motion from the hand control module";
             return false;
@@ -1010,14 +1010,14 @@ public:
         if (rf.find("cartDefaultTrajTime").isNull())
             default_traj_time = 4.0;
         // print since important
-        yInfo() << "VisTacLocSimModule: Cartesian default trajectory time is"
+        yInfo() << "VisuoTactileLocalizer: Cartesian default trajectory time is"
                 << default_traj_time;
 
         tracking_traj_time = rf.find("cartTrackingTrajTime").asDouble();
         if (rf.find("cartTrackingTrajTime").isNull())
             tracking_traj_time = 0.6;
         // print since important
-        yInfo() << "VisTacLocSimModule: Cartesian tracking trajectory time is"
+        yInfo() << "VisuoTactileLocalizer: Cartesian tracking trajectory time is"
                 << tracking_traj_time;
 
         // set default trajectory durations
@@ -1025,14 +1025,14 @@ public:
         if (rf.find("pullTrajDuration").isNull())
             pull_traj_duration = 4.0;
         // print since important
-        yInfo() << "VisTacLocSimModule: Pulling trajectory duration is"
+        yInfo() << "VisuoTactileLocalizer: Pulling trajectory duration is"
                 << pull_traj_duration;
 
         rot_traj_duration = rf.find("rotTrajDuration").asDouble();
         if (rf.find("rotTrajDuration").isNull())
             rot_traj_duration = 4.0;
         // print since important
-        yInfo() << "VisTacLocSimModule: Rotation trajectory duration is"
+        yInfo() << "VisuoTactileLocalizer: Rotation trajectory duration is"
                 << rot_traj_duration;
 
         // set default timeouts
@@ -1122,21 +1122,21 @@ public:
         bool ok = port_filter.open(filter_port_name);
         if (!ok)
         {
-            yError() << "VisTacLocSimModule: unable to open the filter port";
+            yError() << "VisuoTactileLocalizer: unable to open the filter port";
             return false;
         }
 
         ok = port_hand_right.open(right_ctl_port_name);
         if (!ok)
         {
-            yError() << "VisTacLocSimModule: unable to open the right hand control module port";
+            yError() << "VisuoTactileLocalizer: unable to open the right hand control module port";
             return false;
         }
 
         ok = port_hand_left.open(left_ctl_port_name);
         if (!ok)
         {
-            yError() << "VisTacLocSimModule: unable to open the left hand control module port";
+            yError() << "VisuoTactileLocalizer: unable to open the left hand control module port";
             return false;
         }
 
@@ -1154,7 +1154,7 @@ public:
         ok = drv_transform_client.open(propTfClient);
         if (!ok)
         {
-            yError() << "VisTacLocSimModule: unable to open the FrameTransformClient driver.";
+            yError() << "VisuoTactileLocalizer: unable to open the FrameTransformClient driver.";
             return false;
         }
 
@@ -1162,7 +1162,7 @@ public:
         ok = drv_transform_client.view(tf_client);
         if (!ok || tf_client == 0)
         {
-            yError() << "VisTacLocSimModule: unable to retrieve the FrameTransformClient view.";
+            yError() << "VisuoTactileLocalizer: unable to retrieve the FrameTransformClient view.";
             return false;
         }
 
@@ -1174,14 +1174,14 @@ public:
         ok = right_arm.configure(robot_name, "right");
         if (!ok)
         {
-            yError() << "VisTacLocSimModule: unable to configure the right arm controller";
+            yError() << "VisuoTactileLocalizer: unable to configure the right arm controller";
             return false;
         }
 
         ok = left_arm.configure(robot_name, "left");
         if (!ok)
         {
-            yError() << "VisTacLocSimModule: unable to configure the left arm controller";
+            yError() << "VisuoTactileLocalizer: unable to configure the left arm controller";
             return false;
         }
 
@@ -1979,11 +1979,11 @@ int main(int argc, char** argv)
         return 1;
     }
 
-    VisTacLocSimModule mod;
+    VisuoTactileLocalizer localizer;
     yarp::os::ResourceFinder rf;
     rf.setDefaultConfigFile("module_config.ini");
     rf.configure(argc,argv);    
     
-    return mod.runModule(rf);
+    return localizer.runModule(rf);
 
 }
