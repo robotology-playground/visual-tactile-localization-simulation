@@ -130,9 +130,6 @@ protected:
 
     // model helper class
     ModelHelper mod_helper;
-    double model_width;
-    double model_depth;
-    double model_height;
 
     /**
      * Rpc server
@@ -980,140 +977,136 @@ public:
     bool configure(yarp::os::ResourceFinder &rf)
     {
         /**
+         * Extract separate resource finders
+         */
+        yarp::os::ResourceFinder rf_module;
+        rf_module = rf.findNestedResourceFinder("module");
+
+        yarp::os::ResourceFinder rf_mod_helper;
+        rf_mod_helper = rf.findNestedResourceFinder("module_helper");
+
+        /**
          * Parameters from configuration
          */
 
         // port names
-        std::string filter_port_name = rf.find("filterPort").asString();
-        if (rf.find("filterPortName").isNull())
+        std::string filter_port_name = rf_module.find("filterPort").asString();
+        if (rf_module.find("filterPortName").isNull())
             filter_port_name = "/vis_tac_localization/filter:o";
 
-        std::string right_ctl_port_name = rf.find("rightHandCtlPort").asString();
-        if (rf.find("rightHandCtlPort").isNull())
+        std::string right_ctl_port_name = rf_module.find("rightHandCtlPort").asString();
+        if (rf_module.find("rightHandCtlPort").isNull())
             right_ctl_port_name = "/vis_tac_localization/hand-control/right/rpc:o";
 
-        std::string left_ctl_port_name = rf.find("leftHandCtlPort").asString();
-        if (rf.find("leftHandCtlPort").isNull())
+        std::string left_ctl_port_name = rf_module.find("leftHandCtlPort").asString();
+        if (rf_module.find("leftHandCtlPort").isNull())
             left_ctl_port_name = "/vis_tac_localization/hand-control/left/rpc:o";
 
-        std::string tfclient_local_port_name = rf.find("tfClientLocalPort").asString();
-        if (rf.find("tfClientLocalPort").isNull())
+        std::string tfclient_local_port_name = rf_module.find("tfClientLocalPort").asString();
+        if (rf_module.find("tfClientLocalPort").isNull())
             tfclient_local_port_name = "/vis_tac_localization/transformClient";
 
         // robot name
-        std::string robot_name = rf.find("robotName").asString();
-        if (rf.find("robotName").isNull())
+        std::string robot_name = rf_module.find("robotName").asString();
+        if (rf_module.find("robotName").isNull())
             robot_name = "icub";
 
         // default trajectory times for Cartesian Controller
-        default_traj_time = rf.find("cartDefaultTrajTime").asDouble();
-        if (rf.find("cartDefaultTrajTime").isNull())
+        default_traj_time = rf_module.find("cartDefaultTrajTime").asDouble();
+        if (rf_module.find("cartDefaultTrajTime").isNull())
             default_traj_time = 4.0;
         // print since important
         yInfo() << "VisuoTactileLocalizer: Cartesian default trajectory time is"
                 << default_traj_time;
 
-        tracking_traj_time = rf.find("cartTrackingTrajTime").asDouble();
-        if (rf.find("cartTrackingTrajTime").isNull())
+        tracking_traj_time = rf_module.find("cartTrackingTrajTime").asDouble();
+        if (rf_module.find("cartTrackingTrajTime").isNull())
             tracking_traj_time = 0.6;
         // print since important
         yInfo() << "VisuoTactileLocalizer: Cartesian tracking trajectory time is"
                 << tracking_traj_time;
 
         // set default trajectory durations
-        pull_traj_duration = rf.find("pullTrajDuration").asDouble();
-        if (rf.find("pullTrajDuration").isNull())
+        pull_traj_duration = rf_module.find("pullTrajDuration").asDouble();
+        if (rf_module.find("pullTrajDuration").isNull())
             pull_traj_duration = 4.0;
         // print since important
         yInfo() << "VisuoTactileLocalizer: Pulling trajectory duration is"
                 << pull_traj_duration;
 
-        rot_traj_duration = rf.find("rotTrajDuration").asDouble();
-        if (rf.find("rotTrajDuration").isNull())
+        rot_traj_duration = rf_module.find("rotTrajDuration").asDouble();
+        if (rf_module.find("rotTrajDuration").isNull())
             rot_traj_duration = 4.0;
         // print since important
         yInfo() << "VisuoTactileLocalizer: Rotation trajectory duration is"
                 << rot_traj_duration;
 
         // set default timeouts
-        arm_approach_timeout = rf.find("armApproachTimeout").asDouble();
-        if (rf.find("armApproachTimeout").isNull())
+        arm_approach_timeout = rf_module.find("armApproachTimeout").asDouble();
+        if (rf_module.find("armApproachTimeout").isNull())
             arm_approach_timeout = 7.0;
 
-        arm_restore_timeout = rf.find("armRestoreTimeout").asDouble();
-        if (rf.find("armRestoreTimeout").isNull())
+        arm_restore_timeout = rf_module.find("armRestoreTimeout").asDouble();
+        if (rf_module.find("armRestoreTimeout").isNull())
             arm_restore_timeout = 7.0;
 
-        fingers_approach_timeout = rf.find("fingersApproachTimeout").asDouble();
-        if (rf.find("fingersApproachTimeout").isNull())
+        fingers_approach_timeout = rf_module.find("fingersApproachTimeout").asDouble();
+        if (rf_module.find("fingersApproachTimeout").isNull())
             fingers_approach_timeout = 10.0;
 
-        fingers_restore_timeout = rf.find("fingersRestoreTimeout").asDouble();
-        if (rf.find("fingersRestoreTimeout").isNull())
+        fingers_restore_timeout = rf_module.find("fingersRestoreTimeout").asDouble();
+        if (rf_module.find("fingersRestoreTimeout").isNull())
             fingers_restore_timeout = 10.0;
 
         // hand pitch and roll used in approaching phase
-        hand_approach_pitch = rf.find("handApproachPitch").asDouble();
-        if (rf.find("handApproachPitch").isNull())
+        hand_approach_pitch = rf_module.find("handApproachPitch").asDouble();
+        if (rf_module.find("handApproachPitch").isNull())
             hand_approach_pitch = 15.0;
 
-        hand_approach_roll = rf.find("handApproachRoll").asDouble();
-        if (rf.find("handApproachRoll").isNull())
+        hand_approach_roll = rf_module.find("handApproachRoll").asDouble();
+        if (rf_module.find("handApproachRoll").isNull())
             hand_approach_roll = -90.0;
 
         // finger speeds
-        finger_opening_speed = rf.find("fingerOpeningSpeed").asDouble();
-        if (rf.find("fingerOpeningSpeed").isNull())
+        finger_opening_speed = rf_module.find("fingerOpeningSpeed").asDouble();
+        if (rf_module.find("fingerOpeningSpeed").isNull())
             finger_opening_speed = 25.0;
 
-        finger_closing_speed = rf.find("fingerClosingSpeed").asDouble();
-        if (rf.find("fingerClosingSpeed").isNull())
+        finger_closing_speed = rf_module.find("fingerClosingSpeed").asDouble();
+        if (rf_module.find("fingerClosingSpeed").isNull())
             finger_closing_speed = 0.009;
 
-        finger_following_speed = rf.find("fingerFollowingSpeed").asDouble();
-        if (rf.find("fingerFollowingSpeed").isNull())
+        finger_following_speed = rf_module.find("fingerf_moduleollowingSpeed").asDouble();
+        if (rf_module.find("fingerf_moduleollowingSpeed").isNull())
             finger_closing_speed = 0.005;
 
-        // sizes of the object model
-        model_width = rf.find("modelWidth").asDouble();
-        if (rf.find("modelWidth").isNull())
-            model_width = 0.24;
-
-        model_depth = rf.find("modelDepth").asDouble();
-        if (rf.find("modelDepth").isNull())
-            model_depth = 0.17;
-
-        model_height = rf.find("modelHeight").asDouble();
-        if (rf.find("modelHeight").isNull())
-            model_height = 0.037;
-
         // module period
-        module_period = rf.find("modulePeriod").asDouble();
-        if (rf.find("modulePeriod").isNull())
+        module_period = rf_module.find("modulePeriod").asDouble();
+        if (rf_module.find("modulePeriod").isNull())
             module_period = 0.02;
 
         // shift used for move hand upward action
-        move_hand_upward_shift = rf.find("moveHandUpwardShift").asDouble();
-        if (rf.find("moveHandUpwardShift").isNull())
+        move_hand_upward_shift = rf_module.find("moveHandUpwardShift").asDouble();
+        if (rf_module.find("moveHandUpwardShift").isNull())
             move_hand_upward_shift = 0.05;
 
         // shift used during pulling action
-        pull_x_shift = rf.find("pullXShift").asDouble();
-        if (rf.find("pullXShift").isNull())
+        pull_x_shift = rf_module.find("pullXShift").asDouble();
+        if (rf_module.find("pullXShift").isNull())
             pull_x_shift = 0.17;
 
         // yaw rate used during rotation action
-        rot_yaw_rate = rf.find("rotYawRate").asDouble();
-        if (rf.find("rotYawRate").isNull())
+        rot_yaw_rate = rf_module.find("rotYawRate").asDouble();
+        if (rf_module.find("rotYawRate").isNull())
             rot_yaw_rate = -20.0;
 
         // filter transform source and target frame
-        est_tf_source = rf.find("estimateTfSource").asString();
-        if (rf.find("estimateTfSource").isNull())
+        est_tf_source = rf_module.find("estimateTfSource").asString();
+        if (rf_module.find("estimateTfSource").isNull())
             est_tf_source = "/iCub/frame";
 
-        est_tf_target = rf.find("estimateTfTarget").asString();
-        if (rf.find("estimateTfTarget").isNull())
+        est_tf_target = rf_module.find("estimateTfTarget").asString();
+        if (rf_module.find("estimateTfTarget").isNull())
             est_tf_target = "/box_alt/estimate/frame";
 
         /**
@@ -1199,9 +1192,8 @@ public:
         previous_status = Status::Idle;
 
         // configure model helper
-        mod_helper.setModelDimensions(model_width,
-                                      model_depth,
-                                      model_height);
+        mod_helper.configure(rf_mod_helper);
+
         // clear arm names
         seq_action_arm_name.clear();
         single_action_arm_name.clear();
