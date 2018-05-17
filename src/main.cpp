@@ -1941,12 +1941,16 @@ public:
             if (prev_status == Status::PreparePull   ||
                 prev_status == Status::PerformPull   ||
                 prev_status == Status::PrepareRotation ||
-                prev_status == Status::PerformRotation ||
-                prev_status == Status::ArmRestore ||
-                prev_status == Status::WaitArmRestoreDone)
+                prev_status == Status::PerformRotation)
             {
                 // restore arm controller context
                 restoreArmControllerContext(seq_act_arm);
+            }
+            else if(prev_status == Status::ArmRestore ||
+                    prev_status == Status::WaitArmRestoreDone)
+            {
+                // restore arm controller context
+                restoreArmControllerContext(single_act_arm);
             }
 
             // reset flag
