@@ -32,14 +32,14 @@ TrajectoryGenerator::TrajectoryGenerator()
     a0.resize(3, 0.0);
     a3.resize(3, 0.0);
     a4.resize(3, 0.0);
-    a5.resize(3, 0.0);    
+    a5.resize(3, 0.0);
 }
 
 bool TrajectoryGenerator::setInitialPosition(const yarp::sig::Vector &pos)
 {
     if (pos.size() != 3)
-	return false;
-    
+        return false;
+
     pos_i = pos;
 
     return true;
@@ -48,8 +48,8 @@ bool TrajectoryGenerator::setInitialPosition(const yarp::sig::Vector &pos)
 bool TrajectoryGenerator::setFinalPosition(const yarp::sig::Vector &pos)
 {
     if (pos.size() != 3)
-	return false;
-    
+        return false;
+
     pos_f = pos;
 
     return true;
@@ -58,8 +58,8 @@ bool TrajectoryGenerator::setFinalPosition(const yarp::sig::Vector &pos)
 bool TrajectoryGenerator::setDuration(const double &duration)
 {
     if (duration <= 0)
-	return false;
-    
+        return false;
+
     traj_duration = duration;
 
     return true;
@@ -82,27 +82,27 @@ void TrajectoryGenerator::init()
 
 bool TrajectoryGenerator::getTrajectory(const double &time,
                                         yarp::sig::Vector &position,
-					yarp::sig::Vector &velocity)
+                                        yarp::sig::Vector &velocity)
 {
     // check for negative times
     if (time < 0)
-	return false;
-    
+        return false;
+
     // enforce duration of the trajectory
     double t = time;
     if (t > traj_duration)
-	t = traj_duration;
-    
+        t = traj_duration;
+
     // eval current position
     position = a0
-	     + a3 * pow(t, 3.0)
-	     + a4 * pow(t, 4.0)
-	     + a5 * pow(t, 5.0);
+             + a3 * pow(t, 3.0)
+             + a4 * pow(t, 4.0)
+             + a5 * pow(t, 5.0);
 
     // eval current velocity
     velocity = 3.0 * a3 * pow(t, 2.0)
-	     + 4.0 * a4 * pow(t, 3.0)
-	     + 5.0 * a5 * pow(t, 4.0);
+             + 4.0 * a4 * pow(t, 3.0)
+             + 5.0 * a5 * pow(t, 4.0);
 
     return true;
 }
