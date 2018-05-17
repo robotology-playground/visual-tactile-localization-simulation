@@ -39,6 +39,30 @@ ModelHelper::ModelHelper() : x_dir(2, 0.0),
     rob_2_work_frame = yarp::math::axis2dcm(axis_angle).submatrix(0, 2, 0, 2);
 }
 
+void ModelHelper::configure(const yarp::os::ResourceFinder &rf)
+{
+    // sizes of the object model
+    model_width = rf.find("modelWidth").asDouble();
+    if (rf.find("modelWidth").isNull())
+        model_width = 0.24;
+
+    model_depth = rf.find("modelDepth").asDouble();
+    if (rf.find("modelDepth").isNull())
+        model_depth = 0.17;
+
+    model_height = rf.find("modelHeight").asDouble();
+    if (rf.find("modelHeight").isNull())
+        model_height = 0.037;
+
+    offset_x_y = rf.find("offsetXY").asDouble();
+    if (rf.find("offsetXY").isNull())
+        offset_x_y = 0.037;
+
+    offset_h = rf.find("offsetHeight").asDouble();
+    if (rf.find("offsetHeight").isNull())
+        offset_h = 0.037;
+}
+
 void ModelHelper::setModelDimensions(const double &width,
                         const double &depth,
                         const double &height)
@@ -123,11 +147,6 @@ void ModelHelper::evalApproachPosition(yarp::sig::Vector &pos,
 {
     // assign the center of model
     pos = model_center;
-
-    // offset
-    // TODO take these from configuration ini
-    double offset_x_y = 0.06;
-    double offset_h = 0.021;
 
     // pick the right direction and length
     // for evaluation of offset

@@ -13,6 +13,7 @@
 
 // yarp
 #include <yarp/sig/Vector.h>
+#include <yarp/os/ResourceFinder.h>
 
 class ModelHelper
 {
@@ -25,9 +26,12 @@ private:
     double model_width;
     double model_depth;
     double model_height;
+    double offset_x_y;
+    double offset_h;
 
 public:
     ModelHelper();
+    void configure(const yarp::os::ResourceFinder &rf);
     void setModelDimensions(const double &width,
                             const double &depth,
                             const double &height);
