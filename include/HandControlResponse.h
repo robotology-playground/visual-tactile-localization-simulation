@@ -24,7 +24,7 @@ private:
      * Type of the response
      */
     Response response;
-    
+
     /*
      * Status of the controller
      */
