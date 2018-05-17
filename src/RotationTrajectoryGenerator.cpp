@@ -41,11 +41,11 @@ void RotationTrajectoryGenerator::setYawRate(const double &rate)
 }
 
 bool RotationTrajectoryGenerator::getVelocity(const double &time,
-					      yarp::sig::Vector &velocity)
+                                              yarp::sig::Vector &velocity)
 {
     if (time < 0)
-	return false;
-    
+        return false;
+
     // evaluate displacement
     // from object center to pulling point
     yarp::sig::Vector diff = push_point - object_center;
