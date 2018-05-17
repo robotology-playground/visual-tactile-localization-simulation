@@ -339,6 +339,8 @@ protected:
             // change status
             previous_status = status;
             status = Status::PreparePull;
+
+            reply = "[OK] Command issued";
         }
 
         mutex.unlock();
