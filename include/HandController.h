@@ -58,7 +58,8 @@ public:
      * @param hand_name is the name of the hand
      * @return true/false con success/failure
      */
-    bool configure(const std::string &hand_name);
+    bool configure(yarp::os::ResourceFinder &rf,
+                   const std::string &hand_name);
 
     /*
      * Close all the finger controllers and

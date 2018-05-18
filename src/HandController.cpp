@@ -19,7 +19,8 @@
 
 using namespace yarp::math;
 
-bool HandController::configure(const std::string &hand_name)
+bool HandController::configure(yarp::os::ResourceFinder &rf,
+                               const std::string &hand_name)
 {
     // store name of the hand
     this->hand_name = hand_name;
@@ -94,10 +95,17 @@ bool HandController::configure(const std::string &hand_name)
         // instantiate and configure fingers
         FingerController finger;
         finger.init(hand_name, finger_name, imod_arm, ipos_arm, ivel_arm);
-        fingers[finger_name] = finger;
+
+        // see whether there is additional configuration for this finger
+        std::string key_name = hand_name + "_" + finger_name;
+        yarp::os::ResourceFinder finger_rf = rf.findNestedResourceFinder(key_name.c_str());
+        if (!finger_rf.isNull())
+            finger.configure(finger_rf);
 
         // set home position
         finger.setHomePosition(joints);
+
+        fingers[finger_name] = finger;
 
         // reset fingers contacts
         contacts[finger_name] = false;

@@ -369,7 +369,7 @@ bool HandControlModule::configure(yarp::os::ResourceFinder &rf)
     rpc_server.setReader(*this);
 
     // configure hand the hand controller
-    ok = hand.configure(hand_name);
+    ok = hand.configure(rf, hand_name);
     if (!ok)
     {
 	yError() << "HandControlModule::configure"
