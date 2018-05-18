@@ -87,11 +87,11 @@ public:
      * @param ivel pointer to a VelocityControl2 instance
      * @return true/false on success/failure
      */
-    bool configure(const std::string &hand_name,
-                   const std::string &finger_name,
-                   yarp::dev::IControlMode2 *imod,
-                   yarp::dev::IPositionControl2 *ipos,
-                   yarp::dev::IVelocityControl2 *ivel);
+    bool init(const std::string &hand_name,
+              const std::string &finger_name,
+              yarp::dev::IControlMode2 *imod,
+              yarp::dev::IPositionControl2 *ipos,
+              yarp::dev::IVelocityControl2 *ivel);
 
     /*
      * Set a given control mode for all the joints of the finger.

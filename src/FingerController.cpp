@@ -13,11 +13,11 @@
 
 using namespace yarp::math;
 
-bool FingerController::configure(const std::string &hand_name,
-                                 const std::string &finger_name,
-                                 yarp::dev::IControlMode2 *imod,
-                                 yarp::dev::IPositionControl2 *ipos,
-                                 yarp::dev::IVelocityControl2 *ivel)
+bool FingerController::init(const std::string &hand_name,
+                            const std::string &finger_name,
+                            yarp::dev::IControlMode2 *imod,
+                            yarp::dev::IPositionControl2 *ipos,
+                            yarp::dev::IVelocityControl2 *ivel)
 {
     bool ok;
 

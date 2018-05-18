@@ -93,7 +93,7 @@ bool HandController::configure(const std::string &hand_name)
     {
         // instantiate and configure fingers
         FingerController finger;
-        finger.configure(hand_name, finger_name, imod_arm, ipos_arm, ivel_arm);
+        finger.init(hand_name, finger_name, imod_arm, ipos_arm, ivel_arm);
         fingers[finger_name] = finger;
 
         // set home position
