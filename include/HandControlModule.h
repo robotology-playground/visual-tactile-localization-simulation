@@ -58,7 +58,7 @@ private:
 
     // list of currently commanded fingers
     std::vector<std::string> commanded_fingers;
-    
+
     // period
     double period;
 
@@ -80,12 +80,12 @@ private:
     * 'middle', 'ring' or 'little'.
     */
     bool getNumberContacts(iCub::skinDynLib::skinContactList &skin_contact_list,
-			   std::unordered_map<std::string, int> &number_contacts);
+                           std::unordered_map<std::string, int> &number_contacts);
    /*
     * Process a command
     */
     void processCommand(const HandControlCommand &cmd,
-			HandControlResponse &response);
+                        HandControlResponse &response);
    /*
     * Perform control according to the current command
     */
