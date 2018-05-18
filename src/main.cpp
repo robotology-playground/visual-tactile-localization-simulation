@@ -701,11 +701,10 @@ protected:
             return false;
 
         // move fingers towards the object
-        std::vector<std::string> finger_list = {"thumb", "index", "middle", "ring"};
         HandControlCommand hand_cmd;
         HandControlResponse response;
         hand_cmd.setCommandedHand(hand_name);
-        hand_cmd.setCommandedFingers(finger_list);
+        hand_cmd.setCommandedFingers(fingers_list_approach);
         hand_cmd.setFingersForwardSpeed(finger_closing_speed);
         hand_cmd.commandFingersApproach();
         hand_port->write(hand_cmd, response);
@@ -731,11 +730,10 @@ protected:
             return false;
 
         // enable fingers movements towards the object
-        std::vector<std::string> finger_list = {"index", "middle", "ring"};
         HandControlCommand hand_cmd;
         HandControlResponse response;
         hand_cmd.setCommandedHand(hand_name);
-        hand_cmd.setCommandedFingers(finger_list);
+        hand_cmd.setCommandedFingers(fingers_list_following);
         hand_cmd.setFingersForwardSpeed(finger_following_speed);
         hand_cmd.commandFingersFollow();
         hand_port->write(hand_cmd, response);
