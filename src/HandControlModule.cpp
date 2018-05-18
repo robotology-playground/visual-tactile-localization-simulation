@@ -416,6 +416,9 @@ bool HandControlModule::close()
     // stop all movements for safety
     stopControl();
 
+    // close hand controller
+    hand.close();
+
     // close ports
     port_contacts.close();
     rpc_server.close();
