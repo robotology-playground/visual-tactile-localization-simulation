@@ -92,7 +92,8 @@ protected:
     // pitch and roll angle used during
     // approaching phase
     double hand_approach_pitch;
-    double hand_approach_roll;
+    double right_hand_approach_roll;
+    double left_hand_approach_roll;
 
     // fingers opening and closing speeds
     double finger_opening_speed;
@@ -650,6 +651,14 @@ protected:
             return false;
 
         // set desired attitude
+        double hand_approach_roll;
+        if (arm_name == "right")
+            hand_approach_roll = right_hand_approach_roll;
+        else if (arm_name == "left")
+            hand_approach_roll = left_hand_approach_roll;
+        else
+            return false;
+
         arm->setHandAttitude(yaw * 180 / M_PI,
                              hand_approach_pitch,
                              hand_approach_roll);
@@ -1070,9 +1079,13 @@ public:
         if (rf_module.find("handApproachPitch").isNull())
             hand_approach_pitch = 15.0;
 
-        hand_approach_roll = rf_module.find("handApproachRoll").asDouble();
-        if (rf_module.find("handApproachRoll").isNull())
-            hand_approach_roll = -90.0;
+        right_hand_approach_roll = rf_module.find("rightHandApproachRoll").asDouble();
+        if (rf_module.find("rightHandApproachRoll").isNull())
+            right_hand_approach_roll = -90.0;
+
+        left_hand_approach_roll = rf_module.find("leftHandApproachRoll").asDouble();
+        if (rf_module.find("leftHandApproachRoll").isNull())
+            left_hand_approach_roll = 90.0;
 
         // finger speeds
         finger_opening_speed = rf_module.find("fingerOpeningSpeed").asDouble();
