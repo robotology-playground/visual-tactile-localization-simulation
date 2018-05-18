@@ -351,6 +351,11 @@ bool HandControlModule::configure(yarp::os::ResourceFinder &rf)
     if (inner_rf.find("rpcPort").isNull())
 	port_rpc_name = "/hand-control/" + hand_name + "/rpc:i";
     yInfo() << "HandControlModule: rpc port name is" << port_rpc_name;
+
+    // check whether additional encoders are required
+    bool use_analogs = inner_rf.find("useAnalogs").asBool();
+    if(inner_rf.find("useAnalogs").isNull())
+        use_analogs = false;
     
     // open the contact points port
     bool ok = port_contacts.open(port_contacts_name);
@@ -374,7 +379,7 @@ bool HandControlModule::configure(yarp::os::ResourceFinder &rf)
     rpc_server.setReader(*this);
 
     // configure hand the hand controller
-    ok = hand.configure(rf, robot_name, hand_name);
+    ok = hand.configure(rf, robot_name, hand_name, use_analogs);
     if (!ok)
     {
 	yError() << "HandControlModule::configure"
