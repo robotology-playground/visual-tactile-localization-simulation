@@ -80,8 +80,8 @@ yarp_install(FILES ${scripts} DESTINATION ${ICUBCONTRIB_APPLICATIONS_INSTALL_DIR
 
 # configuration file for main module
 set (confMainModule ${PROJECT_SOURCE_DIR}/config/module_config.ini)
-yarp_install(FILES ${confMainModule} DESTINATION ${YARP_CONTEXTS_INSTALL_DIR}/simVisualTactileLocalization)
+yarp_install(FILES ${confMainModule} DESTINATION ${ICUBCONTRIB_CONTEXTS_INSTALL_DIR}/simVisualTactileLocalization)
 
 # configuration file for hand controller module
 set (confHandCtlModule ${PROJECT_SOURCE_DIR}/config/hand_control_module_config.ini)
-yarp_install(FILES ${confHandCtlModule} DESTINATION ${YARP_CONTEXTS_INSTALL_DIR}/simVisualTactileLocalization)
+yarp_install(FILES ${confHandCtlModule} DESTINATION ${ICUBCONTRIB_CONTEXTS_INSTALL_DIR}/simVisualTactileLocalization)
