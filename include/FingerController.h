@@ -83,6 +83,14 @@ private:
     double prox_max_value;
     double prox_proj_gain;
 
+    // limits
+    double thumb_oppose_lim;
+    double index_prox_lim;
+    double index_dist_lim;
+    double middle_prox_lim;
+    double middle_dist_lim;
+    double ring_little_lim;
+
 public:
     /*
      * Initialize the controller.

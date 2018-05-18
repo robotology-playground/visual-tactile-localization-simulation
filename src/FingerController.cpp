@@ -129,11 +129,94 @@ bool FingerController::init(const std::string &hand_name,
     prox_max_value = 0.0;
     prox_proj_gain = 0.0;
 
+    // set defaults for joints limits
+    thumb_oppose_lim = 15.0;
+    index_prox_lim = 25.0;
+    index_dist_lim = 90.0;
+    middle_prox_lim = 30.0;
+    middle_dist_lim = 85.0;
+    ring_little_lim = 85.0;
+
     return true;
 }
 
 bool FingerController::configure(const yarp::os::ResourceFinder &rf)
 {
+    if (finger_name == "thumb")
+    {
+        if (rf.find("thumbOpposeLimit").isNull())
+            thumb_oppose_lim = 15.0;
+        else
+        {
+            auto thumb_oppose_lim_v = rf.find("thumbOpposeLimit");
+            if (thumb_oppose_lim_v.isDouble())
+                thumb_oppose_lim = thumb_oppose_lim_v.asDouble();
+            else
+                thumb_oppose_lim = 15.0;
+        }
+    }
+    else if (finger_name == "index")
+    {
+        if (rf.find("indexProximalLimit").isNull())
+            index_prox_lim = 25.0;
+        else
+        {
+            auto index_prox_lim_v = rf.find("indexProximalLimit");
+            if (index_prox_lim_v.isDouble())
+                index_prox_lim = index_prox_lim_v.asDouble();
+            else
+                index_prox_lim = 25.0;
+        }
+
+        if (rf.find("indexDistalLimit").isNull())
+            index_dist_lim = 90.0;
+        else
+        {
+            auto index_dist_lim_v = rf.find("indexDistalLimit");
+            if (index_dist_lim_v.isDouble())
+                index_dist_lim = index_dist_lim_v.asDouble();
+            else
+                index_dist_lim = 90.0;
+        }
+    }
+    else if (finger_name == "middle")
+    {
+        if (rf.find("middleProximalLimit").isNull())
+            middle_prox_lim = 30.0;
+        else
+        {
+            auto middle_prox_lim_v = rf.find("middleProximalLimit");
+            if (middle_prox_lim_v.isDouble())
+                middle_prox_lim = middle_prox_lim_v.asDouble();
+            else
+                middle_prox_lim = 30.0;
+        }
+
+        if (rf.find("middleDistalLimit").isNull())
+            middle_dist_lim = 85.0;
+        else
+        {
+            auto middle_dist_lim_v = rf.find("middleDistalLimit");
+            if (middle_dist_lim_v.isDouble())
+                middle_dist_lim = middle_dist_lim_v.asDouble();
+            else
+                middle_dist_lim = 85.0;
+        }
+    }
+    else if (finger_name == "ring")
+    {
+        if (rf.find("ringLittleLimit").isNull())
+            ring_little_lim = 85.0;
+        else
+        {
+            auto ring_little_lim_v = rf.find("ringLittleLimit");
+            if (ring_little_lim_v.isDouble())
+                ring_little_lim = ring_little_lim_v.asDouble();
+            else
+                ring_little_lim = 85.0;
+        }
+    }
+
     if ((finger_name == "index") || (finger_name == "middle"))
     {
         if (rf.find("proxComfortValue").isNull())
