@@ -326,6 +326,11 @@ bool HandControlModule::configure(yarp::os::ResourceFinder &rf)
 	return false;
     }
 
+    // get the robot name
+    std::string robot_name = rf.find("robotName").asString();
+    if (rf.find("robotName").isNull())
+        robot_name = "icub";
+
     yarp::os::ResourceFinder inner_rf;
     inner_rf = rf.findNestedResourceFinder(hand_name.c_str());
 
@@ -369,7 +374,7 @@ bool HandControlModule::configure(yarp::os::ResourceFinder &rf)
     rpc_server.setReader(*this);
 
     // configure hand the hand controller
-    ok = hand.configure(rf, hand_name);
+    ok = hand.configure(rf, robot_name, hand_name);
     if (!ok)
     {
 	yError() << "HandControlModule::configure"
