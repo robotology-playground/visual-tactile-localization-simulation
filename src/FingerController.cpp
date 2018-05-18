@@ -124,15 +124,16 @@ bool FingerController::init(const std::string &hand_name,
     // set default home joints position
     joints_home.resize(ctl_joints.size(), 0.0);
 
+    // set defaults for proximal null based control
+    prox_comfort_value = 0.0;
+    prox_max_value = 0.0;
+    prox_proj_gain = 0.0;
+
     return true;
 }
 
 bool FingerController::configure(const yarp::os::ResourceFinder &rf)
 {
-    prox_comfort_value = 0.0;
-    prox_max_value = 0.0;
-    prox_proj_gain = 0.0;
-
     if ((finger_name == "index") || (finger_name == "middle"))
     {
         if (rf.find("proxComfortValue").isNull())
@@ -167,6 +168,12 @@ bool FingerController::configure(const yarp::os::ResourceFinder &rf)
             else
                 prox_proj_gain = 10.0;
         }
+
+        yInfo() << "FingerController configuration for"
+                << hand_name + "_" + finger_name;
+        yInfo() << "Proximal Comfort:" << prox_comfort_value;
+        yInfo() << "Proximal Max:" << prox_max_value;
+        yInfo() << "Proximal Projector Gain" << prox_proj_gain;
     }
 }
 
@@ -525,13 +532,12 @@ bool FingerController::moveFingerForward(const double &speed)
 
         // evaluate gradient of the repulsive potential
         yarp::sig::Vector q_dot_limits(2, 0.0);
-        double joint_comfort = 10 * (M_PI / 180);
-        double joint_max = 25 * (M_PI / 180);
-        double gain = 10;
+        double joint_comfort = prox_comfort_value * (M_PI / 180);
+        double joint_max = prox_max_value * (M_PI / 180);
         q_dot_limits[0] = -0.5 * (joint - joint_comfort) /
             pow(joint_max, 2);
 
-        q_dot += projector * gain * q_dot_limits;
+        q_dot += projector * prox_proj_gain * q_dot_limits;
     }
 
     // issue velocity command
