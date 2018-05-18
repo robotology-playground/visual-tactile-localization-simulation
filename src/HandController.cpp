@@ -369,7 +369,7 @@ bool HandController::stopFingers(const std::vector<std::string> finger_list)
         // get the finger controller
         FingerController &ctl = fingers[finger_name];
 
-        // try to restore the initial position of the finger
+        // try to stop finger
         ok = ctl.stop();
         if (!ok)
             return false;
