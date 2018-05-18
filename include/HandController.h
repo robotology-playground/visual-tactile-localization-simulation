@@ -55,10 +55,12 @@ private:
 public:
     /*
      * Configure the hand controller.
+     * @param robot_name is the name of the robot
      * @param hand_name is the name of the hand
      * @return true/false con success/failure
      */
     bool configure(yarp::os::ResourceFinder &rf,
+                   const std::string &robot_name,
                    const std::string &hand_name);
 
     /*

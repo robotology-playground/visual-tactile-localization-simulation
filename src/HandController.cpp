@@ -20,6 +20,7 @@
 using namespace yarp::math;
 
 bool HandController::configure(yarp::os::ResourceFinder &rf,
+                               const std::string &robot_name,
                                const std::string &hand_name)
 {
     // store name of the hand
@@ -28,7 +29,7 @@ bool HandController::configure(yarp::os::ResourceFinder &rf,
     // prepare properties for the Encoders
     yarp::os::Property prop;
     prop.put("device", "remote_controlboard");
-    prop.put("remote", "/icubSim/" + hand_name + "_arm");
+    prop.put("remote", "/" + robot_name + "/" + hand_name + "_arm");
     prop.put("local", "/hand_controller/" + hand_name + "_arm/encoders");
     bool ok = drv_arm.open(prop);
     if (!ok)
