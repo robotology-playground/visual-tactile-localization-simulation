@@ -377,4 +377,3 @@ bool HandController::stopFingers(const std::vector<std::string> finger_list)
 
     return true;
 }
-
