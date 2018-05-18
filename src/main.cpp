@@ -1014,6 +1014,10 @@ public:
         if (rf_module.find("robotName").isNull())
             robot_name = "icub";
 
+        std::string arm_with_torso = rf_module.find("armWithTorso").asString();
+        if (rf_module.find("armWithTorso").isNull())
+            arm_with_torso = "right";
+
         // default trajectory times for Cartesian Controller
         default_traj_time = rf_module.find("cartDefaultTrajTime").asDouble();
         if (rf_module.find("cartDefaultTrajTime").isNull())
@@ -1202,7 +1206,10 @@ public:
         single_action_arm_name.clear();
 
         // enable torso on the right arm only
-        right_arm.enableTorso();
+        if (arm_with_torso == "right")
+            right_arm.enableTorso();
+        else if (arm_with_torso == "left")
+            left_arm.enableTorso();
 
         /**
          * Rpc server
