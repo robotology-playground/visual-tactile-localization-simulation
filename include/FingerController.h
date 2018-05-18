@@ -129,13 +129,26 @@ public:
 
     /*
      * Update the state of the finger joints using
-     * the encoders readings.
+     * the motor encoders readings.
      *
-     * @param encoders a vector containing the encoders
+     * @param motor_encs a vector containing the motor encoders
      *        readings of the whole arm
      * @return true/false on success/failure
      */
-    bool updateFingerChain(const yarp::sig::Vector &encoders);
+    bool updateFingerChain(const yarp::sig::Vector &motor_encs);
+
+    /*
+     * Update the state of the finger joints using
+     * the motor encoders readings.
+     *
+     * @param motor_encs a vector containing the motor encoders
+     *        readings of the whole arm
+     * @param analogs_encs a vector containing the additional encoders
+     *        of the fingers
+     * @return true/false on success/failure
+     */
+    bool updateFingerChain(const yarp::sig::Vector &motor_encs,
+                           const yarp::sig::Vector &analogs_encs);
 
     /*
      * Get the Jacobian of the finger considering the finger as a planar chain.

@@ -276,6 +276,28 @@ bool FingerController::updateFingerChain(const yarp::sig::Vector &encoders)
     return true;
 }
 
+bool FingerController::updateFingerChain(const yarp::sig::Vector &motor_encs,
+                                         const yarp::sig::Vector &analogs_encs)
+{
+    bool ok;
+
+    // get subset of joints related to the finger
+    ok = finger.getChainJoints(motor_encs, analogs_encs, joints);
+    if (!ok)
+    {
+        yError() << "FingerController::updateFingerChain"
+                 << "Error: unable to retrieve the finger's joint values for finger"
+                 << hand_name << finger_name;
+        return false;
+    }
+
+    // convert to radians
+    joints = joints * (M_PI/180.0);
+
+    // update chain
+    finger.setAng(joints);
+}
+
 bool FingerController::getJacobianFingerFrame(yarp::sig::Matrix &jacobian)
 {
     // jacobian for linear velocity part
