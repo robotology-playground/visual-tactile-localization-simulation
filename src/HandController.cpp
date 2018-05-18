@@ -21,10 +21,14 @@ using namespace yarp::math;
 
 bool HandController::configure(yarp::os::ResourceFinder &rf,
                                const std::string &robot_name,
-                               const std::string &hand_name)
+                               const std::string &hand_name,
+                               const bool &use_analogs)
 {
     // store name of the hand
     this->hand_name = hand_name;
+
+    // store use_analogs
+    this->use_analogs = use_analogs;
 
     // prepare properties for the Encoders
     yarp::os::Property prop;
@@ -37,6 +41,20 @@ bool HandController::configure(yarp::os::ResourceFinder &rf,
         yError() << "HandController::configure"
                  << "Error: unable to open the Remote Control Board driver";
         return false;
+    }
+
+    if (use_analogs)
+    {
+	prop.put("device", "analogsensorclient");
+	prop.put("remote", "/" + robot_name + "/" + hand_name + "_hand/analog:o");
+	prop.put("local", "/hand_controller/" + hand_name + "_hand/analogs");
+	ok = drv_analog.open(prop);
+	if (!ok)
+	{
+	    yError() << "HandController::configure error:"
+		     << "unable to open the Analog Sensor Client driver";
+	    return false;
+	}
     }
 
     // try to retrieve the views
@@ -72,16 +90,27 @@ bool HandController::configure(yarp::os::ResourceFinder &rf,
         return false;
     }
 
+    if (use_analogs)
+    {
+        ok = drv_analog.view(ianalog_arm);
+        if (!ok || ianalog_arm == 0)
+        {
+            yError() << "HandController:configure"
+                     << "Error: unable to retrieve the IAnalogSensor view";
+            return false;
+        }
+    }
+
     // get the current encoder readings
     // required to set the home position of the fingers joints
     ok = false;
     double t0 = yarp::os::SystemClock::nowSystem();
-    yarp::sig::Vector joints;
+    yarp::sig::Vector home_encoders;
     while ((!ok) && (yarp::os::SystemClock::nowSystem() - t0 < 10.0))
     {
         // this might fail if the gazebo pluging
         // exposing encoders is not yet ready
-        if (getJoints(joints))
+        if (getMotorEncoders(home_encoders))
             ok = true;
         yarp::os::SystemClock::delaySystem(1.0);
     }
@@ -106,8 +135,8 @@ bool HandController::configure(yarp::os::ResourceFinder &rf,
         if (!finger_rf.isNull())
             finger.configure(finger_rf);
 
-        // set home position
-        finger.setHomePosition(joints);
+        // set home position of motors
+        finger.setHomePosition(home_encoders);
 
         fingers[finger_name] = finger;
 
@@ -122,31 +151,43 @@ bool HandController::close()
 {
     // close driver
     drv_arm.close();
+    drv_analog.close();
 
     return true;
 }
 
-bool HandController::getJoints(yarp::sig::Vector &joints)
+bool HandController::getMotorEncoders(yarp::sig::Vector &encs)
 {
     bool ok;
 
-    // extract joints for the whole arm
+    // extract encoders for the whole arm
     int n_encs;
     ok = ienc_arm->getAxes(&n_encs);
     if (!ok)
     {
-        yError() << "HandController::getJoints"
+        yError() << "HandController::getMotorEncoders"
                  << "Error: unable to retrieve the number of controlled axes";
         return false;
     }
-    joints.resize(n_encs);
-    ok = ienc_arm->getEncoders(joints.data());
+    encs.resize(n_encs);
+    ok = ienc_arm->getEncoders(encs.data());
     if (!ok)
     {
-        yError() << "HandController::getJoints"
+        yError() << "HandController::getMotorEncoders"
                  << "Error: unable to retrieve the encoder readings";
         return false;
     }
+
+    return true;
+}
+
+bool HandController::getAnalogsEncoders(yarp::sig::Vector &encs)
+{
+    bool ok;
+
+    ok = ianalog_arm->read(encs);
+    if(ok != yarp::dev::IAnalogSensor::AS_OK)
+        return false;
 
     return true;
 }
@@ -169,8 +210,11 @@ bool HandController::moveFingersUntilContact(const std::vector<std::string> name
     bool ok;
 
     // get current joints
-    yarp::sig::Vector joints;
-    getJoints(joints);
+    yarp::sig::Vector motor_encs;
+    yarp::sig::Vector analogs_encs;
+    getMotorEncoders(motor_encs);
+    if (use_analogs)
+        getAnalogsEncoders(analogs_encs);
 
     for (std::string finger_name : names)
     {
@@ -181,7 +225,10 @@ bool HandController::moveFingersUntilContact(const std::vector<std::string> name
             FingerController &ctl = fingers[finger_name];
 
             // try to update finger chain
-            ok = ctl.updateFingerChain(joints);
+            if (use_analogs)
+                ok = ctl.updateFingerChain(motor_encs, analogs_encs);
+            else
+                ok = ctl.updateFingerChain(motor_encs);
             if (!ok)
                 return false;
 
@@ -229,8 +276,11 @@ bool HandController::moveFingersMaintainingContact(const std::vector<std::string
     bool ok;
 
     // get current joints
-    yarp::sig::Vector joints;
-    getJoints(joints);
+    yarp::sig::Vector motor_encs;
+    yarp::sig::Vector analogs_encs;
+    getMotorEncoders(motor_encs);
+    if (use_analogs)
+        getAnalogsEncoders(analogs_encs);
 
     for (std::string finger_name : names)
     {
@@ -238,7 +288,10 @@ bool HandController::moveFingersMaintainingContact(const std::vector<std::string
         FingerController &ctl = fingers[finger_name];
 
         // try to update finger chain
-        ok = ctl.updateFingerChain(joints);
+        if (use_analogs)
+            ok = ctl.updateFingerChain(motor_encs, analogs_encs);
+        else
+            ok = ctl.updateFingerChain(motor_encs);
         if (!ok)
             return false;
 
@@ -324,3 +377,4 @@ bool HandController::stopFingers(const std::vector<std::string> finger_list)
 
     return true;
 }
+

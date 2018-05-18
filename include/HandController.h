@@ -20,6 +20,7 @@
 #include <yarp/dev/IPositionControl2.h>
 #include <yarp/dev/IVelocityControl2.h>
 #include <yarp/dev/IControlMode2.h>
+#include <yarp/dev/IAnalogSensor.h>
 
 // icub-main
 #include <iCub/iKin/iKinFwd.h>
@@ -39,9 +40,11 @@ private:
 
     // driver
     yarp::dev::PolyDriver drv_arm;
+    yarp::dev::PolyDriver drv_analog;
 
     // views
     yarp::dev::IEncoders *ienc_arm;
+    yarp::dev::IAnalogSensor *ianalog_arm;
     yarp::dev::IControlMode2 *imod_arm;
 
     yarp::dev::IPositionControl2 *ipos_arm;
@@ -52,16 +55,21 @@ private:
     std::unordered_map<std::string, FingerController> fingers;
     std::unordered_map<std::string, bool> contacts;
 
+    // whether to use or not additional finger encoders
+    bool use_analogs;
+
 public:
     /*
      * Configure the hand controller.
      * @param robot_name is the name of the robot
      * @param hand_name is the name of the hand
+     * @param use_analogs whether to use additional encoders for fingers
      * @return true/false con success/failure
      */
     bool configure(yarp::os::ResourceFinder &rf,
                    const std::string &robot_name,
-                   const std::string &hand_name);
+                   const std::string &hand_name,
+                   const bool &use_analogs = false);
 
     /*
      * Close all the finger controllers and
@@ -71,11 +79,18 @@ public:
     bool close();
 
     /*
-     * Get joints angles associated to the chain of the whole arm.
-     * @param joints a yarp::sig::Vector containing the extracted joints
+     * Get motor encoders of the whole arm
+     * @param encs a yarp::sig::Vector containing encoders
      * @return true/false con success/failure
      */
-    bool getJoints(yarp::sig::Vector &joints);
+    bool getMotorEncoders(yarp::sig::Vector &encs);
+
+    /*
+     * Get additional analogs encoders of the fingers
+     * @param encs a yarp::sig::Vector containing encoders values
+     * @return true/false con success/failure
+     */
+    bool getAnalogsEncoders(yarp::sig::Vector &encs);
 
     /*
      * Reset the internal state used within the method moveFingersUntilContact.
