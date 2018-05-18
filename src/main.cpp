@@ -100,6 +100,9 @@ protected:
     double finger_closing_speed;
     double finger_following_speed;
 
+    // whether to use or not fingers following
+    bool use_fingers_following;
+
     /**
      * Filter
      */
@@ -1087,6 +1090,11 @@ public:
         if (rf_module.find("leftHandApproachRoll").isNull())
             left_hand_approach_roll = 90.0;
 
+        // fingers following
+        use_fingers_following = rf_module.find("enableFingersFollowing").asBool();
+        if (rf_module.find("enableFingersFollowing").isNull())
+            use_fingers_following = false;
+
         // finger speeds
         finger_opening_speed = rf_module.find("fingerOpeningSpeed").asDouble();
         if (rf_module.find("fingerOpeningSpeed").isNull())
@@ -1546,7 +1554,8 @@ public:
             sendCommandToFilter(true, "tactile");
 
             // enable fingers following mode
-            enableFingersFollowing(seq_act_arm);
+            if (use_fingers_following)
+                enableFingersFollowing(seq_act_arm);
 
             // reset flag
             is_timer_started = false;
