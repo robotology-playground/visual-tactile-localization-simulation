@@ -1918,6 +1918,9 @@ public:
                 // restore completed
                 yInfo() << "[WAIT ARM RESTORE] done";
 
+                // stop control
+                stopArm(single_act_arm);
+
                 restoreArmControllerContext(single_act_arm);
 
                 // go back to Idle
