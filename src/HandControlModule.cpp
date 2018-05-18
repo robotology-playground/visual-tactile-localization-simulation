@@ -136,8 +136,16 @@ void HandControlModule::processCommand(const HandControlCommand &cmd,
 
         // remove pending contact points
         // from last session
-        while (port_contacts.getPendingReads() > 0)
-            port_contacts.read(false);
+        if (use_simulated_contacts)
+        {
+            while (port_contacts_sim.getPendingReads() > 0)
+                port_contacts_sim.read(false);
+        }
+        else
+        {
+            while (port_contacts.getPendingReads() > 0)
+                port_contacts.read(false);
+        }
 
         if (command == Command::Approach)
         {
@@ -185,11 +193,15 @@ void HandControlModule::performControl()
     case Command::Approach:
     case Command::Follow:
     {
-        iCub::skinDynLib::skinContactList* list_ptr;
+        // these are used in simulation (GazeboYarpSkin plugin)
+        iCub::skinDynLib::skinContactList* list_ptr_sim;
         iCub::skinDynLib::skinContactList empty_list;
 
         // read from contacts port
-        list_ptr = port_contacts.read(false);
+        if (use_simulated_contacts)
+            list_ptr_sim = port_contacts_sim.read(false);
+        else
+            list_ptr = port_contacts.read(false);
         if (list_ptr == YARP_NULLPTR)
             list_ptr = &empty_list;
 
@@ -331,6 +343,11 @@ bool HandControlModule::configure(yarp::os::ResourceFinder &rf)
     if (rf.find("robotName").isNull())
         robot_name = "icub";
 
+    // get use_simulated_contacts flag
+    use_simulated_contacts = rf.find("useSimulatedContacts");
+    if (rf.find("useSimulatedContacts").isNull())
+        use_simulated_contacts = false;
+
     yarp::os::ResourceFinder inner_rf;
     inner_rf = rf.findNestedResourceFinder(hand_name.c_str());
 
@@ -357,13 +374,29 @@ bool HandControlModule::configure(yarp::os::ResourceFinder &rf)
     if(inner_rf.find("useAnalogs").isNull())
         use_analogs = false;
 
+    bool ok;
+
     // open the contact points port
-    bool ok = port_contacts.open(port_contacts_name);
-    if (!ok)
+    if (use_simulated_contacts)
     {
-        yError() << "HandControlModule::configure"
-                 << "Error: unable to open the contacts port";
-        return false;
+        ok = port_contacts_sim.open(port_contacts_name);
+        if (!ok)
+        {
+            yError() << "HandControlModule::configure"
+                     << "Error: unable to open the simulated contacts port";
+            return false;
+        }
+    }
+    else
+    {
+        ok = port_contacts.open(port_contacts_name);
+        if (!ok)
+        {
+            yError() << "HandControlModule::configure"
+                     << "Error: unable to open the contacts port";
+            return false;
+        }
+
     }
 
     // open the rpc server port
@@ -420,7 +453,10 @@ bool HandControlModule::close()
     hand.close();
 
     // close ports
-    port_contacts.close();
+    if (use_simulated_contacts)
+        port_contacts_sim.close();
+    else
+        port_contacts.close();
     rpc_server.close();
 }
 

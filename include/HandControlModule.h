@@ -39,8 +39,12 @@ private:
     std::string hand_name;
 
     // contact points port and storage
-    yarp::os::BufferedPort<iCub::skinDynLib::skinContactList> port_contacts;
+    // this is used in simulation (GazeboYarpSkin plugin)
+    yarp::os::BufferedPort<iCub::skinDynLib::skinContactList> port_contacts_sim;
+    // this is used with the real robot
+    yarp::os::BufferedPort<yarp::sig::Vector> port_contacts;
     std::string port_contacts_name;
+    bool use_simulated_contacts;
 
     // command port
     std::string port_rpc_name;
