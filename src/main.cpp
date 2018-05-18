@@ -103,6 +103,12 @@ protected:
     // whether to use or not fingers following
     bool use_fingers_following;
 
+    // fingers to be used in approaching phase
+    std::vector<std::string> fingers_list_approach;
+
+    // fingers to be used in following mode
+    std::vector<std::string> fingers_list_following;
+
     /**
      * Filter
      */
@@ -988,6 +994,34 @@ protected:
         return true;
     }
 
+    bool loadListStrings(const yarp::os::ResourceFinder &rf,
+                         const std::string &tag_name,
+                         std::vector<std::string> &list)
+    {
+        bool strings_found = false;
+        if (!rf.find(tag_name).isNull())
+        {
+            yarp::os::Bottle* strings_list = rf.find(tag_name).asList();
+            if (strings_list != nullptr)
+            {
+                for (size_t i=0; i<strings_list->size(); i++)
+                {
+                    yarp::os::Value string_v = strings_list->get(i);
+                    if (string_v.isString())
+                        list.push_back(string_v.asString());
+                    else
+                        break;
+
+                    if (i == strings_list->size()-1)
+                        strings_found = true;
+                }
+            }
+        }
+        if (!strings_found)
+            list.clear();
+
+        return strings_found;
+    }
 public:
     bool configure(yarp::os::ResourceFinder &rf)
     {
@@ -1090,7 +1124,15 @@ public:
         if (rf_module.find("leftHandApproachRoll").isNull())
             left_hand_approach_roll = 90.0;
 
-        // fingers following
+        // fingers list for approaching phase
+        if(!loadListStrings(rf_module, "fingersForApproach", fingers_list_approach))
+            fingers_list_approach = {"index", "middle", "ring"};
+
+        // fingers list for following mode
+        if(!loadListStrings(rf_module, "fingersForFollowing", fingers_list_following))
+            fingers_list_following = {"index", "middle", "ring"};
+
+        // fingers following enabler
         use_fingers_following = rf_module.find("enableFingersFollowing").asBool();
         if (rf_module.find("enableFingersFollowing").isNull())
             use_fingers_following = false;
