@@ -20,6 +20,7 @@
 #include <yarp/dev/IVelocityControl2.h>
 #include <yarp/dev/IControlMode2.h>
 #include <yarp/math/SVD.h>
+#include <yarp/os/ResourceFinder.h>
 
 // icub-main
 #include <iCub/iKin/iKinFwd.h>
@@ -76,6 +77,12 @@ private:
     // current control mode
     int control_mode;
 
+    // parameters for null based control
+    // of proximal joints of index and middle fingers
+    double prox_comfort_value;
+    double prox_max_value;
+    double prox_proj_gain;
+
 public:
     /*
      * Initialize the controller.
@@ -92,6 +99,11 @@ public:
               yarp::dev::IControlMode2 *imod,
               yarp::dev::IPositionControl2 *ipos,
               yarp::dev::IVelocityControl2 *ivel);
+    /*
+     * Configure controller taking parameters from ResourceFinder.
+     *
+     */
+    bool configure(const yarp::os::ResourceFinder &rf);
 
     /*
      * Set a given control mode for all the joints of the finger.

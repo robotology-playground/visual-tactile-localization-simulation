@@ -127,6 +127,49 @@ bool FingerController::init(const std::string &hand_name,
     return true;
 }
 
+bool FingerController::configure(const yarp::os::ResourceFinder &rf)
+{
+    prox_comfort_value = 0.0;
+    prox_max_value = 0.0;
+    prox_proj_gain = 0.0;
+
+    if ((finger_name == "index") || (finger_name == "middle"))
+    {
+        if (rf.find("proxComfortValue").isNull())
+            prox_comfort_value = 10.0;
+        else
+        {
+            auto prox_comfort_value_v = rf.find("proxComfortValue");
+            if (prox_comfort_value_v.isDouble())
+                prox_comfort_value = prox_comfort_value_v.asDouble();
+            else
+                prox_comfort_value = 10.0;
+        }
+
+        if (rf.find("proxMaxValue").isNull())
+            prox_max_value = 25.0;
+        else
+        {
+            auto prox_max_value_v = rf.find("proxMaxValue");
+            if (prox_max_value_v.isDouble())
+                prox_max_value = prox_max_value_v.asDouble();
+            else
+                prox_max_value = 25.0;
+        }
+
+        if (rf.find("proxProjGain").isNull())
+            prox_proj_gain = 10.0;
+        else
+        {
+            auto prox_proj_gain_v = rf.find("proxProjGain");
+            if (prox_proj_gain_v.isDouble())
+                prox_proj_gain = prox_proj_gain_v.asDouble();
+            else
+                prox_proj_gain = 10.0;
+        }
+    }
+}
+
 bool FingerController::setControlMode(const int &mode)
 {
     bool ok;
