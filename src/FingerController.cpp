@@ -72,11 +72,20 @@ bool FingerController::init(const std::string &hand_name,
     }
 
     // get the current control modes for the controlled DoFs
-    // FIX ME: not working with Gazebo
-    // initial_modes.resize(ctl_joints.size());
-    // ok = imod->getControlModes(ctl_joints.size(),
-    //                            ctl_joints.getFirst(),
-    //                            initial_modes.getFirst());
+    initial_modes.resize(ctl_joints.size());
+    ok = imod->getControlModes(ctl_joints.size(),
+                               ctl_joints.getFirst(),
+                               initial_modes.getFirst());
+    if (!ok)
+    {
+        yError() << "FingerController:configure"
+                 << "Error: unable to get the initial mode"
+                 << "for the joints of the"
+                 << hand_name << finger_name
+                 << "finger";
+
+        return false;
+    }
 
     // set the velocity control mode for the controlled DoFs
     ok = setControlMode(VOCAB_CM_VELOCITY);
@@ -314,17 +323,16 @@ bool FingerController::close()
     }
 
     // restore initial control mode
-    // FIX ME: not working with Gazebo
-    // ok = imod->setControlModes(ctl_joints.size(),
-    //                            ctl_joints.getFirst(),
-    //                            initial_modes.getFirst());
-    // if (!ok)
-    // {
-    //  yError() << "FingerController:close"
-    //           << "Error: unable to restore the initial control modes for finger"
-    //           << hand_name << finger_name;
-    //  return false;
-    // }
+    ok = imod->setControlModes(ctl_joints.size(),
+                               ctl_joints.getFirst(),
+                               initial_modes.getFirst());
+    if (!ok)
+    {
+     yError() << "FingerController:close"
+              << "Error: unable to restore the initial control modes for finger"
+              << hand_name << finger_name;
+     return false;
+    }
 
     return true;
 }
