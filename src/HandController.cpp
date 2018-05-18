@@ -77,16 +77,19 @@ bool HandController::configure(yarp::os::ResourceFinder &rf,
     ok = false;
     double t0 = yarp::os::SystemClock::nowSystem();
     yarp::sig::Vector joints;
-    while (yarp::os::SystemClock::nowSystem() - t0 < 10.0)
+    while ((!ok) && (yarp::os::SystemClock::nowSystem() - t0 < 10.0))
     {
         // this might fail if the gazebo pluging
         // exposing encoders is not yet ready
         if (getJoints(joints))
-        {
             ok = true;
-            break;
-        }
         yarp::os::SystemClock::delaySystem(1.0);
+    }
+    if (!ok)
+    {
+        yError() << "HandController:configure"
+                 << "Error: unable to retrieve the initial configuration of the joints";
+        return false;
     }
 
     // handle fingers
