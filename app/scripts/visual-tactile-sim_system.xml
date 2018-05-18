@@ -93,7 +93,7 @@
   <module>
     <name>hand_ctrl_module</name>
     <node>localhost</node>
-    <parameters>--context simVisualTactileLocalization --handName right</parameters>
+    <parameters>--context simVisualTactileLocalization --robotName icubSim --handName right</parameters>
     <dependencies>
       <port timeout="5.0">/clock</port>
     </dependencies>
@@ -103,7 +103,7 @@
   <module>
     <name>hand_ctrl_module</name>
     <node>localhost</node>
-    <parameters>--context simVisualTactileLocalization --handName left</parameters>
+    <parameters>--context simVisualTactileLocalization --robotName icubSim --handName left</parameters>
     <dependencies>
       <port timeout="5.0">/clock</port>
     </dependencies>
