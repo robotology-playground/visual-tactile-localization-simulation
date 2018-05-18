@@ -91,6 +91,9 @@ private:
     double middle_dist_lim;
     double ring_little_lim;
 
+    // copy of motor encoders values
+    yarp::sig::Vector motors_encoders;
+
 public:
     /*
      * Initialize the controller.
@@ -197,6 +200,15 @@ public:
      * @return true/false on success/failure
      */
     bool isPositionMoveDone(bool &done);
+
+    /*
+     * Set to zero commanded velocity of joints that are above desired limit
+     *
+     * @param vels_in a yarp::sig::Vector vector containing the desired joints velocities
+     * @param vels_out a yarp::sig::Vector vector containing the enforced joints velocities
+     */
+    void enforceJointsLimits(const yarp::sig::Vector &vels_in,
+                             yarp::sig::Vector &vels_out);
 
     /*
      * Set the velocities of the controlled joints of the finger.

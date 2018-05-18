@@ -340,6 +340,9 @@ bool FingerController::updateFingerChain(const yarp::sig::Vector &encoders)
 {
     bool ok;
 
+    // store motor encoders that are required to enforce joints limits
+    motors_encoders = encoders;
+
     // get subset of joints related to the finger
     ok = finger.getChainJoints(encoders, joints);
     if (!ok)
@@ -570,6 +573,39 @@ bool FingerController::isPositionMoveDone(bool &done)
                                  &done);
 }
 
+void FingerController::enforceJointsLimits(const yarp::sig::Vector &vels_in,
+                                           yarp::sig::Vector &vels_out)
+{
+    // copy joints velocities
+    vels_out = vels_in;
+
+    // enforce joints limits
+    if (finger_name == "thumb")
+    {
+        if (motors_encoders[8] > thumb_oppose_lim)
+            vels_out[0] = 0.0;
+    }
+    else if (finger_name == "index")
+    {
+        if (motors_encoders[11] > index_prox_lim)
+            vels_out[0] = 0.0;
+        if (motors_encoders[12] > index_dist_lim)
+            vels_out[1] = 0.0;
+    }
+    else if (finger_name == "middle")
+    {
+        if (motors_encoders[13] > middle_prox_lim)
+            vels_out[0] = 0.0;
+        if (motors_encoders[14] > middle_dist_lim)
+            vels_out[1] = 0.0;
+    }
+    else if (finger_name == "ring")
+    {
+        if (motors_encoders[15] > ring_little_lim)
+            vels_out[0] = 0.0;
+    }
+}
+
 bool FingerController::setJointsVelocities(const yarp::sig::Vector &vels)
 {
     bool ok;
@@ -588,8 +624,12 @@ bool FingerController::setJointsVelocities(const yarp::sig::Vector &vels)
         }
     }
 
+    // enforce joints limits
+    yarp::sig::Vector enforced_vels;
+    enforceJointsLimits(vels, enforced_vels);
+
     // convert velocities to deg/s
-    yarp::sig::Vector vels_deg = vels * (180.0/M_PI);
+    yarp::sig::Vector vels_deg = enforced_vels * (180.0/M_PI);
 
     // issue velocity command
     return ivel->velocityMove(ctl_joints.size(), ctl_joints.getFirst(), vels_deg.data());
