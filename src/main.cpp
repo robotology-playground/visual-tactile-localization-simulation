@@ -89,6 +89,10 @@ protected:
     // open loop yaw rate used for rotation action
     double rot_yaw_rate;
 
+    // minimum allowed z coordinate for
+    // approaching phase
+    double min_allowed_z;
+
     // pitch and roll angle used during
     // approaching phase
     double hand_approach_pitch;
@@ -229,6 +233,72 @@ protected:
             status = Status::ResetFilter;
 
             reply = "[OK] Command issued";
+        }
+
+        mutex.unlock();
+
+        return reply;
+    }
+
+    std::string set_min_allowed_z(const double min_z)
+    {
+        mutex.lock();
+
+        std::string reply;
+
+        if (status != Status::Idle)
+            reply = "[FAILED] Wait for completion of the current phase";
+        else
+        {
+            min_allowed_z = min_z;
+
+            reply = "[OK] Minimum allowed z changed to " + std::to_string(min_allowed_z);
+        }
+
+        mutex.unlock();
+
+        return reply;
+    }
+
+    std::string get_min_allowed_z()
+    {
+        mutex.lock();
+
+        std::string reply;
+
+        reply = "[OK] Minimum allowed z is " + std::to_string(min_allowed_z);
+
+        mutex.unlock();
+
+        return reply;
+    }
+
+    std::string get_approach_position(const std::string &object_position)
+    {
+        mutex.lock();
+
+        std::string reply;
+
+        // check if the estimate is available
+        if (!is_estimate_available)
+            reply = "[FAILED] Estimate is not available";
+        else
+        {
+            // evaluate the desired hand pose
+            // according to the current estimate
+            mod_helper.setModelPose(estimate);
+            double yaw = mod_helper.evalApproachYawAttitude();
+            yarp::sig::Vector pos(3, 0.0);
+            mod_helper.evalApproachPosition(pos, object_position);
+
+            reply = "[OK] Planned position is ";
+            reply +=  "x: " + std::to_string(pos[0]) +
+                    ", y: " + std::to_string(pos[1]) +
+                    ", z: " + std::to_string(pos[2]) +
+                    ", yaw: " + std::to_string(yaw);
+
+            if (pos[2] < min_allowed_z)
+                reply += "(z is TOO LOW)";
         }
 
         mutex.unlock();
@@ -1206,6 +1276,10 @@ public:
         if (rf_module.find("rotYawRate").isNull())
             rot_yaw_rate = -20.0;
 
+        min_allowed_z = rf_module.find("minimumAllowedZ").asDouble();
+        if (rf_module.find("minimumAllowedZ").isNull())
+            min_allowed_z = -0.10;
+
         // filter transform source and target frame
         est_tf_source = rf_module.find("estimateTfSource").asString();
         if (rf_module.find("estimateTfSource").isNull())
@@ -1379,6 +1453,9 @@ public:
         std::string source = est_tf_source;
         std::string target = est_tf_target;
         is_estimate_available = tf_client->getTransform(target, source, estimate);
+
+        // get the current minimum allowed z for approaching phase
+        double min_z = min_allowed_z;
 
         mutex.unlock();
 
