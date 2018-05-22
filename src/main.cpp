@@ -48,7 +48,7 @@ using namespace yarp::math;
 
 enum class Status { Idle,
                     Localize,
-                    MoveHandUpward,
+                    MoveHandUpward, WaitMoveHandUpwardDone,
                     ArmApproach, WaitArmApproachDone,
                     FingersApproach, WaitFingersApproachDone,
                     PrepareRotation, PerformRotation,
@@ -179,6 +179,7 @@ protected:
     double last_time;
     double arm_approach_timeout;
     double arm_restore_timeout;
+    double arm_upward_timeout;
     double fingers_approach_timeout;
     double fingers_restore_timeout;
 
@@ -608,9 +609,6 @@ protected:
 
         // issue command
         arm->cartesian()->goToPose(pos, att);
-
-        // stop control
-        arm->cartesian()->stopControl();
 
         return true;
     }
@@ -1101,6 +1099,10 @@ public:
         if (rf_module.find("armRestoreTimeout").isNull())
             arm_restore_timeout = 7.0;
 
+        arm_upward_timeout = rf_module.find("armUpwardTimeout").asDouble();
+        if (rf_module.find("armUpwardTimeout").isNull())
+            arm_upward_timeout = 7.0;
+
         fingers_approach_timeout = rf_module.find("fingersApproachTimeout").asDouble();
         if (rf_module.find("fingersApproachTimeout").isNull())
             fingers_approach_timeout = 10.0;
@@ -1370,17 +1372,81 @@ public:
             ok = moveHandUpward(single_act_arm);
 
             if (!ok)
+            {
                 yError() << "[MOVE HAND UPWARD] error while trying to move hand upward";
+
+                // stop control
+                stopArm(single_act_arm);
+
+                mutex.lock();
+
+                // go to Idle
+                status = Status::Idle;
+
+                // reset arm name
+                single_action_arm_name.clear();
+
+                mutex.unlock();
+
+                break;
+            }
 
             mutex.lock();
 
             // go back to Idle
-            status = Status::Idle;
-
-            // clean arm anme
-            single_act_arm = "";
+            status = Status::WaitMoveHandUpwardDone;
 
             mutex.unlock();
+
+            break;
+        }
+
+        case Status::WaitMoveHandUpwardDone:
+        {
+            // check status
+            bool is_done = false;
+            bool ok = checkArmMotionDone(single_act_arm, is_done);
+
+            // handle failure and timeout
+            if (!ok ||
+                ((yarp::os::Time::now() - last_time > arm_upward_timeout)))
+            {
+                yError() << "[WAIT MOVE HAND UPWARD DONE] check motion done failed or timeout reached";
+
+                // stop control
+                stopArm(single_act_arm);
+
+                mutex.lock();
+
+                // go back to Idle
+                status = Status::Idle;
+
+                // reset arm name
+                single_action_arm_name.clear();
+
+                mutex.unlock();
+
+                break;
+            }
+
+            if (is_done)
+            {
+                // approach completed
+                yInfo() << "[WAIT MOVE HAND UPWARD DONE] done";
+
+                // stop control
+                stopArm(single_act_arm);
+
+                mutex.lock();
+
+                // go to Idle
+                status = Status::Idle;
+
+                // clear name
+                single_action_arm_name.clear();
+
+                mutex.unlock();
+            }
 
             break;
         }
