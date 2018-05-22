@@ -1,6 +1,7 @@
 service VIS_TAC_IDL
 {
     string localize();
+    string reset_filter();
     string move_hand_upward(1:string armToMove);
     string home(1:string armToPutHome);
     string approach(1:string armToUse, 2:string whereToApproach);

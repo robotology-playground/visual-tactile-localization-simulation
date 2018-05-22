@@ -47,7 +47,7 @@
 using namespace yarp::math;
 
 enum class Status { Idle,
-                    Localize,
+                    Localize, ResetFilter,
                     MoveHandUpward, WaitMoveHandUpwardDone,
                     ArmApproach, WaitArmApproachDone,
                     FingersApproach, WaitFingersApproachDone,
@@ -205,6 +205,28 @@ protected:
             // change status
             previous_status = status;
             status = Status::Localize;
+
+            reply = "[OK] Command issued";
+        }
+
+        mutex.unlock();
+
+        return reply;
+    }
+
+    std::string reset_filter()
+    {
+        mutex.lock();
+
+        std::string reply;
+
+        if (status != Status::Idle)
+            reply = "[FAILED] Wait for completion of the current phase";
+        else
+        {
+            // change status
+            previous_status = status;
+            status = Status::ResetFilter;
 
             reply = "[OK] Command issued";
         }
@@ -449,9 +471,9 @@ protected:
      *        i.e. 'visual' or 'tactile'
      * @return true/false on success/failure
      */
-    bool sendCommandToFilter(const bool& enable, const std::string &type = "")
+    bool sendCommandToFilter(const std::string& cmd, const std::string &type = "")
     {
-        if (enable && type.empty())
+        if (cmd == "enable" && type.empty())
             return false;
 
         yarp::sig::FilterCommand &filter_cmd = port_filter.prepare();
@@ -460,13 +482,15 @@ protected:
         filter_cmd.clear();
 
         // enable filtering
-        if (enable)
+        if (cmd == "enable")
             filter_cmd.enableFiltering();
-        else
+        else if (cmd == "disable")
             filter_cmd.disableFiltering();
+        else if (cmd == "reset")
+            filter_cmd.resetFilter();
 
         // enable the correct type of filtering
-        if (enable)
+        if (cmd == "enable")
         {
             if (type == "visual")
                 filter_cmd.enableVisualFiltering();
@@ -1371,7 +1395,25 @@ public:
             bool ok;
 
             // issue localization
-            ok = sendCommandToFilter(true, "visual");
+            ok = sendCommandToFilter("enable", "visual");
+
+            if (!ok)
+                yError() << "[LOCALIZE] error while sending command to the filter";
+
+            // go back to Idle
+            mutex.lock();
+            status = Status::Idle;
+            mutex.unlock();
+
+            break;
+        }
+
+        case Status::ResetFilter:
+        {
+            bool ok;
+
+            // issue filter reset
+            ok = sendCommandToFilter("reset");
 
             if (!ok)
                 yError() << "[LOCALIZE] error while sending command to the filter";
@@ -1680,7 +1722,7 @@ public:
             }
 
             // enable tactile filtering
-            sendCommandToFilter(true, "tactile");
+            sendCommandToFilter("enable", "tactile");
 
             // enable fingers following mode
             if (use_fingers_following)
@@ -1755,7 +1797,7 @@ public:
                 stopFingers(seq_act_arm);
 
                 // disable filtering
-                sendCommandToFilter(false);
+                sendCommandToFilter("disable");
 
                 // restore arm controller context
                 // that was changed in preparePullObject(seq_act_arm)
@@ -1815,7 +1857,7 @@ public:
             }
 
             // enable tactile filtering
-            sendCommandToFilter(true, "tactile");
+            sendCommandToFilter("enable", "tactile");
 
             // enable fingers following mode
             enableFingersFollowing(seq_act_arm);
@@ -1888,7 +1930,7 @@ public:
                 stopFingers(seq_act_arm);
 
                 // disable filtering
-                sendCommandToFilter(false);
+                sendCommandToFilter("disable");
 
                 // restore arm controller context
                 // that was changed in prepareRotateObject(seq_act_arm)
@@ -2097,7 +2139,7 @@ public:
             stopFingers("left");
 
             // disable filtering
-            sendCommandToFilter(false);
+            sendCommandToFilter("disable");
 
             // in case pushing was initiated
             // the previous context of the cartesian controller
