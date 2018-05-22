@@ -1060,6 +1060,18 @@ public:
         if (rf_module.find("armWithTorso").isNull())
             arm_with_torso = "right";
 
+        bool limit_torso_pitch = rf_module.find("limitTorsoPitch").asBool();
+        double max_torso_pitch;
+        if(rf_module.find("limitTorsoPich").isNull())
+            limit_torso_pitch = true;
+
+        if (limit_torso_pitch)
+        {
+            max_torso_pitch = rf_module.find("maxTorsoPitch").asDouble();
+            if (rf_module.find("maxTorsoPitch").isNull())
+                max_torso_pitch = 30.0;
+        }
+
         // default trajectory times for Cartesian Controller
         default_traj_time = rf_module.find("cartDefaultTrajTime").asDouble();
         if (rf_module.find("cartDefaultTrajTime").isNull())
@@ -1270,9 +1282,17 @@ public:
 
         // enable torso on the right arm only
         if (arm_with_torso == "right")
+        {
             right_arm.enableTorso();
+            if (limit_torso_pitch)
+                right_arm.limitTorsoPitch(max_torso_pitch);
+        }
         else if (arm_with_torso == "left")
+        {
             left_arm.enableTorso();
+            if (limit_torso_pitch)
+                left_arm.limitTorsoPitch(max_torso_pitch);
+        }
 
         /**
          * Rpc server
