@@ -45,7 +45,7 @@ public:
     void enableFiltering();
     void disableFiltering();
     void enableVisualFiltering();
-    void enableTactileFiltering();
+    void enableTactileFiltering(const std::string &hand_name);
     int tag() const;
     int command() const;
 
