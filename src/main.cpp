@@ -369,6 +369,8 @@ protected:
 
         if (status != Status::Idle)
             reply = "[FAILED] Wait for completion of the current phase";
+        else if (!is_estimate_available)
+            reply = "[FAILED] Estimate is not available";
         else if ((hand_name != "right") && (hand_name != "left"))
             reply = "[FAILED] You should specify a valid arm name";
         else if ((object_position != "center") &&
@@ -377,6 +379,22 @@ protected:
             reply = "[FAILED] You should specify a valid object location";
         else
         {
+            // check if planned approach position
+            // is safe
+            mod_helper.setModelPose(estimate);
+            double yaw = mod_helper.evalApproachYawAttitude();
+            yarp::sig::Vector pos(3, 0.0);
+            mod_helper.evalApproachPosition(pos, object_position);
+            if (pos[2] < min_allowed_z)
+            {
+                reply = "[FAILED] Planned z position (" +
+                    std::to_string(pos[2]) +
+                    ") is TOO LOW";
+
+                mutex.unlock();
+                return reply;
+            }
+
             // change status
             previous_status = status;
             status = Status::ArmApproach;
