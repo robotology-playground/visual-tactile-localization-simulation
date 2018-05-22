@@ -67,16 +67,16 @@ void HandControlModule::getNumberContactsSim(std::unordered_map<std::string, int
         }
     }
 
-    if (n_thumb != 0)
-        yInfo() << "thumb:" << n_thumb;
-    if (n_index != 0)
-        yInfo() << "index:" << n_index;
-    if (n_middle != 0)
-        yInfo() << "middle:" << n_middle;
-    if (n_ring != 0)
-        yInfo() << "ring:" << n_ring;
-    if (n_little != 0)
-        yInfo() << "little:" << n_little;
+    // if (n_thumb != 0)
+    //     yInfo() << "thumb:" << n_thumb;
+    // if (n_index != 0)
+    //     yInfo() << "index:" << n_index;
+    // if (n_middle != 0)
+    //     yInfo() << "middle:" << n_middle;
+    // if (n_ring != 0)
+    //     yInfo() << "ring:" << n_ring;
+    // if (n_little != 0)
+    //     yInfo() << "little:" << n_little;
 
     number_contacts["thumb"] = n_thumb;
     number_contacts["index"] = n_index;
