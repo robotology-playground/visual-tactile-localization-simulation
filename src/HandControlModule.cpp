@@ -16,9 +16,14 @@
 
 typedef std::map<iCub::skinDynLib::SkinPart, iCub::skinDynLib::skinContactList> skinPartMap;
 
-bool HandControlModule::getNumberContacts(iCub::skinDynLib::skinContactList &skin_contact_list,
-                                          std::unordered_map<std::string, int> &number_contacts)
+void HandControlModule::getNumberContactsSim(std::unordered_map<std::string, int> &number_contacts)
 {
+    iCub::skinDynLib::skinContactList* skin_contact_list;
+    iCub::skinDynLib::skinContactList empty_list;
+    skin_contact_list = port_contacts_sim.read(false);
+    if (skin_contact_list == YARP_NULLPTR)
+        skin_contact_list = &empty_list;
+
     // clear number of contacts for each finger
     int n_thumb = 0;
     int n_index = 0;
@@ -26,10 +31,10 @@ bool HandControlModule::getNumberContacts(iCub::skinDynLib::skinContactList &ski
     int n_ring = 0;
     int n_little = 0;
 
-    if (skin_contact_list.size() != 0)
+    if (skin_contact_list->size() != 0)
     {
         // split contacts per SkinPart
-        skinPartMap map = skin_contact_list.splitPerSkinPart();
+        skinPartMap map = skin_contact_list->splitPerSkinPart();
 
         // take the right skinPart
         iCub::skinDynLib::SkinPart skinPart;
@@ -62,13 +67,65 @@ bool HandControlModule::getNumberContacts(iCub::skinDynLib::skinContactList &ski
         }
     }
 
+    if (n_thumb != 0)
+        yInfo() << "thumb:" << n_thumb;
+    if (n_index != 0)
+        yInfo() << "index:" << n_index;
+    if (n_middle != 0)
+        yInfo() << "middle:" << n_middle;
+    if (n_ring != 0)
+        yInfo() << "ring:" << n_ring;
+    if (n_little != 0)
+        yInfo() << "little:" << n_little;
+
     number_contacts["thumb"] = n_thumb;
     number_contacts["index"] = n_index;
     number_contacts["middle"] = n_middle;
     number_contacts["ring"] = n_ring;
     number_contacts["little"] = n_little;
+}
 
-    return true;
+void HandControlModule::getNumberContacts(std::unordered_map<std::string, int> &number_contacts)
+{
+    number_contacts.clear();
+
+    // reset finger_contacts
+    number_contacts["thumb"] = 0;
+    number_contacts["index"] = 0;
+    number_contacts["middle"] = 0;
+    number_contacts["ring"] = 0;
+    number_contacts["little"] = 0;
+
+    // try to read skin data from the port
+    yarp::sig::Vector *skin_data = port_contacts.read(false);
+    if (skin_data == NULL)
+	return;
+
+    // size should be 192 for hand data
+    if (skin_data->size() != 192)
+	return;
+
+    // finger tips taxels are in the range 0-59
+    double thr = 0;
+    std::string finger_name;
+    for (size_t i=0; i<60; i++)
+    {
+	if ((*skin_data)[i] > thr)
+	{
+	    if (i >=0 && i < 12)
+		finger_name = "index";
+	    else if (i >= 12 && i < 24)
+		finger_name = "middle";
+	    else if (i >= 24 && i < 36)
+		finger_name = "ring";
+	    else if (i >= 36 && i < 48)
+		finger_name = "little";
+	    else if (i >= 48)
+		finger_name = "thumb";
+
+	    number_contacts[finger_name]++;
+	}
+    }
 }
 
 void HandControlModule::processCommand(const HandControlCommand &cmd,
@@ -193,21 +250,12 @@ void HandControlModule::performControl()
     case Command::Approach:
     case Command::Follow:
     {
-        // these are used in simulation (GazeboYarpSkin plugin)
-        iCub::skinDynLib::skinContactList* list_ptr_sim;
-        iCub::skinDynLib::skinContactList empty_list;
-
-        // read from contacts port
-        if (use_simulated_contacts)
-            list_ptr_sim = port_contacts_sim.read(false);
-        else
-            list_ptr = port_contacts.read(false);
-        if (list_ptr == YARP_NULLPTR)
-            list_ptr = &empty_list;
-
         // extract contact informations
         std::unordered_map<std::string, int> number_contacts;
-        getNumberContacts(*list_ptr, number_contacts);
+        if (use_simulated_contacts)
+            getNumberContactsSim(number_contacts);
+        else
+            getNumberContacts(number_contacts);
 
         // command fingers
         bool done = false;
@@ -344,7 +392,7 @@ bool HandControlModule::configure(yarp::os::ResourceFinder &rf)
         robot_name = "icub";
 
     // get use_simulated_contacts flag
-    use_simulated_contacts = rf.find("useSimulatedContacts");
+    use_simulated_contacts = rf.find("useSimulatedContacts").asBool();
     if (rf.find("useSimulatedContacts").isNull())
         use_simulated_contacts = false;
 

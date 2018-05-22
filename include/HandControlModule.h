@@ -80,11 +80,14 @@ private:
    /*
     * Return the number of contacts detected for each finger tip
     * as a std::unorderd_map.
+    *
+    * This is to be used in simulation.
+    *
     * The key is the name of the finger, i.e. 'thumb', 'index',
     * 'middle', 'ring' or 'little'.
     */
-    bool getNumberContacts(iCub::skinDynLib::skinContactList &skin_contact_list,
-                           std::unordered_map<std::string, int> &number_contacts);
+    void getNumberContactsSim(std::unordered_map<std::string, int> &number_contacts);
+    void getNumberContacts(std::unordered_map<std::string, int> &number_contacts);
    /*
     * Process a command
     */
