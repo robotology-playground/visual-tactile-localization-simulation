@@ -41,6 +41,7 @@ private:
     void setCommand(int);
 
 public:
+    void resetFilter();
     void enableFiltering();
     void disableFiltering();
     void enableVisualFiltering();

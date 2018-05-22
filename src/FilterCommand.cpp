@@ -14,6 +14,11 @@
 
 #include <FilterCommand.h>
 
+void yarp::sig::FilterCommand::resetFilter()
+{
+    this->cmd_value = VOCAB3('R', 'E', 'S');
+}
+
 void yarp::sig::FilterCommand::enableFiltering()
 {
     this->cmd_value = VOCAB2('O', 'N');
