@@ -608,7 +608,7 @@ protected:
             return false;
 
         // issue command
-        arm->cartesian()->goToPose(pos, att);
+        arm->cartesian()->goToPoseSync(pos, att);
 
         return true;
     }
@@ -1393,10 +1393,13 @@ public:
 
             mutex.lock();
 
-            // go back to Idle
+            // go to WaitMoveHandUpwardDone
             status = Status::WaitMoveHandUpwardDone;
 
             mutex.unlock();
+
+            // reset timer
+            last_time = yarp::os::Time::now();
 
             break;
         }
