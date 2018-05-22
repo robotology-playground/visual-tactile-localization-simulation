@@ -2054,6 +2054,9 @@ public:
 
                 restoreArmControllerContext(single_act_arm);
 
+                // reset arm name
+                single_action_arm_name.clear();
+
                 // go back to Idle
                 mutex.lock();
                 status = Status::Idle;
