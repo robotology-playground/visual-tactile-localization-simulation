@@ -132,6 +132,13 @@ public:
     bool enableTorso();
 
     /*
+     * Limit the maximum pitch of the torso.
+     * @param max_pitch maximum allowed pitch for the torso
+     * @return true/false on success/failure
+     */
+    bool limitTorsoPitch(const double &max_pitch);
+
+    /*
      * This function restore the initial pose of the arm.
      * @return true/false on success/failure
      */

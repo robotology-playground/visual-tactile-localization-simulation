@@ -314,6 +314,37 @@ bool ArmController::enableTorso()
     return true;
 }
 
+bool ArmController::limitTorsoPitch(const double &max_pitch)
+{
+    bool ok;
+
+    // pitch joint axis number
+    int pitch_axis = 0;
+
+    // get current limits
+    double min, max;
+    ok = icart->getLimits(pitch_axis, &min, &max);
+    if (!ok)
+    {
+        yError() << "ArmController::limitTorsoPitch"
+                 << "Error: unable to get the torso pitch limits for the"
+                 << arm_name << "arm chain";
+        return false;
+    }
+
+    // set the new limit
+    ok = icart->setLimits(pitch_axis, min, max_pitch);
+    if (!ok)
+    {
+        yError() << "ArmController::enableTorso"
+                 << "Error: unable to set the maximum torso pitch for the"
+                 << arm_name << "arm chain";
+        return false;
+    }
+
+    return true;
+}
+
 bool ArmController::goHome()
 {
     bool ok;
