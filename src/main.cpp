@@ -557,9 +557,12 @@ protected:
      * @param enable whether to enable or disable the filtering
      * @param type the type of filtering,
      *        i.e. 'visual' or 'tactile'
+     * @param hand_name the name of the hand to be used with tactile filtering
      * @return true/false on success/failure
      */
-    bool sendCommandToFilter(const std::string& cmd, const std::string &type = "")
+    bool sendCommandToFilter(const std::string &cmd,
+                             const std::string &type = "",
+                             const std::string &hand_name = "")
     {
         if (cmd == "enable" && type.empty())
             return false;
@@ -583,7 +586,7 @@ protected:
             if (type == "visual")
                 filter_cmd.enableVisualFiltering();
             else if (type == "tactile")
-                filter_cmd.enableTactileFiltering();
+                filter_cmd.enableTactileFiltering(hand_name);
         }
 
         // send command to the filter
@@ -1817,7 +1820,7 @@ public:
             }
 
             // enable tactile filtering
-            sendCommandToFilter("enable", "tactile");
+            sendCommandToFilter("enable", "tactile", seq_act_arm);
 
             // enable fingers following mode
             if (use_fingers_following)
@@ -1952,7 +1955,7 @@ public:
             }
 
             // enable tactile filtering
-            sendCommandToFilter("enable", "tactile");
+            sendCommandToFilter("enable", "tactile", seq_act_arm);
 
             // enable fingers following mode
             enableFingersFollowing(seq_act_arm);
