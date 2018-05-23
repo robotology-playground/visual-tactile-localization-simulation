@@ -29,7 +29,7 @@ list(APPEND CMAKE_MODULE_PATH ${ICUBCONTRIB_MODULE_PATH})
 include(YarpIDL)
 include(YarpInstallationHelpers)
 include(ICUBcontribHelpers)
-#include(ICUBcontribOptions)
+include(ICUBcontribOptions)
 
 # specify to install in $ICUBcontrib_DIR/bin
 icubcontrib_set_default_prefix()
