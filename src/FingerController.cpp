@@ -40,7 +40,7 @@ bool FingerController::init(const std::string &hand_name,
     this->hand_name = hand_name;
 
     // initialize the finger
-    finger = iCub::iKin::iCubFinger(hand_name + "_" + finger_name);
+    finger = iCub::iKin::iCubFingerExt(hand_name + "_" + finger_name);
 
     // set the controlled joints depending on the finger name
     if (finger_name == "thumb")

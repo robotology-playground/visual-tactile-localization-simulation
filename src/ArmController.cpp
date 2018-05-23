@@ -240,7 +240,7 @@ bool ArmController::attachFingerTip(const std::string& finger_name)
     // get the transformation between the standard
     // effector and the desired finger
     yarp::sig::Vector joints;
-    iCub::iKin::iCubFinger finger(arm_name + "_" + finger_name);
+    iCub::iKin::iCubFingerExt finger(arm_name + "_" + finger_name);
     ok = finger.getChainJoints(encs,joints);
     if (!ok)
         return false;

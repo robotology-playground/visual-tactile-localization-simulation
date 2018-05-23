@@ -19,10 +19,12 @@
 #include <yarp/dev/CartesianControl.h>
 
 // icub-main
-#include <iCub/iKin/iKinFwd.h>
+/* #include <iCub/iKin/iKinFwd.h> */
 
 // std
 #include <string>
+
+#include <fwd_kin_ext.h>
 
 class ArmController
 {

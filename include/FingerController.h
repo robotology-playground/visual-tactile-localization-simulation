@@ -23,18 +23,20 @@
 #include <yarp/os/ResourceFinder.h>
 
 // icub-main
-#include <iCub/iKin/iKinFwd.h>
+/* #include <iCub/iKin/iKinFwd.h> */
 
 // std
 #include <string>
 
 #include <cmath>
 
+#include <fwd_kin_ext.h>
+
 class FingerController
 {
 private:
     //
-    iCub::iKin::iCubFinger finger;
+    iCub::iKin::iCubFingerExt finger;
 
     // name of the finger
     std::string finger_name;

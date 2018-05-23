@@ -47,6 +47,7 @@ set(sources_main_module
   ${CMAKE_SOURCE_DIR}/src/TrajectoryGenerator.cpp
   ${CMAKE_SOURCE_DIR}/src/RotationTrajectoryGenerator.cpp
   ${CMAKE_SOURCE_DIR}/src/VIS_TAC_IDL.cpp
+  ${CMAKE_SOURCE_DIR}/src/fwd_kin_ext.cpp
   )
 
 set (sources_hand_ctrl_module
@@ -55,6 +56,7 @@ set (sources_hand_ctrl_module
   ${CMAKE_SOURCE_DIR}/src/HandControlModule.cpp
   ${CMAKE_SOURCE_DIR}/src/HandControlCommand.cpp
   ${CMAKE_SOURCE_DIR}/src/HandControlResponse.cpp
+  ${CMAKE_SOURCE_DIR}/src/fwd_kin_ext.cpp
   )
 
 include(idl_thrift.cmake)
