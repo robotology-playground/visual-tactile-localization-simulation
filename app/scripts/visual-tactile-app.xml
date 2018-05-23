@@ -13,9 +13,6 @@
     <node>localhost</node>    
     <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
     <parameters>--context visualTactileLocalization</parameters>    
-    <dependencies>
-      <port timeout="5.0">/yarplogger</port>      
-    </dependencies>
   </module>
 
   <connection>
