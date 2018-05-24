@@ -149,6 +149,11 @@ public:
     void probeContacts();
 
     /*
+     * Set controller to idle
+     */
+    void goIdle();
+
+    /*
      * Clear the command
      */
     void clear();

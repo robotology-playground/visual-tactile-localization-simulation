@@ -121,6 +121,11 @@ void HandControlCommand::probeContacts()
     cmd = Command::ProbeContacts;
 }
 
+void HandControlCommand::goIdle()
+{
+    cmd = Command::Idle;
+}
+
 void HandControlCommand::clear()
 {
     commanded_hand.clear();
