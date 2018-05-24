@@ -533,7 +533,7 @@ protected:
             reply = "[FAILED] Wait for completion of the current phase";
         else if ((hand_name != "right") && (hand_name != "left"))
             reply = "[FAILED] You should specify a valid hand name";
-        else if (enableFingersContactsProbe(hand_name))
+        else if (setFingersContactsProbe(true, hand_name))
             reply = "[OK] Fingers contacts probe enabled for "
                 + hand_name + " hand";
 
@@ -874,11 +874,13 @@ protected:
     }
 
     /*
-     * Enable fingers contacts probe.
+     * Enable/disable fingers contacts probe.
+     * @param enable true if the probe should be activated
      * @param hand_name hand to be used
      * @return true/false con success/failure
      */
-    bool enableFingersContactsProbe(const std::string &hand_name)
+    bool setFingersContactsProbe(const bool &enable,
+                                 const std::string &hand_name)
     {
 
         // check if the hand name is valid
@@ -895,7 +897,10 @@ protected:
         HandControlCommand hand_cmd;
         HandControlResponse response;
         hand_cmd.setCommandedHand(hand_name);
-        hand_cmd.probeContacts();
+        if (enable)
+            hand_cmd.probeContacts();
+        else
+            hand_cmd.goIdle();
         hand_port->write(hand_cmd, response);
 
         return true;
