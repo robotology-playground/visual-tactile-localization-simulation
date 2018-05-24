@@ -109,26 +109,6 @@ bool HandController::configure(yarp::os::ResourceFinder &rf,
         return false;
     }
 
-    // get the current encoder readings
-    // required to set the home position of the fingers joints
-    ok = false;
-    double t0 = yarp::os::SystemClock::nowSystem();
-    yarp::sig::Vector home_encoders;
-    while ((!ok) && (yarp::os::SystemClock::nowSystem() - t0 < 10.0))
-    {
-        // this might fail if the gazebo pluging
-        // exposing encoders is not yet ready
-        if (getMotorEncoders(home_encoders))
-            ok = true;
-        yarp::os::SystemClock::delaySystem(1.0);
-    }
-    if (!ok)
-    {
-        yError() << "HandController:configure"
-                 << "Error: unable to retrieve the initial configuration of the joints";
-        return false;
-    }
-
     // handle fingers
     fingers_names = {"thumb", "index", "middle", "ring"};
     for (std::string finger_name : fingers_names)
