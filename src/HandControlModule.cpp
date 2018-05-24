@@ -266,7 +266,6 @@ void HandControlModule::performControl()
                 yInfo() << hand_name << finger_name
                         << ":" << n_contacts << "contacts";
         }
-        yInfo() << "";
 
         break;
     }
