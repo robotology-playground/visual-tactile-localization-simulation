@@ -19,6 +19,7 @@
 #include <yarp/dev/IPositionControl2.h>
 #include <yarp/dev/IVelocityControl2.h>
 #include <yarp/dev/IControlMode2.h>
+#include <yarp/dev/IControlLimits2.h>
 #include <yarp/math/SVD.h>
 #include <yarp/os/ResourceFinder.h>
 
@@ -76,6 +77,10 @@ private:
     // common to all fingers
     yarp::dev::IControlMode2 *imod;
 
+    // control limits interface
+    // common to all fingers
+    yarp::dev::IControlLimits2 *ilim;
+
     // current control mode
     int control_mode;
 
@@ -103,6 +108,7 @@ public:
      * @param hand_name the name of the hand
      * @param finger_name the name of the finger
      * @param imod pointer to a ControlMode2 instance
+     * @param ivel pointer to a ControlLimits2 instance
      * @param ipos pointer to a PositionControl2 instance
      * @param ivel pointer to a VelocityControl2 instance
      * @return true/false on success/failure
@@ -110,6 +116,7 @@ public:
     bool init(const std::string &hand_name,
               const std::string &finger_name,
               yarp::dev::IControlMode2 *imod,
+              yarp::dev::IControlLimits2 *ilim,
               yarp::dev::IPositionControl2 *ipos,
               yarp::dev::IVelocityControl2 *ivel);
     /*

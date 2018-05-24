@@ -16,6 +16,7 @@ using namespace yarp::math;
 bool FingerController::init(const std::string &hand_name,
                             const std::string &finger_name,
                             yarp::dev::IControlMode2 *imod,
+                            yarp::dev::IControlLimits2 *ilim,
                             yarp::dev::IPositionControl2 *ipos,
                             yarp::dev::IVelocityControl2 *ivel)
 {
@@ -26,6 +27,9 @@ bool FingerController::init(const std::string &hand_name,
 
     // store pointer to ControlMode2 instance
     this->imod = imod;
+
+    // store pointer to ControlLimits2 instance
+    this->ilim = ilim;
 
     // store pointer to PositionControl2 instance
     this->ipos = ipos;
