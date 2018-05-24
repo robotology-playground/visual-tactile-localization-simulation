@@ -116,6 +116,11 @@ void HandControlCommand::requestFingersRestoreStatus()
     cmd = Command::RestoreStatus;
 }
 
+void HandControlCommand::probeContacts()
+{
+    cmd = Command::ProbeContacts;
+}
+
 void HandControlCommand::clear()
 {
     commanded_hand.clear();

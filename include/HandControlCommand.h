@@ -25,7 +25,8 @@ enum class Command { Empty = 0, Idle = 1,
                      Stop = 2, Approach = 3,
                      Follow = 4, Restore = 5,
                      WaitRestoreDone = 6,
-                     ApproachStatus = 7, RestoreStatus = 8};
+                     ApproachStatus = 7, RestoreStatus = 8,
+                     ProbeContacts = 9};
 
 class HandControlCommand : public yarp::os::Portable
 {
@@ -141,6 +142,11 @@ public:
      * Request the status of the finger restore phase
      */
     void requestFingersRestoreStatus();
+
+    /*
+     * Run contacts probe for all the fingers
+     */
+    void probeContacts();
 
     /*
      * Clear the command
