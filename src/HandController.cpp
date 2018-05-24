@@ -115,9 +115,16 @@ bool HandController::configure(yarp::os::ResourceFinder &rf,
     {
         // instantiate and configure fingers
         FingerController finger;
-        finger.init(hand_name, finger_name,
-                    imod_arm, ilimits_arm,
-                    ipos_arm, ivel_arm);
+        ok = finger.init(hand_name, finger_name,
+                         imod_arm, ilimits_arm,
+                         ipos_arm, ivel_arm);
+        if (!ok)
+        {
+            yError() << "HandController::configure"
+                     << "Error: unable to initialize controller for"
+                     << hand_name << finger_name;
+            return false;
+        }
 
         // see whether there is additional configuration for this finger
         std::string key_name = hand_name + "_" + finger_name;
