@@ -542,6 +542,25 @@ protected:
         return reply;
     }
 
+    std::string disable_contacts_probe(const std::string &hand_name)
+    {
+        mutex.lock();
+
+        std::string reply;
+
+        if (status != Status::Idle)
+            reply = "[FAILED] Wait for completion of the current phase";
+        else if ((hand_name != "right") && (hand_name != "left"))
+            reply = "[FAILED] You should specify a valid hand name";
+        else if (setFingersContactsProbe(false, hand_name))
+            reply = "[OK] Fingers contacts probe disabled for "
+                + hand_name + " hand";
+
+        mutex.unlock();
+
+        return reply;
+    }
+
     std::string stop()
     {
         mutex.lock();
