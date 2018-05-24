@@ -247,6 +247,29 @@ void HandControlModule::performControl()
         break;
     }
 
+    case Command::ProbeContacts:
+    {
+        std::unordered_map<std::string, int> number_contacts;
+
+        if (use_simulated_contacts)
+            getNumberContactsSim(number_contacts);
+        else
+            getNumberContacts(number_contacts);
+
+        for (auto it = number_contacts.begin();
+             it != number_contacts.end(); it++)
+        {
+            const std::string &finger_name = it->first;
+            const int &n_contacts = it->second;
+            if (n_contacts > 0)
+                yInfo() << hand_name << finger_name
+                        << ":" << n_contacts << "contacts";
+        }
+        yInfo() << "";
+
+        break;
+    }
+
     case Command::Approach:
     case Command::Follow:
     {
