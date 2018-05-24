@@ -523,6 +523,26 @@ protected:
         return reply;
     }
 
+    std::string enable_contacts_probe(const std::string &hand_name)
+    {
+        mutex.lock();
+
+        std::string reply;
+
+
+        if (status != Status::Idle)
+            reply = "[FAILED] Wait for completion of the current phase";
+        else if ((hand_name != "right") && (hand_name != "left"))
+            reply = "[FAILED] You should specify a valid hand name";
+        else if (enableFingersContactsProbe(hand_name))
+            reply = "[OK] Fingers contacts probe enabled for "
+                + hand_name + " hand";
+
+        mutex.unlock();
+
+        return reply;
+    }
+
     std::string stop()
     {
         mutex.lock();
@@ -849,6 +869,34 @@ protected:
         hand_cmd.setCommandedFingers(fingers_list_following);
         hand_cmd.setFingersForwardSpeed(finger_following_speed);
         hand_cmd.commandFingersFollow();
+        hand_port->write(hand_cmd, response);
+
+        return true;
+    }
+
+    /*
+     * Enable fingers contacts probe.
+     * @param hand_name hand to be used
+     * @return true/false con success/failure
+     */
+    bool enableFingersContactsProbe(const std::string &hand_name)
+    {
+
+        // check if the hand name is valid
+        if ((hand_name.empty()) ||
+            ((hand_name != "right") && (hand_name != "left")))
+            return false;
+
+        // pick the correct hand
+        yarp::os::RpcClient* hand_port = getHandPort(hand_name);
+        if (hand_port == nullptr)
+            return false;
+
+        // enable fingers movements towards the object
+        HandControlCommand hand_cmd;
+        HandControlResponse response;
+        hand_cmd.setCommandedHand(hand_name);
+        hand_cmd.probeContacts();
         hand_port->write(hand_cmd, response);
 
         return true;
