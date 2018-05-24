@@ -157,7 +157,8 @@ void HandControlModule::processCommand(const HandControlCommand &cmd,
     if (command == Command::Approach ||
         command == Command::Follow ||
         command == Command::Restore ||
-        command == Command::Stop)
+        command == Command::Stop ||
+        command == Command::ProbeContacts)
     {
         // change the current command
         current_command = command;
