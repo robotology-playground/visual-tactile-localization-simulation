@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <application>
 
-  <name>VisualTactileLocalizationSimApplication</name>
+  <name>VisualTactileLocalizationApplication</name>
   <description>Main module for visual-tactile localization</description>
 
   <authors>
