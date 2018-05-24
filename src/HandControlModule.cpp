@@ -145,8 +145,7 @@ void HandControlModule::processCommand(const HandControlCommand &cmd,
         return;
     }
 
-    if (command == Command::Empty ||
-        command == Command::Idle)
+    if (command == Command::Empty)
     {
         // nothing to do here
         return;
@@ -158,7 +157,8 @@ void HandControlModule::processCommand(const HandControlCommand &cmd,
         command == Command::Follow ||
         command == Command::Restore ||
         command == Command::Stop ||
-        command == Command::ProbeContacts)
+        command == Command::ProbeContacts ||
+        command == Command::Idle)
     {
         // change the current command
         current_command = command;
