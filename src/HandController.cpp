@@ -135,9 +135,6 @@ bool HandController::configure(yarp::os::ResourceFinder &rf,
         if (!finger_rf.isNull())
             finger.configure(finger_rf);
 
-        // set home position of motors
-        finger.setHomePosition(home_encoders);
-
         fingers[finger_name] = finger;
 
         // reset fingers contacts
