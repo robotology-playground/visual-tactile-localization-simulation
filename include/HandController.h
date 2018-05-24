@@ -20,6 +20,7 @@
 #include <yarp/dev/IPositionControl2.h>
 #include <yarp/dev/IVelocityControl2.h>
 #include <yarp/dev/IControlMode2.h>
+#include <yarp/dev/IControlLimits2.h>
 #include <yarp/dev/IAnalogSensor.h>
 
 // icub-main
@@ -46,6 +47,7 @@ private:
     yarp::dev::IEncoders *ienc_arm;
     yarp::dev::IAnalogSensor *ianalog_arm;
     yarp::dev::IControlMode2 *imod_arm;
+    yarp::dev::IControlLimits2 *ilimits_arm;
 
     yarp::dev::IPositionControl2 *ipos_arm;
     yarp::dev::IVelocityControl2 *ivel_arm;

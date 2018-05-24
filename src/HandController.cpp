@@ -101,6 +101,14 @@ bool HandController::configure(yarp::os::ResourceFinder &rf,
         }
     }
 
+    ok = drv_arm.view(ilimits_arm);
+    if (!ok || ilimits_arm == 0)
+    {
+        yError() << "HandController::configure"
+                 << "Error: unable to retrieve the IControlLimits2 view";
+        return false;
+    }
+
     // get the current encoder readings
     // required to set the home position of the fingers joints
     ok = false;
