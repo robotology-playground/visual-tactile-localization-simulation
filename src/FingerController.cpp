@@ -135,7 +135,14 @@ bool FingerController::init(const std::string &hand_name,
     finger_root_att = finger_root_att.submatrix(0, 2, 0, 2);
 
     // set default home joints position
-    joints_home.resize(ctl_joints.size(), 0.0);
+    joints_home.resize(ctl_joints.size());
+    for (size_t i=0; i<ctl_joints.size(); i++)
+    {
+        double min;
+        double max;
+        ilim->getLimits(ctl_joints[i], &min, &max);
+        joints_home[i] = min;
+    }
 
     // set defaults for proximal null based control
     prox_comfort_value = 0.0;
