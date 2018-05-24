@@ -529,7 +529,6 @@ protected:
 
         std::string reply;
 
-
         if (status != Status::Idle)
             reply = "[FAILED] Wait for completion of the current phase";
         else if ((hand_name != "right") && (hand_name != "left"))
