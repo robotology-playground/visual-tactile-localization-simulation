@@ -363,6 +363,12 @@ void HandControlModule::performControl()
     case Command::Stop:
     {
         stopControl();
+
+        // go in Idle
+        mutex.lock();
+        current_command = Command::Idle;
+        mutex.unlock();
+
         break;
     }
     }
