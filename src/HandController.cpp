@@ -232,6 +232,8 @@ bool HandController::moveFingersUntilContact(const std::vector<std::string> name
                 // and the little could touch before the ring finger
                 finger_name == "ring" && number_contacts.at("little") > 0)
             {
+                yInfo() << finger_name << "reached contact!";
+
                 // stop the finger
                 ok = ctl.stop();
                 if (!ok)
