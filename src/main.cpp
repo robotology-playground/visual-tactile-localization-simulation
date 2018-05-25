@@ -49,6 +49,7 @@ using namespace yarp::math;
 enum class Status { Idle,
                     Localize, ResetFilter,
                     MoveHandUpward, WaitMoveHandUpwardDone,
+                    MoveArmRestPosition, WaitMoveArmRestPositionDone,
                     ArmApproach, WaitArmApproachDone,
                     FingersApproach, WaitFingersApproachDone,
                     PrepareRotation, PerformRotation,
@@ -190,6 +191,7 @@ protected:
     double arm_approach_timeout;
     double arm_restore_timeout;
     double arm_upward_timeout;
+    double arm_rest_timeout;
     double fingers_approach_timeout;
     double fingers_restore_timeout;
 
@@ -330,6 +332,33 @@ protected:
 
             // set current hand
             single_action_arm_name = hand_name;
+
+            reply = "[OK] Command issued";
+        }
+
+        mutex.unlock();
+
+        return reply;
+    }
+
+    std::string move_arm_rest_pose(const std::string &arm_name)
+    {
+        mutex.lock();
+
+        std::string reply;
+
+        if (status != Status::Idle)
+            reply = "[FAILED] Wait for completion of the current phase";
+        else if ((arm_name != "right") && (arm_name != "left"))
+            reply = "[FAILED] You should specify a valid hand name";
+        else
+        {
+            // change status
+            previous_status = status;
+            status = Status::MoveArmRestPosition;
+
+            // set current hand
+            single_action_arm_name = arm_name;
 
             reply = "[OK] Command issued";
         }
@@ -775,6 +804,38 @@ protected:
         // issue command
         arm->cartesian()->goToPoseSync(pos, att);
 
+        return true;
+    }
+
+    /*
+     * Move the arm in the default rest position.
+     */
+    bool moveArmRestPosition(const std::string &hand_name)
+    {
+        bool ok;
+
+        // check if the hand name is valid
+        if ((hand_name.empty()) ||
+            ((hand_name != "right") && (hand_name != "left")))
+            return false;
+
+        // pick the correct arm
+        ArmController* arm = getArmController(hand_name);
+        if (arm == nullptr)
+            return false;
+
+        // set trajectory time
+        ok = arm->cartesian()->setTrajTime(default_traj_time);
+        if (!ok)
+            return false;
+
+        // issue command
+        if (hand_name == "right")
+            arm->cartesian()->goToPoseSync(right_arm_rest_pos,
+                                           right_arm_rest_att);
+        else if (hand_name == "left")
+            arm->cartesian()->goToPoseSync(left_arm_rest_pos,
+                                           left_arm_rest_att);
         return true;
     }
 
@@ -1245,9 +1306,8 @@ protected:
                 return false;
             }
 
-            list.push_back(item_v.asDouble());
+            list[i] = item_v.asDouble();
         }
-
         return true;
     }
 public:
@@ -1347,6 +1407,10 @@ public:
         if (rf_module.find("armUpwardTimeout").isNull())
             arm_upward_timeout = 7.0;
 
+        arm_rest_timeout = rf_module.find("armRestTimeout").asDouble();
+        if (rf_module.find("armRestTimeout").isNull())
+            arm_rest_timeout = 7.0;
+
         fingers_approach_timeout = rf_module.find("fingersApproachTimeout").asDouble();
         if (rf_module.find("fingersApproachTimeout").isNull())
             fingers_approach_timeout = 10.0;
@@ -1437,6 +1501,8 @@ public:
         }
         left_arm_rest_pos = left_arm_rest_pose.subVector(0, 2);
         left_arm_rest_att = left_arm_rest_pose.subVector(3, 6);
+        yInfo() << left_arm_rest_pos.toString();
+        yInfo() << left_arm_rest_att.toString();
         yarp::sig::Vector right_arm_rest_pose;
         if (!loadListDouble(rf_module, "rightArmRestPose",
                             7, right_arm_rest_pose))
@@ -1446,6 +1512,8 @@ public:
         }
         right_arm_rest_pos = right_arm_rest_pose.subVector(0, 2);
         right_arm_rest_att = right_arm_rest_pose.subVector(3, 6);
+        yInfo() << right_arm_rest_pos.toString();
+        yInfo() << right_arm_rest_att.toString();
 
         /**
          * Ports
@@ -1733,6 +1801,96 @@ public:
             {
                 // approach completed
                 yInfo() << "[WAIT MOVE HAND UPWARD DONE] done";
+
+                // stop control
+                stopArm(single_act_arm);
+
+                mutex.lock();
+
+                // go to Idle
+                status = Status::Idle;
+
+                // clear name
+                single_action_arm_name.clear();
+
+                mutex.unlock();
+            }
+
+            break;
+        }
+
+        case Status::MoveArmRestPosition:
+        {
+            bool ok;
+
+            // issue command
+            ok = moveArmRestPosition(single_act_arm);
+
+            if (!ok)
+            {
+                yError() << "[MOVE ARM REST POSITION] error while trying to move arm to rest position";
+
+                // stop control
+                stopArm(single_act_arm);
+
+                mutex.lock();
+
+                // go to Idle
+                status = Status::Idle;
+
+                // reset arm name
+                single_action_arm_name.clear();
+
+                mutex.unlock();
+
+                break;
+            }
+
+            mutex.lock();
+
+            // go to WaitMoveHandUpwardDone
+            status = Status::WaitMoveArmRestPositionDone;
+
+            mutex.unlock();
+
+            // reset timer
+            last_time = yarp::os::Time::now();
+
+            break;
+        }
+
+        case Status::WaitMoveArmRestPositionDone:
+        {
+            // check status
+            bool is_done = false;
+            bool ok = checkArmMotionDone(single_act_arm, is_done);
+
+            // handle failure and timeout
+            if (!ok ||
+                ((yarp::os::Time::now() - last_time > arm_rest_timeout)))
+            {
+                yError() << "[WAIT MOVE ARM REST POSITION DONE] check motion done failed or timeout reached";
+
+                // stop control
+                stopArm(single_act_arm);
+
+                mutex.lock();
+
+                // go back to Idle
+                status = Status::Idle;
+
+                // reset arm name
+                single_action_arm_name.clear();
+
+                mutex.unlock();
+
+                break;
+            }
+
+            if (is_done)
+            {
+                // approach completed
+                yInfo() << "[WAIT MOVE ARM REST POSITION DONE] done";
 
                 // stop control
                 stopArm(single_act_arm);
