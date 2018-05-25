@@ -51,6 +51,12 @@ private:
     // list of joints to be controlled
     yarp::sig::VectorOf<int> ctl_joints;
 
+    // list of desired joints limits
+    yarp::sig::VectorOf<double> joints_des_limits;
+
+    // list of max joints limits
+    yarp::sig::VectorOf<double> joints_max_limits;
+
     // list of control modes at startup
     yarp::sig::VectorOf<int> initial_modes;
 
@@ -89,14 +95,6 @@ private:
     double prox_comfort_value;
     double prox_max_value;
     double prox_proj_gain;
-
-    // limits
-    double thumb_oppose_lim;
-    double index_prox_lim;
-    double index_dist_lim;
-    double middle_prox_lim;
-    double middle_dist_lim;
-    double ring_little_lim;
 
     // copy of motor encoders values
     yarp::sig::Vector motors_encoders;
@@ -213,11 +211,16 @@ public:
     /*
      * Set to zero commanded velocity of joints that are above desired limit
      *
-     * @param vels_in a yarp::sig::Vector vector containing the desired joints velocities
-     * @param vels_out a yarp::sig::Vector vector containing the enforced joints velocities
+     * @param vels a yarp::sig::Vector vector containing the velocities
      */
-    void enforceJointsLimits(const yarp::sig::Vector &vels_in,
-                             yarp::sig::Vector &vels_out);
+    void enforceJointsLimits(yarp::sig::Vector &vels);
+
+    /*
+     * Set to zero commanded velocity of joints that are above max allowed value
+     *
+     * @param vels a yarp::sig::Vector vector containing the velocities
+     */
+    void enforceJointsMaxLimits(yarp::sig::Vector &vels);
 
     /*
      * Set the velocities of the controlled joints of the finger.
@@ -225,9 +228,11 @@ public:
      * To be used in "streaming" mode.
      *
      * @param vels a yarp::sig::Vector vector containing the desired joints velocity
+     * @param enforce_joints_limits whether to enforce joints limits or not
      * @return true/false on success/failure
      */
-    bool setJointsVelocities(const yarp::sig::Vector &vels);
+    bool setJointsVelocities(const yarp::sig::Vector &vels,
+                             const bool &enforce_joints_limits);
 
     /*
      * Move the finger forward with a given speed.
@@ -244,9 +249,11 @@ public:
      *
      * @param speed the desired forward speed
      *        (negative speed move the finger backward)
+     * @param enforce_joints_limits whether to enforce joints limits or not
      * @return true/false on success/failure
      */
-    bool moveFingerForward(const double &speed);
+    bool moveFingerForward(const double &speed,
+                           const bool &enforce_joints_limits);
 
     /*
      * Stop the finger.

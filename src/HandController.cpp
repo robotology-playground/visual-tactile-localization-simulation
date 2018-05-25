@@ -245,7 +245,8 @@ bool HandController::moveFingersUntilContact(const std::vector<std::string> name
             else
             {
                 // continue finger movements
-                ok = ctl.moveFingerForward(speed);
+                bool enforce_joints_limits = true;
+                ok = ctl.moveFingerForward(speed, enforce_joints_limits);
                 if (!ok)
                     return false;
             }
@@ -306,7 +307,8 @@ bool HandController::moveFingersMaintainingContact(const std::vector<std::string
         else
         {
             // continue finger movements
-            ok = ctl.moveFingerForward(speed);
+            bool enforce_joints_limits = false;
+            ok = ctl.moveFingerForward(speed, enforce_joints_limits);
             if (!ok)
                 return false;
         }

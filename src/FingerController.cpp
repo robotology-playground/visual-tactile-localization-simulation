@@ -134,14 +134,34 @@ bool FingerController::init(const std::string &hand_name,
     finger_root_att = yarp::math::axis2dcm(pose.subVector(3,6));
     finger_root_att = finger_root_att.submatrix(0, 2, 0, 2);
 
+    // set default desired joints limits
+    joints_des_limits.resize(ctl_joints.size());
+    if (finger_name == "thumb")
+        joints_des_limits[0] = 15.0;
+    else if (finger_name == "index")
+    {
+        joints_des_limits[0] = 25.0;
+        joints_des_limits[1] = 90.0;
+    }
+    else if (finger_name == "middle")
+    {
+        joints_des_limits[0] = 30.0;
+        joints_des_limits[1] = 85.0;
+    }
+    else if (finger_name == "ring")
+        joints_des_limits[0] = 85.0;
+
     // set default home joints position
+    // and maximum limits
     joints_home.resize(ctl_joints.size());
+    joints_max_limits.resize(ctl_joints.size());
     for (size_t i=0; i<ctl_joints.size(); i++)
     {
         double min;
         double max;
         ilim->getLimits(ctl_joints[i], &min, &max);
         joints_home[i] = min;
+        joints_max_limits[i] = max;
     }
 
     // set defaults for proximal null based control
@@ -149,91 +169,90 @@ bool FingerController::init(const std::string &hand_name,
     prox_max_value = 0.0;
     prox_proj_gain = 0.0;
 
-    // set defaults for joints limits
-    thumb_oppose_lim = 15.0;
-    index_prox_lim = 25.0;
-    index_dist_lim = 90.0;
-    middle_prox_lim = 30.0;
-    middle_dist_lim = 85.0;
-    ring_little_lim = 85.0;
-
     return true;
 }
 
 bool FingerController::configure(const yarp::os::ResourceFinder &rf)
 {
+    double default_lim;
     if (finger_name == "thumb")
     {
+        default_lim = 15.0;
         if (rf.find("thumbOpposeLimit").isNull())
-            thumb_oppose_lim = 15.0;
+            joints_des_limits[0] = default_lim;
         else
         {
             auto thumb_oppose_lim_v = rf.find("thumbOpposeLimit");
             if (thumb_oppose_lim_v.isDouble())
-                thumb_oppose_lim = thumb_oppose_lim_v.asDouble();
+                joints_des_limits[0] = thumb_oppose_lim_v.asDouble();
             else
-                thumb_oppose_lim = 15.0;
+                joints_des_limits[0] = default_lim;
         }
     }
     else if (finger_name == "index")
     {
+        default_lim = 25.0;
         if (rf.find("indexProximalLimit").isNull())
-            index_prox_lim = 25.0;
+            joints_des_limits[0] = default_lim;
         else
         {
             auto index_prox_lim_v = rf.find("indexProximalLimit");
             if (index_prox_lim_v.isDouble())
-                index_prox_lim = index_prox_lim_v.asDouble();
+                joints_des_limits[0] = index_prox_lim_v.asDouble();
             else
-                index_prox_lim = 25.0;
+                joints_des_limits[0] = default_lim;
         }
 
+        default_lim = 90.0;
         if (rf.find("indexDistalLimit").isNull())
-            index_dist_lim = 90.0;
+            joints_des_limits[1] = default_lim;
         else
         {
             auto index_dist_lim_v = rf.find("indexDistalLimit");
             if (index_dist_lim_v.isDouble())
-                index_dist_lim = index_dist_lim_v.asDouble();
+                joints_des_limits[1] = index_dist_lim_v.asDouble();
             else
-                index_dist_lim = 90.0;
+                joints_des_limits[1] = default_lim;
         }
     }
     else if (finger_name == "middle")
     {
+        default_lim = 30.0;
         if (rf.find("middleProximalLimit").isNull())
-            middle_prox_lim = 30.0;
+            joints_des_limits[0] = default_lim;
         else
         {
             auto middle_prox_lim_v = rf.find("middleProximalLimit");
             if (middle_prox_lim_v.isDouble())
-                middle_prox_lim = middle_prox_lim_v.asDouble();
+                joints_des_limits[0] = middle_prox_lim_v.asDouble();
             else
-                middle_prox_lim = 30.0;
+                joints_des_limits[0] = default_lim;
         }
 
+        default_lim = 85.0;
         if (rf.find("middleDistalLimit").isNull())
-            middle_dist_lim = 85.0;
+            joints_des_limits[1] = default_lim;
         else
         {
             auto middle_dist_lim_v = rf.find("middleDistalLimit");
             if (middle_dist_lim_v.isDouble())
-                middle_dist_lim = middle_dist_lim_v.asDouble();
+                joints_des_limits[1] = middle_dist_lim_v.asDouble();
             else
-                middle_dist_lim = 85.0;
+                joints_des_limits[1] = default_lim;
         }
     }
     else if (finger_name == "ring")
     {
+        default_lim = 85.0;
         if (rf.find("ringLittleLimit").isNull())
-            ring_little_lim = 85.0;
+            joints_des_limits[0] = default_lim;
         else
         {
             auto ring_little_lim_v = rf.find("ringLittleLimit");
             if (ring_little_lim_v.isDouble())
-                ring_little_lim = ring_little_lim_v.asDouble();
+                joints_des_limits[0] = ring_little_lim_v.asDouble();
             else
-                ring_little_lim = 85.0;
+                joints_des_limits[0] = default_lim;
         }
     }
 
@@ -284,7 +303,7 @@ bool FingerController::setControlMode(const int &mode)
 {
     bool ok;
 
-    // get current control modes first
+    get current control modes first
     yarp::sig::VectorOf<int> modes(ctl_joints.size());
     ok = imod->getControlModes(ctl_joints.size(),
                                ctl_joints.getFirst(),
@@ -298,7 +317,7 @@ bool FingerController::setControlMode(const int &mode)
     }
 
     // set only the control modes different from the desired one
-    for (size_t i=0; i<modes.size(); i++)
+    for (size_t i=0; i<ctl_joints.size(); i++)
     {
         if (modes[i] != mode)
         {
@@ -592,42 +611,37 @@ bool FingerController::isPositionMoveDone(bool &done)
                                  &done);
 }
 
-void FingerController::enforceJointsLimits(const yarp::sig::Vector &vels_in,
-                                           yarp::sig::Vector &vels_out)
+void FingerController::enforceJointsLimits(yarp::sig::Vector &vels)
 {
-    // copy joints velocities
-    vels_out = vels_in;
-
     // enforce joints limits
-    if (finger_name == "thumb")
+    for (size_t i=0; i<ctl_joints.size(); i++)
     {
-        if (motors_encoders[8] > thumb_oppose_lim)
-            vels_out[0] = 0.0;
-    }
-    else if (finger_name == "index")
-    {
-        if (motors_encoders[11] > index_prox_lim)
-            vels_out[0] = 0.0;
-        if (motors_encoders[12] > index_dist_lim)
-            vels_out[1] = 0.0;
-    }
-    else if (finger_name == "middle")
-    {
-        if (motors_encoders[13] > middle_prox_lim)
-            vels_out[0] = 0.0;
-        if (motors_encoders[14] > middle_dist_lim)
-            vels_out[1] = 0.0;
-    }
-    else if (finger_name == "ring")
-    {
-        if (motors_encoders[15] > ring_little_lim)
-            vels_out[0] = 0.0;
+        int &joint_index = ctl_joints[i];
+        double &des_limit = joints_des_limits[i];
+        if (motors_encoders[joint_index] > des_limit)
+            vels[i] = 0.0;
     }
 }
 
-bool FingerController::setJointsVelocities(const yarp::sig::Vector &vels)
+void FingerController::enforceJointsMaxLimits(yarp::sig::Vector &vels)
+{
+    // enforce joints limits
+    for (size_t i=0; i<ctl_joints.size(); i++)
+    {
+        int &joint_index = ctl_joints[i];
+        double &max_limit = joints_max_limits[i];
+        if (motors_encoders[joint_index] > max_limit)
+            vels[i] = 0.0;
+    }
+}
+
+bool FingerController::setJointsVelocities(const yarp::sig::Vector &vels,
+                                           const bool &enforce_joints_limits)
 {
     bool ok;
+
+    // local copy of velocities
+    yarp::sig::Vector velocities = vels;
 
     // switch to velocity control
     if (control_mode != VOCAB_CM_VELOCITY)
@@ -643,18 +657,22 @@ bool FingerController::setJointsVelocities(const yarp::sig::Vector &vels)
         }
     }
 
-    // enforce joints limits
-    yarp::sig::Vector enforced_vels;
-    enforceJointsLimits(vels, enforced_vels);
+    // enforce joints desired limits limits if required
+    if (enforce_joints_limits)
+        enforceJointsLimits(velocities);
+
+    // always enforce joints max limits
+    enforceJointsMaxLimits(velocities);
 
     // convert velocities to deg/s
-    yarp::sig::Vector vels_deg = enforced_vels * (180.0/M_PI);
+    yarp::sig::Vector vels_deg = velocities * (180.0/M_PI);
 
     // issue velocity command
     return ivel->velocityMove(ctl_joints.size(), ctl_joints.getFirst(), vels_deg.data());
 }
 
-bool FingerController::moveFingerForward(const double &speed)
+bool FingerController::moveFingerForward(const double &speed,
+                                         const bool &enforce_joints_limits)
 {
     // get the jacobian in the current configuration
     yarp::sig::Matrix jac;
@@ -705,7 +723,7 @@ bool FingerController::moveFingerForward(const double &speed)
     }
 
     // issue velocity command
-    bool ok = setJointsVelocities(q_dot);
+    bool ok = setJointsVelocities(q_dot, enforce_joints_limits);
     if (!ok)
     {
         yInfo() << "FingerController::moveFingerForward Error:"
