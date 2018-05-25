@@ -2035,7 +2035,8 @@ public:
             sendCommandToFilter("enable", "tactile", seq_act_arm);
 
             // enable fingers following mode
-            enableFingersFollowing(seq_act_arm);
+            if (use_fingers_following)
+                enableFingersFollowing(seq_act_arm);
 
             // reset flags
             is_timer_started = false;
