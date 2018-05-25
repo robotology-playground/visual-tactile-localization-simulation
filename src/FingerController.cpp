@@ -303,7 +303,7 @@ bool FingerController::setControlMode(const int &mode)
 {
     bool ok;
 
-    get current control modes first
+    //get current control modes first
     yarp::sig::VectorOf<int> modes(ctl_joints.size());
     ok = imod->getControlModes(ctl_joints.size(),
                                ctl_joints.getFirst(),
