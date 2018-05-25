@@ -533,7 +533,8 @@ protected:
             reply = "[FAILED] Wait for completion of the current phase";
         else if ((hand_name != "right") && (hand_name != "left"))
             reply = "[FAILED] You should specify a valid hand name";
-        else if (setFingersContactsProbe(true, hand_name))
+        else if (setFingersContactsProbe(true, hand_name) &&
+                 sendCommandToFilter("contacts_probe_on", "", hand_name))
             reply = "[OK] Fingers contacts probe enabled for "
                 + hand_name + " hand";
 
@@ -552,7 +553,8 @@ protected:
             reply = "[FAILED] Wait for completion of the current phase";
         else if ((hand_name != "right") && (hand_name != "left"))
             reply = "[FAILED] You should specify a valid hand name";
-        else if (setFingersContactsProbe(false, hand_name))
+        else if (setFingersContactsProbe(false, hand_name) &&
+                 sendCommandToFilter("contacts_probe_off", "", hand_name))
             reply = "[OK] Fingers contacts probe disabled for "
                 + hand_name + " hand";
 
@@ -617,6 +619,10 @@ protected:
             filter_cmd.disableFiltering();
         else if (cmd == "reset")
             filter_cmd.resetFilter();
+        else if (cmd == "contacts_probe_on")
+            filter_cmd.probeContactsOn(hand_name);
+        else if (cmd == "contacts_probe_off")
+            filter_cmd.probeContactsOff();
 
         // enable the correct type of filtering
         if (cmd == "enable")
@@ -912,7 +918,7 @@ protected:
         if (hand_port == nullptr)
             return false;
 
-        // enable fingers movements towards the object
+        // enable contacts probe
         HandControlCommand hand_cmd;
         HandControlResponse response;
         hand_cmd.setCommandedHand(hand_name);
