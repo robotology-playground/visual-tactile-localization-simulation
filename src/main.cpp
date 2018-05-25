@@ -113,6 +113,12 @@ protected:
     // fingers to be used in following mode
     std::vector<std::string> fingers_list_following;
 
+    // left arm rest position
+    yarp::sig::Vector left_arm_rest_pos;
+    yarp::sig::Vector left_arm_rest_att;
+    yarp::sig::Vector right_arm_rest_pos;
+    yarp::sig::Vector right_arm_rest_att;
+
     /**
      * Filter
      */
@@ -1210,6 +1216,40 @@ protected:
 
         return strings_found;
     }
+
+    bool loadListDouble(yarp::os::ResourceFinder &rf,
+                        const std::string &key,
+                        const int &size,
+                        yarp::sig::Vector &list)
+    {
+        if (rf.find(key).isNull())
+            return false;
+
+        yarp::os::Bottle* b = rf.find(key).asList();
+        if (b == nullptr)
+            return false;
+
+        if (b->size() != size)
+            return false;
+
+        list.resize(size);
+        for (size_t i=0; i<b->size(); i++)
+        {
+            yarp::os::Value item_v = b->get(i);
+            if (item_v.isNull())
+                return false;
+
+            if (!item_v.isDouble())
+            {
+                list.clear();
+                return false;
+            }
+
+            list.push_back(item_v.asDouble());
+        }
+
+        return true;
+    }
 public:
     bool configure(yarp::os::ResourceFinder &rf)
     {
@@ -1386,6 +1426,26 @@ public:
         est_tf_target = rf_module.find("estimateTfTarget").asString();
         if (rf_module.find("estimateTfTarget").isNull())
             est_tf_target = "/box_alt/estimate/frame";
+
+        // rest poses for left and right arm
+        yarp::sig::Vector left_arm_rest_pose;
+        if (!loadListDouble(rf_module, "leftArmRestPose",
+                            7, left_arm_rest_pose))
+        {
+            yError() << "VisuoTactileLocalizer: unable to load rest pose for left arm";
+            return false;
+        }
+        left_arm_rest_pos = left_arm_rest_pose.subVector(0, 2);
+        left_arm_rest_att = left_arm_rest_pose.subVector(3, 6);
+        yarp::sig::Vector right_arm_rest_pose;
+        if (!loadListDouble(rf_module, "rightArmRestPose",
+                            7, right_arm_rest_pose))
+        {
+            yError() << "VisuoTactileLocalizer: unable to load rest pose for right arm";
+            return false;
+        }
+        right_arm_rest_pos = right_arm_rest_pose.subVector(0, 2);
+        right_arm_rest_att = right_arm_rest_pose.subVector(3, 6);
 
         /**
          * Ports
