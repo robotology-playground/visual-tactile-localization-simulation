@@ -76,20 +76,20 @@ bool FingerController::init(const std::string &hand_name,
     }
 
     // get the current control modes for the controlled DoFs
-    initial_modes.resize(ctl_joints.size());
-    ok = imod->getControlModes(ctl_joints.size(),
-                               ctl_joints.getFirst(),
-                               initial_modes.getFirst());
-    if (!ok)
-    {
-        yError() << "FingerController:configure"
-                 << "Error: unable to get the initial mode"
-                 << "for the joints of the"
-                 << hand_name << finger_name
-                 << "finger";
+    // initial_modes.resize(ctl_joints.size());
+    // ok = imod->getControlModes(ctl_joints.size(),
+    //                            ctl_joints.getFirst(),
+    //                            initial_modes.getFirst());
+    // if (!ok)
+    // {
+    //     yError() << "FingerController:configure"
+    //              << "Error: unable to get the initial mode"
+    //              << "for the joints of the"
+    //              << hand_name << finger_name
+    //              << "finger";
 
-        return false;
-    }
+    //     return false;
+    // }
 
     // set the velocity control mode for the controlled DoFs
     ok = setControlMode(VOCAB_CM_VELOCITY);
@@ -304,23 +304,23 @@ bool FingerController::setControlMode(const int &mode)
     bool ok;
 
     //get current control modes first
-    yarp::sig::VectorOf<int> modes(ctl_joints.size());
-    ok = imod->getControlModes(ctl_joints.size(),
-                               ctl_joints.getFirst(),
-                               modes.getFirst());
-    if (!ok)
-    {
-        yError() << "FingerController:setControlMode"
-                 << "Error: unable to get current joints control modes for finger"
-                 << hand_name << finger_name;
-        return false;
-    }
+    // yarp::sig::VectorOf<int> modes(ctl_joints.size());
+    // ok = imod->getControlModes(ctl_joints.size(),
+    //                            ctl_joints.getFirst(),
+    //                            modes.getFirst());
+    // if (!ok)
+    // {
+    //     yError() << "FingerController:setControlMode"
+    //              << "Error: unable to get current joints control modes for finger"
+    //              << hand_name << finger_name;
+    //     return false;
+    // }
 
     // set only the control modes different from the desired one
     for (size_t i=0; i<ctl_joints.size(); i++)
     {
-        if (modes[i] != mode)
-        {
+        // if (modes[i] != mode)
+        // {
             ok = imod->setControlMode(ctl_joints[i], mode);
             if (!ok)
             {
@@ -329,7 +329,7 @@ bool FingerController::setControlMode(const int &mode)
                          << hand_name << finger_name;
                 return false;
             }
-        }
+        // }
     }
 
     // if all joints were set store the current control mode

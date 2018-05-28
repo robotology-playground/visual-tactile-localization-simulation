@@ -458,13 +458,16 @@ protected:
             reply = "[FAILED] Wait for completion of the current phase";
         else if ((hand_name != "right") && (hand_name != "left"))
             reply = "[FAILED] You should specify a valid hand name";
-        else if (!is_approach_done)
-            reply = "[FAILED]You should approach the object before approaching with fingers";
-        else if (hand_name != seq_action_arm_name)
-            reply = "[FAILED]You should continue this sequence of actions with the " +
-                    seq_action_arm_name + " arm";
+        // else if (!is_approach_done)
+        //     reply = "[FAILED]You should approach the object before approaching with fingers";
+        // else if (hand_name != seq_action_arm_name)
+        //     reply = "[FAILED]You should continue this sequence of actions with the " +
+        //             seq_action_arm_name + " arm";
         else
         {
+            // testing
+            seq_action_arm_name = hand_name;
+
             // change status
             previous_status = status;
             status = Status::FingersApproach;
