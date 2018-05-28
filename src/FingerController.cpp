@@ -353,9 +353,11 @@ bool FingerController::close()
     }
 
     // restore initial control mode
+    yarp::sig::VectorOf<int> pos_ctl_modes;
+    pos_ctl_modes.resize(ctl_joints.size(), VOCAB_CM_POSITION);
     ok = imod->setControlModes(ctl_joints.size(),
                                ctl_joints.getFirst(),
-                               initial_modes.getFirst());
+                               pos_ctl_modes.getFirst());
     if (!ok)
     {
      yError() << "FingerController:close"
