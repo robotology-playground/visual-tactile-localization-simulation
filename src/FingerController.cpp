@@ -353,18 +353,20 @@ bool FingerController::close()
     }
 
     // restore initial control mode
-    yarp::sig::VectorOf<int> pos_ctl_modes;
-    pos_ctl_modes.resize(ctl_joints.size(), VOCAB_CM_POSITION);
-    ok = imod->setControlModes(ctl_joints.size(),
-                               ctl_joints.getFirst(),
-                               pos_ctl_modes.getFirst());
-    if (!ok)
-    {
-     yError() << "FingerController:close"
-              << "Error: unable to restore the initial control modes for finger"
-              << hand_name << finger_name;
-     return false;
-    }
+    //yarp::sig::VectorOf<int> pos_ctl_modes;
+    //pos_ctl_modes.resize(ctl_joints.size(), VOCAB_CM_POSITION);
+    //ok = imod->setControlModes(ctl_joints.size(),
+                               //ctl_joints.getFirst(),
+                               //pos_ctl_modes.getFirst());
+    //if (!ok)
+    //{
+     //yError() << "FingerController:close"
+              //<< "Error: unable to restore the initial control modes for finger"
+              //<< hand_name << finger_name;
+     //return false;
+    //}
+
+    setControlMode(VOCAB_CM_POSITION);
 
     return true;
 }
