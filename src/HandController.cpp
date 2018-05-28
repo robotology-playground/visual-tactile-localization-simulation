@@ -143,6 +143,11 @@ bool HandController::configure(yarp::os::ResourceFinder &rf,
 
 bool HandController::close()
 {
+
+    // close finger controllers
+    for (std::string finger_name : fingers_names)
+        fingers[finger_name].close();
+
     // close driver
     drv_arm.close();
     drv_analog.close();
