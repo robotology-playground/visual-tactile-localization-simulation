@@ -361,6 +361,8 @@ bool HandController::isFingersRestoreDone(const std::vector<std::string> &finger
             return false;
         is_done &= finger_done;
     }
+
+    return true;
 }
 
 bool HandController::stopFingers(const std::vector<std::string> finger_list)
