@@ -354,20 +354,19 @@ void HandControlModule::performControl()
         ok = hand.isFingersRestoreDone(commanded_fingers,
                                        is_done);
 
-        // this is commented due to issues with Gazebo
-        // if (!ok)
-        // {
-        //     // something went wrong
-        //     // stop finger movements
-        //     stopControl();
+        if (!ok)
+        {
+            // something went wrong
+            // stop finger movements
+            stopControl();
 
-        //     // go in Idle
-        //     mutex.lock();
-        //     current_command = Command::Idle;
-        //     mutex.unlock();
+            // go in Idle
+            mutex.lock();
+            current_command = Command::Idle;
+            mutex.unlock();
 
-        //     return;
-        // }
+            return;
+        }
 
         mutex.lock();
 
