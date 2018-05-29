@@ -76,20 +76,21 @@ bool FingerController::init(const std::string &hand_name,
     }
 
     // get the current control modes for the controlled DoFs
-    // initial_modes.resize(ctl_joints.size());
-    // ok = imod->getControlModes(ctl_joints.size(),
-    //                            ctl_joints.getFirst(),
-    //                            initial_modes.getFirst());
-    // if (!ok)
-    // {
-    //     yError() << "FingerController:configure"
-    //              << "Error: unable to get the initial mode"
-    //              << "for the joints of the"
-    //              << hand_name << finger_name
-    //              << "finger";
+    initial_modes.resize(ctl_joints.size());
+    for (size_t i=0; i<ctl_joints.size(); i++)
+    {
+        ok = imod->getControlMode(ctl_joints[i], &(initial_modes[i]));
+        if (!ok)
+        {
+            yError() << "FingerController:configure"
+                     << "Error: unable to get the initial mode"
+                     << "for the joints of the"
+                     << hand_name << finger_name
+                     << "finger";
 
-    //     return false;
-    // }
+            return false;
+        }
+    }
 
     // set the velocity control mode for the controlled DoFs
     ok = setControlMode(VOCAB_CM_VELOCITY);
@@ -353,20 +354,17 @@ bool FingerController::close()
     }
 
     // restore initial control mode
-    //yarp::sig::VectorOf<int> pos_ctl_modes;
-    //pos_ctl_modes.resize(ctl_joints.size(), VOCAB_CM_POSITION);
-    //ok = imod->setControlModes(ctl_joints.size(),
-                               //ctl_joints.getFirst(),
-                               //pos_ctl_modes.getFirst());
-    //if (!ok)
-    //{
-     //yError() << "FingerController:close"
-              //<< "Error: unable to restore the initial control modes for finger"
-              //<< hand_name << finger_name;
-     //return false;
-    //}
-
-    setControlMode(VOCAB_CM_POSITION);
+    for (size_t i=0; i<ctl_joints.size(); i++)
+    {
+        ok = imod->setControlMode(ctl_joints[i], initial_modes[i]);
+        if (!ok)
+        {
+            yError() << "FingerController:close"
+                     << "Error: unable to restore the initial control modes for finger"
+                     << hand_name << finger_name;
+            return false;
+        }
+    }
 
     return true;
 }
