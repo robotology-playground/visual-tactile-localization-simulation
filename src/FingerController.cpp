@@ -310,6 +310,13 @@ bool FingerController::configure(const yarp::os::ResourceFinder &rf)
     }
 }
 
+bool FingerController::alignJointsBounds()
+{
+    std::deque<yarp::dev::IControlLimits*> lims;
+    lims.push_back(ilim);
+    return finger.alignJointsBounds(lims);
+}
+
 bool FingerController::setControlMode(const int &mode)
 {
     bool ok;

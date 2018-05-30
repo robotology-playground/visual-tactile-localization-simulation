@@ -132,6 +132,9 @@ bool HandController::configure(yarp::os::ResourceFinder &rf,
         if (!finger_rf.isNull())
             finger.configure(finger_rf);
 
+        if (use_analogs)
+            finger.alignJointsBounds();
+
         fingers[finger_name] = finger;
 
         // reset fingers contacts

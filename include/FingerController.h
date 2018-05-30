@@ -124,6 +124,11 @@ public:
     bool configure(const yarp::os::ResourceFinder &rf);
 
     /*
+     * Align finger chain joints bounds using limits from IControlLimits
+     */
+    bool alignJointsBounds();
+
+    /*
      * Set a given control mode for all the joints of the finger.
      *
      * @return true/false on success/failure
