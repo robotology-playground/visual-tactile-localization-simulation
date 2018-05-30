@@ -426,6 +426,9 @@ bool FingerController::updateFingerChain(const yarp::sig::Vector &motor_encs,
 {
     bool ok;
 
+    // store motor encoders that are required to enforce joints limits
+    motors_encoders = motor_encs;
+
     // get subset of joints related to the finger
     ok = finger.getChainJoints(motor_encs, analogs_encs, joints);
     if (!ok)
