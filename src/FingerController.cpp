@@ -434,6 +434,8 @@ bool FingerController::updateFingerChain(const yarp::sig::Vector &motor_encs,
 
     // update chain
     finger.setAng(joints);
+
+    return true;
 }
 
 bool FingerController::getJacobianFingerFrame(yarp::sig::Matrix &jacobian)
