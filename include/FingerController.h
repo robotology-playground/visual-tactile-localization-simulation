@@ -96,6 +96,10 @@ private:
     double prox_max_value;
     double prox_proj_gain;
 
+    // damping factor for
+    // jacobian pseudoinversion
+    double pinv_damping;
+
     // copy of motor encoders values
     yarp::sig::Vector motors_encoders;
 

@@ -308,6 +308,17 @@ bool FingerController::configure(const yarp::os::ResourceFinder &rf)
         yInfo() << "Proximal Max:" << prox_max_value;
         yInfo() << "Proximal Projector Gain" << prox_proj_gain;
     }
+
+    if (rf.find("pinvDamping").isNull())
+        pinv_damping = 0.0;
+    else
+    {
+        auto pinv_damping_v = rf.find("pinvDamping");
+        if (pinv_damping_v.isDouble())
+            pinv_damping = pinv_damping_v.asDouble();
+        else
+            pinv_damping = 0.0;
+    }
 }
 
 bool FingerController::alignJointsBounds()
@@ -726,7 +737,7 @@ bool FingerController::moveFingerForward(const double &speed,
     yarp::sig::Matrix jac_inv;
 
     jac_inv = jac.transposed() *
-        yarp::math::pinv(jac * jac.transposed());
+        yarp::math::pinv(jac * jac.transposed() + pinv_damping * yarp::math::eye(1));
     q_dot = jac_inv * vel;
 
     // try to avoid too much displacement for the first
