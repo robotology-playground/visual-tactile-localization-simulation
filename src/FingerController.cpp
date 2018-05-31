@@ -180,6 +180,9 @@ bool FingerController::init(const std::string &hand_name,
     prox_max_value = 0.0;
     prox_proj_gain = 0.0;
 
+    // setup analog bounds
+    setupAnalogBounds();
+
     return true;
 }
 
@@ -441,7 +444,7 @@ bool FingerController::updateFingerChain(const yarp::sig::Vector &motor_encs,
     motors_encoders = motor_encs;
 
     // get subset of joints related to the finger
-    ok = finger.getChainJoints(motor_encs, analogs_encs, joints);
+    ok = finger.getChainJoints(motor_encs, analogs_encs, joints, analog_bounds);
     if (!ok)
     {
         yError() << "FingerController::updateFingerChain"
@@ -796,4 +799,42 @@ bool FingerController::stop()
         return false;
 
     return true;
+}
+
+void FingerController::setupAnalogBounds()
+{
+    // taken from real robot
+    // by avering 50 trials
+    // left hand only
+    analog_bounds.resize(15, 2);
+    analog_bounds(0, 0) = 250.0; // not acquired
+    analog_bounds(1, 0) = 250.0; // not acquire
+    analog_bounds(2, 0) = 250.0; // not acquired
+    analog_bounds(3, 0) = 243.22;
+    analog_bounds(4, 0) = 216.44;
+    analog_bounds(5, 0) = 230.44;
+    analog_bounds(6, 0) = 244.46;
+    analog_bounds(7, 0) = 214.38;
+    analog_bounds(8, 0) = 247.98;
+    analog_bounds(9, 0) = 229.56;
+    analog_bounds(10, 0) = 208.84;
+    analog_bounds(11, 0) = 231.54;
+    analog_bounds(12, 0) = 249.20;
+    analog_bounds(13, 0) = 212.52;
+    analog_bounds(14, 0) = 227.62;
+    analog_bounds(0, 1) = 0.0; // not acquired
+    analog_bounds(1, 1) = 0.0; // not acquired
+    analog_bounds(2, 1) = 0.0; // not acquired
+    analog_bounds(3, 1) = 9.42;
+    analog_bounds(4, 1) = 39.66;
+    analog_bounds(5, 1) = 0.0;
+    analog_bounds(6, 1) = 0.0;
+    analog_bounds(7, 1) = 53.54;
+    analog_bounds(8, 1) = 20.0;
+    analog_bounds(9, 1) = 23.64;
+    analog_bounds(10, 1) = 25.0;
+    analog_bounds(11, 1) = 29.68;
+    analog_bounds(12, 1) = 20.76;
+    analog_bounds(13, 1) = 62.68;
+    analog_bounds(14, 1) = 62.22;
 }

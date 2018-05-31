@@ -103,6 +103,17 @@ private:
     // copy of motor encoders values
     yarp::sig::Vector motors_encoders;
 
+    // matrix of analog bounds
+    // for encoders of proximal/distal joints
+    yarp::sig::Matrix analog_bounds;
+
+    /*
+     * Setup the analog bounds for
+     * encoders of proximal/distal joints
+     *
+     */
+    void setupAnalogBounds();
+
 public:
     /*
      * Initialize the controller.
