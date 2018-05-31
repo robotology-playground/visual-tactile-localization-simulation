@@ -133,7 +133,16 @@ bool HandController::configure(yarp::os::ResourceFinder &rf,
             finger.configure(finger_rf);
 
         if (use_analogs)
-            finger.alignJointsBounds();
+        {
+            ok = finger.alignJointsBounds();
+            if (!ok)
+            {
+                yError() << "HandController::configure"
+                         << "Error: unable to initialize controller for"
+                         << hand_name << finger_name;
+                return false;
+            }
+        }
 
         fingers[finger_name] = finger;
 
