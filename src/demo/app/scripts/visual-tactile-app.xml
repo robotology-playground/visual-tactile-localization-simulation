@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<application>
+
+  <name>VisualTactileLocalizationApplication</name>
+  <description>Main module for visual-tactile localization</description>
+
+  <authors>
+    <author>Nicola Piga</author>
+  </authors>
+
+  <module>
+    <name>vtl-demo</name>
+    <node>localhost</node>    
+    <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
+    <parameters>--context visualTactileLocalization</parameters>    
+  </module>
+
+  <connection>
+    <from>/vis_tac_localization/filter:o</from>
+    <to>/upf-localizer:i</to>
+  </connection>
+
+  <connection>
+    <from>/vis_tac_localization/hand-control/right/rpc:o</from>
+    <to>/hand-control/right/rpc:i</to>
+  </connection>
+
+  <connection>
+    <from>/vis_tac_localization/hand-control/left/rpc:o</from>
+    <to>/hand-control/left/rpc:i</to>
+  </connection>
+
+</application>
