@@ -9,3 +9,4 @@
 # author: Nicola Piga
 #
 add_subdirectory(vtk-viewer)
+add_subdirectory(si-viewer)
