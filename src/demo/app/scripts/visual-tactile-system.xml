@@ -40,6 +40,12 @@
     <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
   </module>
 
+  <module>
+    <name>vtl-filter-point-cloud</name>
+    <node>localhost</node>
+    <parameters>--uniform-sample 30</parameters>
+  </module>
+
   <connection>
     <from>/pointCloudRead/pointCloud:o</from>
     <to>/filter-point-cloud/pointcloud:i</to>
