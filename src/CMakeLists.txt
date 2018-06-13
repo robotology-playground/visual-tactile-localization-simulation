@@ -11,7 +11,7 @@
 
 add_subdirectory(demo)
 add_subdirectory(hand-control)
-# add_subdirectory(point-cloud-filter)
+add_subdirectory(filter-point-cloud)
 # add_subdirectory(superimpose-viewer)
 # add_subdirectory(viewer)
 # add_subdirectory(ground-truth)
