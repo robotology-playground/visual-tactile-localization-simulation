@@ -749,9 +749,6 @@ bool FingerController::moveFingerForward(const double &speed,
         yarp::math::pinv(jac * jac.transposed() + pinv_damping * yarp::math::eye(1));
     q_dot = jac_inv * vel;
 
-    yInfo() << yarp::math::pinv(jac * jac.transposed()).toString();
-    yInfo() << yarp::math::pinv(tmp * tmp.transposed()).toString();
-
     // try to avoid too much displacement for the first
     // joint for fingers index and middle
     if (finger_name == "index" ||
