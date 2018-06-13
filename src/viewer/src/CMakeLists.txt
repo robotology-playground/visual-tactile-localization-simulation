@@ -8,9 +8,4 @@
 #
 # author: Nicola Piga
 #
-
-add_subdirectory(demo)
-add_subdirectory(hand-control)
-add_subdirectory(filter-point-cloud)
-add_subdirectory(viewer)
-# add_subdirectory(ground-truth)
+add_subdirectory(vtk-viewer)
