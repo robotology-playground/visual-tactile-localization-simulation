@@ -114,6 +114,12 @@ protected:
     // fingers to be used in following mode
     std::vector<std::string> fingers_list_following;
 
+    // fingers to be used when stop is required
+    std::vector<std::string> fingers_list_stop;
+
+    // fingers to be used in restore mode
+    std::vector<std::string> fingers_list_restore;
+
     // left arm rest position
     yarp::sig::Vector left_arm_rest_pos;
     yarp::sig::Vector left_arm_rest_att;
@@ -1442,6 +1448,14 @@ public:
         // fingers list for following mode
         if(!loadListStrings(rf_module, "fingersForFollowing", fingers_list_following))
             fingers_list_following = {"index", "middle", "ring"};
+
+        // fingers list for fingers stop
+        if(!loadListStrings(rf_module, "fingersForStop", fingers_list_stop))
+            fingers_list_stop = {"index", "middle", "ring"};
+
+        // fingers list for fingers restore
+        if(!loadListStrings(rf_module, "fingersForRestore", fingers_list_restore))
+            fingers_list_restore = {"index", "middle", "ring"};
 
         // fingers following enabler
         use_fingers_following = rf_module.find("enableFingersFollowing").asBool();
