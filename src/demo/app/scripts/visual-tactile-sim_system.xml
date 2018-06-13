@@ -110,6 +110,18 @@
     <environment>YARP_CLOCK=/clock;YARP_FORWARD_LOG_ENABLE=1</environment>
   </module>
 
+  <module>
+    <name>vtl-si-viewer</name>
+    <node>localhost</node>
+    <parameters>--context simVisualTactileLocalization</parameters>
+  </module>
+
+  <module>
+    <name>yarpview</name>
+    <node>localhost</node>
+    <parameters>--name /si_estimate_viewer/viewer:i</parameters>
+  </module>
+
   <connection>
     <from>/box_alt/fakepointcloud:o</from>
     <to>/upf-localizer/pc:i</to>
@@ -133,6 +145,16 @@
   <connection>
     <from>/left_hand/skinManager/skin_events:o</from>
     <to>/upf-localizer/contacts:i</to>
+  </connection>
+
+  <connection>
+    <from>/icubSim/cam/left</from>
+    <to>/si_estimate_viewer/left_eye:i</to>
+  </connection>
+
+  <connection>
+    <from>/si_estimate_viewer/left_eye:o</from>
+    <to>/si_estimate_viewer/viewer:i</to>
   </connection>
   
 </application>

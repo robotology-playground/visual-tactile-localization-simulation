@@ -46,6 +46,18 @@
     <parameters>--uniform-sample 30</parameters>
   </module>
 
+  <module>
+    <name>vtl-si-viewer</name>
+    <node>localhost</node>
+    <parameters>--context visualTactileLocalization</parameters>
+  </module>
+
+  <module>
+    <name>yarpview</name>
+    <node>localhost</node>
+    <parameters>--name /si_estimate_viewer/viewer:i</parameters>
+  </module>
+
   <connection>
     <from>/pointCloudRead/pointCloud:o</from>
     <to>/filter-point-cloud/pointcloud:i</to>
@@ -66,24 +78,34 @@
     <to>/upf-localizer/filtered-pc:i</to>
   </connection>
 
-  <connection>
-    <from>/icub/skin/right_hand_comp</from>
-    <to>/upf-localizer/contacts:i</to>
-  </connection>
+  <!-- <connection> -->
+  <!--   <from>/icub/skin/right_hand_comp</from> -->
+  <!--   <to>/upf-localizer/contacts:i</to> -->
+  <!-- </connection> -->
 
   <connection>
     <from>/icub/skin/left_hand_comp</from>
     <to>/upf-localizer/contacts:i</to>
   </connection>
-  
-  <connection>
-    <from>/icub/skin/right_hand_comp</from>
-    <to>/hand-control/right/contacts:i</to>
-  </connection>
+
+  <!-- <connection> -->
+  <!--   <from>/icub/skin/right_hand_comp</from> -->
+  <!--   <to>/hand-control/right/contacts:i</to> -->
+  <!-- </connection> -->
 
   <connection>
     <from>/icub/skin/left_hand_comp</from>
     <to>/hand-control/left/contacts:i</to>
+  </connection>
+
+  <connection>
+    <from>/icub/camcalib/left/out</from>
+    <to>/si_estimate_viewer/left_eye:i</to>
+  </connection>
+
+  <connection>
+    <from>/si_estimate_viewer/left_eye:o</from>
+    <to>/si_estimate_viewer/viewer:i</to>
   </connection>
   
 </application>
