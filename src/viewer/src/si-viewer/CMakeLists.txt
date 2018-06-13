@@ -14,6 +14,7 @@ set(EXE_TARGET_NAME vtl-si-viewer)
 # Dependencies
 find_package(YARP REQUIRED)
 find_package(ICUB)
+find_package(OpenCV REQUIRED)
 find_package(SuperimposeMesh REQUIRED)
 find_package(HEAD_KIN REQUIRED)
 
@@ -38,6 +39,7 @@ target_include_directories(${EXE_TARGET_NAME} PRIVATE
 target_link_libraries(${EXE_TARGET_NAME}
   ${YARP_LIBRARIES}
   ${ICUB_LIBRARIES}
+  ${OpenCV_LIBS}
   SuperimposeMesh::SuperimposeMesh)
 
 # Install calls
