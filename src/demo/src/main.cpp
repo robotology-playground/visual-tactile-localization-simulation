@@ -1177,12 +1177,11 @@ protected:
             return false;
 
         // issue restore command
-        std::vector<std::string> finger_list = {"thumb", "index", "middle", "ring"};
         HandControlCommand hand_cmd;
         HandControlResponse response;
         hand_cmd.clear();
         hand_cmd.setCommandedHand(hand_name);
-        hand_cmd.setCommandedFingers(finger_list);
+        hand_cmd.setCommandedFingers(fingers_list_restore);
         hand_cmd.setFingersRestoreSpeed(finger_opening_speed);
         hand_cmd.commandFingersRestore();
         hand_port->write(hand_cmd, response);
@@ -1247,11 +1246,10 @@ protected:
             return false;
 
         // stop all the fingers
-        std::vector<std::string> finger_list = {"thumb", "index", "middle", "ring"};
         HandControlCommand hand_cmd;
         HandControlResponse response;
         hand_cmd.setCommandedHand(hand_name);
-        hand_cmd.setCommandedFingers(finger_list);
+        hand_cmd.setCommandedFingers(fingers_list_stop);
         hand_cmd.commandStop();
         hand_port->write(hand_cmd, response);
 
