@@ -252,13 +252,10 @@ int main(int argc, char *argv[])
     rf.setDefaultConfigFile("si_viewer_config.ini");
     rf.configure(argc,argv);
 
-    if (!rf.check("file"))
+    if (!yarp.checkNetwork())
     {
-        if (!yarp.checkNetwork())
-        {
-            yError() << "Unable to find Yarp server!";
-            return EXIT_FAILURE;
-        }
+        yError() << "Unable to find Yarp server!";
+        return EXIT_FAILURE;
     }
 
     EstimateViewer viewer;

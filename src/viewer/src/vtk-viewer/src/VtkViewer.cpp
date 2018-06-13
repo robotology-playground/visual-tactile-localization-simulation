@@ -465,13 +465,10 @@ int main(int argc, char *argv[])
     ResourceFinder rf;
     rf.configure(argc,argv);
 
-    if (!rf.check("file"))
+    if (!yarp.checkNetwork())
     {
-        if (!yarp.checkNetwork())
-        {
-            yError()<<"Unable to find Yarp server!";
-            return EXIT_FAILURE;
-        }
+        yError()<<"Unable to find Yarp server!";
+        return EXIT_FAILURE;
     }
 
     Viewer viewer;
