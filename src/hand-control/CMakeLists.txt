@@ -9,7 +9,7 @@
 # author: Nicola Piga
 #
 
-set(EXE_TARGET_NAME vtl-hand-control)
+set(EXE_TARGET_NAME vtl-hand-ctrl)
 
 # Dependencies
 find_package(YARP REQUIRED)
