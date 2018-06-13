@@ -79,8 +79,6 @@ target_include_directories(${EXE_TARGET_NAME} PRIVATE
 
 target_link_libraries(${EXE_TARGET_NAME} ${YARP_LIBRARIES} ${ICUB_LIBRARIES})
 
-# Configuration files
-
 # Install calls
 install(TARGETS ${EXE_TARGET_NAME} DESTINATION bin)
 
