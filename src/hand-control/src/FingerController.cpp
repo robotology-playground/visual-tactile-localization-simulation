@@ -77,16 +77,16 @@ bool FingerController::init(const std::string &hand_name,
 
     // get the current control modes for the controlled DoFs
     initial_modes.resize(ctl_joints.size());
-    // for (size_t i=0; i<ctl_joints.size(); i++)
-    // {
+    for (size_t i=0; i<ctl_joints.size(); i++)
+    {
         ok = false;
         double t0 = yarp::os::SystemClock::nowSystem();
         while (!ok && (yarp::os::SystemClock::nowSystem() - t0 < 10.0))
         {
-            // ok = imod->getControlMode(ctl_joints[i], &(initial_modes[i]));
-            ok = imod->getControlModes(ctl_joints.size(),
-                                       ctl_joints.getFirst(),
-                                       initial_modes.getFirst());
+            ok = imod->getControlMode(ctl_joints[i], &(initial_modes[i]));
+            // ok = imod->getControlModes(ctl_joints.size(),
+            //                            ctl_joints.getFirst(),
+            //                            initial_modes.getFirst());
 
             yarp::os::SystemClock::delaySystem(1.0);
         }
@@ -100,7 +100,7 @@ bool FingerController::init(const std::string &hand_name,
 
             return false;
         }
-    // }
+    }
 
     // set the velocity control mode for the controlled DoFs
     ok = setControlMode(VOCAB_CM_VELOCITY);
@@ -180,6 +180,9 @@ bool FingerController::init(const std::string &hand_name,
     prox_max_value = 0.0;
     prox_proj_gain = 0.0;
 
+    // set default for thumb parking
+    thumb_parking_mode = false;
+
     // setup analog bounds
     setupAnalogBounds();
 
@@ -201,6 +204,17 @@ bool FingerController::configure(const yarp::os::ResourceFinder &rf)
                 joints_des_limits[0] = thumb_oppose_lim_v.asDouble();
             else
                 joints_des_limits[0] = default_lim;
+        }
+
+        if (!rf.find("thumbParkingMode").isNull())
+        {
+            auto thumb_parking_mode_v = rf.find("thumbParkingMode");
+            if (thumb_parking_mode_v.isBool())
+            {
+                thumb_parking_mode = thumb_parking_mode_v.asBool();
+                if (thumb_parking_mode)
+                    executeThumbParking();
+            }
         }
     }
     else if (finger_name == "index")
@@ -374,6 +388,40 @@ bool FingerController::close()
 {
     bool ok;
 
+    // if the thumb is in parking mode
+    // it is required to restore its status to a safe one
+    if (thumb_parking_mode)
+    {
+        // undoThumbParking restore thumb opposition to a save value of 10.0 degrees
+        ok = undoThumbParking();
+        if (!ok)
+        {
+            yError() << "FingerController::close"
+                     << "WARNING: unable to undo thumb parking";
+            return false;
+        }
+
+        // restore position control for thumb
+        yarp::sig::VectorOf<int> joints;
+        joints.push_back(8);
+        joints.push_back(9);
+        joints.push_back(10);
+        for (size_t i=0; i<joints.size(); i++)
+        {
+            ok = imod->setControlMode(joints[i],
+                                      VOCAB_CM_POSITION);
+            if (!ok)
+            {
+                yError() << "FingerController:close"
+                         << "Error: unable to set position of joints of"
+                         << hand_name << "thumb";
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     // stop motion
     ok = ivel->stop(ctl_joints.size(), ctl_joints.getFirst());
     if (!ok)
@@ -387,9 +435,8 @@ bool FingerController::close()
     // restore initial control mode
     for (size_t i=0; i<ctl_joints.size(); i++)
     {
-        ok = imod->setControlModes(ctl_joints.size(),
-                                   ctl_joints.getFirst(),
-                                   initial_modes.getFirst());
+        ok = imod->setControlMode(ctl_joints[i],
+                                  initial_modes[i]);
         if (!ok)
         {
             yError() << "FingerController:close"
@@ -843,4 +890,193 @@ void FingerController::setupAnalogBounds()
     analog_bounds(12, 1) = 20.76;
     analog_bounds(13, 1) = 62.68;
     analog_bounds(14, 1) = 62.22;
+}
+
+bool FingerController::executeThumbParking()
+{
+    if (!thumb_parking_mode)
+        return false;
+
+    bool ok;
+
+    // store all indexes of thumb joints
+    yarp::sig::VectorOf<int> joints_indexes;
+    joints_indexes.push_back(8);
+    joints_indexes.push_back(9);
+    joints_indexes.push_back(10);
+
+    // get minimum allowed values for thumb joints
+    yarp::sig::Vector joints_values(3);
+    for (size_t i=0; i<joints_indexes.size(); i++)
+    {
+        double min;
+        double max;
+        ilim->getLimits(joints_indexes[i], &min, &max);
+        joints_values[i] = min;
+    }
+
+    // try to set position control
+    for (size_t i=0; i<joints_indexes.size(); i++)
+    {
+        ok = imod->setControlMode(joints_indexes[i], VOCAB_CM_POSITION);
+        if (!ok)
+        {
+            yInfo() << "FingerController::executeThumbParking Error:"
+                    << "unable to set Position control mode for finger"
+                    << finger_name;
+
+            return false;
+        }
+    }
+
+    // set reference joints velocities
+    // the same velocity is used for all the joints
+    yarp::sig::Vector speeds(joints_indexes.size(), 25.0);
+    ok = ipos->setRefSpeeds(joints_indexes.size(),
+                            joints_indexes.getFirst(),
+                            speeds.data());
+    if (!ok)
+    {
+        yInfo() << "FingerController::executeThumbParking Error:"
+                << "unable to set joints reference speeds for finger"
+                << finger_name;
+
+        return false;
+    }
+
+    // try to set position of thumb joints
+    // first proximal and distal joints
+    yarp::sig::VectorOf<int> joints_indexes_reduced;
+    joints_indexes_reduced.push_back(9);
+    joints_indexes_reduced.push_back(10);
+    yarp::sig::Vector joints_values_reduced;
+    joints_values_reduced.push_back(joints_values[1]);
+    joints_values_reduced.push_back(joints_values[2]);
+    ok = ipos->positionMove(joints_indexes_reduced.size(),
+                            joints_indexes_reduced.getFirst(),
+                            joints_values_reduced.data());
+    if (!ok)
+    {
+        yInfo() << "FingerController::executeThumbParking Error:"
+                << "unable to set positions of joints of finger"
+                << finger_name;
+        return false;
+    }
+
+    bool done = false;
+    double t0 = yarp::os::Time::now();
+    // while((!done) && ((yarp::os::Time::now() - t0) < 5.0))
+    while((yarp::os::Time::now() - t0) < 5.0)
+    {
+        ok = ipos->checkMotionDone(joints_indexes_reduced.size(),
+                                   joints_indexes_reduced.getFirst(),
+                                   &done);
+        if (!ok)
+        {
+            yInfo() << "FingerController::isPositionMoveDone Error:"
+                    << "unable to get status from IPositionControl::checkMotionDone for finger"
+                    << finger_name;
+            return false;
+        }
+    }
+
+    // try to set position of thumb opposition
+    joints_indexes_reduced.clear();
+    joints_values_reduced.clear();
+    joints_indexes_reduced.push_back(8);
+    joints_values_reduced.push_back(joints_values[0]);
+    ok = ipos->positionMove(joints_indexes_reduced.size(),
+                            joints_indexes_reduced.getFirst(),
+                            joints_values_reduced.data());
+    if (!ok)
+    {
+        yInfo() << "FingerController::executeThumbParking Error:"
+                << "unable to set positions of joints of finger"
+                << finger_name;
+        return false;
+    }
+
+    done = false;
+    t0 = yarp::os::Time::now();
+    // while(!done && ((yarp::os::Time::now() - t0) < 5.0))
+    while((yarp::os::Time::now() - t0) < 5.0)
+    {
+        ok = ipos->checkMotionDone(joints_indexes_reduced.size(),
+                                   joints_indexes_reduced.getFirst(),
+                                   &done);
+        if (!ok)
+        {
+            yInfo() << "FingerController::isPositionMoveDone Error:"
+                    << "unable to get status from IPositionControl::checkMotionDone for finger"
+                    << finger_name;
+            return false;
+        }
+    }
+
+    // put the joints in idle
+    for (size_t i=0; i<joints_indexes.size(); i++)
+    {
+        ok = imod->setControlMode(joints_indexes[i], VOCAB_CM_IDLE);
+        if (!ok)
+        {
+            yInfo() << "FingerController::executeThumbParking Error:"
+                    << "unable to put joints of finger"
+                    << finger_name
+                    << "in idle";
+
+            return false;
+        }
+    }
+    return true;
+}
+
+bool FingerController::undoThumbParking()
+{
+    if (!thumb_parking_mode)
+        return false;
+
+    // thumb opposition index
+    int joint_index = 8;
+
+    // try to set position control for thumb opposition
+    bool ok = imod->setControlMode(joint_index, VOCAB_CM_POSITION);
+    if (!ok)
+    {
+        yInfo() << "FingerController::undoThumbParking Error:"
+                << "unable to set Position control mode for thumb opposition";
+
+        return false;
+    }
+
+    // safe minimum value for thumb opposition
+    double min_value = 10.0;
+
+    // try to set position of thumb opposition
+    ok = ipos->positionMove(1,
+                            &joint_index,
+                            &min_value);
+    if (!ok)
+    {
+        yInfo() << "FingerController::undoThumbParking Error:"
+                << "unable to set the position of thumb opposition joint";
+        return false;
+    }
+
+    bool done = false;
+    double t0 = yarp::os::Time::now();
+    // while(!done && ((yarp::os::Time::now() - t0) < 5.0))
+    while((yarp::os::Time::now() - t0) < 5.0)
+    {
+        ok = ipos->checkMotionDone(1,
+                                   &joint_index,
+                                   &done);
+        if (!ok)
+        {
+            yInfo() << "FingerController::isPositionMoveDone Error:"
+                    << "unable to get status from IPositionControl::checkMotionDone for finger"
+                    << finger_name;
+            return false;
+        }
+    }
+    return true;
 }

@@ -107,12 +107,29 @@ private:
     // for encoders of proximal/distal joints
     yarp::sig::Matrix analog_bounds;
 
+    // whether to put thumb in parking mode
+    bool thumb_parking_mode;
+
     /*
      * Setup the analog bounds for
      * encoders of proximal/distal joints
      *
      */
     void setupAnalogBounds();
+
+    /*
+     * Execute parking of the thumb
+     *
+     * @return true/false on success/failure
+     */
+    bool executeThumbParking();
+
+    /*
+     * Undo parking of the thumb
+     *
+     * @return true/false on success/failure
+     */
+    bool undoThumbParking();
 
 public:
     /*
