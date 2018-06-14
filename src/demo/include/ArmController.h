@@ -36,7 +36,6 @@ protected:
     // drivers
     yarp::dev::PolyDriver drv_cart;
     yarp::dev::PolyDriver drv_enc_arm;
-    /* yarp::dev::PolyDriver drv_enc_torso; */
 
     // views
     yarp::dev::ICartesianControl *icart;
