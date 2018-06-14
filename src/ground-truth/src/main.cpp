@@ -29,6 +29,6 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    // Tracker tracker;
-    // return tracker.runModule(rf);
+    Tracker tracker;
+    return tracker.runModule(rf);
 }
