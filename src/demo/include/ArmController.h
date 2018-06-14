@@ -28,8 +28,6 @@
 // std
 #include <string>
 
-
-
 class ArmController
 {
 protected:
