@@ -10,6 +10,7 @@
  */
 
 // yarp
+#include <yarp/os/ResourceFinder.h>
 #include <yarp/dev/PolyDriver.h>
 #include <yarp/dev/GazeControl.h>
 
@@ -27,9 +28,17 @@ class GazeController
     // cartesian controller initial context
     int startup_cart_context;
 
+    // default trajectory time
+    int eyes_traj_time;
+    int neck_traj_time;
+
 public:
-    bool configure();
+    bool configure(const yarp::os::ResourceFinder &rf);
     bool close();
+    bool setReference(const yarp::sig::Vector &fixation_point);
+    bool getCameraPose(const std::string &eye_name,
+                       yarp::sig::Vector &pos,
+                       yarp::sig::Vector &att);
 };
 
 #endif

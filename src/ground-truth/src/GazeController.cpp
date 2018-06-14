@@ -15,10 +15,33 @@
 //
 #include <GazeController.h>
 
-bool GazeController::configure()
+bool GazeController::configure(const yarp::os::ResourceFinder &rf)
 {
     yarp::os::Property prop;
     bool ok;
+
+    // default trajectory times for neck and eyes
+    neck_traj_time = 3.0;
+    if (!rf.find("neckTrajTime").isNull())
+    {
+        yarp::os::Value time_v = rf.find("neckTrajTime");
+        if (time_v.isDouble())
+            neck_traj_time = time_v.asDouble();
+    }
+    yInfo() << "GazeController::configure"
+            << "neck trajectory time is"
+            << neck_traj_time;
+
+    eyes_traj_time = 3.0;
+    if (!rf.find("eyesTrajTime").isNull())
+    {
+        yarp::os::Value time_v = rf.find("eyesTrajTime");
+        if (time_v.isDouble())
+            eyes_traj_time = time_v.asDouble();
+    }
+    yInfo() << "GazeController::configure"
+            << "eyes trajectory time is"
+            << eyes_traj_time;
 
     /**
      * Drivers configuration
@@ -68,6 +91,10 @@ bool GazeController::configure()
         return false;
     }
 
+    // set the default trajectory time
+    igaze->setEyesTrajTime(eyes_traj_time);
+    igaze->setNeckTrajTime(neck_traj_time);
+
     return true;
 }
 
@@ -103,3 +130,20 @@ bool GazeController::close()
     return true;
 }
 
+bool GazeController::setReference(const yarp::sig::Vector &fixation_point)
+{
+    return igaze->lookAtFixationPoint(fixation_point);
+}
+
+bool GazeController::getCameraPose(const std::string &eye_name,
+                                   yarp::sig::Vector &pos,
+                                   yarp::sig::Vector &att)
+{
+    if ((eye_name != "right") && (eye_name != "left"))
+        return false;
+
+    if (eye_name == "right")
+        return igaze->getRightEyePose(pos, att);
+    else if(eye_name == "left")
+        return igaze->getLeftEyePose(pos, att);
+}
