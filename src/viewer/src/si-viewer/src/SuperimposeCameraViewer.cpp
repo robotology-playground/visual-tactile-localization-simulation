@@ -34,7 +34,7 @@ class EstimateViewer : public yarp::os::RFModule
 private:
     // head kinematics
     headKinematics head_kin;
-    
+
     // camera port
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb>> image_input_port;
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb>> image_output_port;
@@ -50,7 +50,7 @@ private:
     double period;
 
     // frame transform client
-    yarp::dev::PolyDriver drv_transform_client;    
+    yarp::dev::PolyDriver drv_transform_client;
     yarp::dev::IFrameTransform* tf_client;
     std::string tf_source;
     std::string tf_target;
@@ -62,7 +62,7 @@ public:
         std::string robot_name = "icub";
         if (!rf.find("robotName").isNull())
             robot_name = rf.find("robotName").asString();
-        
+
         eye_name = "left";
         if (!rf.find("eyeName").isNull())
             eye_name = rf.find("eyeName").asString();
@@ -83,7 +83,7 @@ public:
         if (!rf.find("period").isNull())
             period = rf.find("period").asDouble();
 
-	tf_source = "/iCub/frame";
+        tf_source = "/iCub/frame";
         if (!rf.find("tfSource").isNull())
             tf_source = rf.find("tfSource").asString();
         tf_target = "/estimate/frame";
@@ -97,7 +97,7 @@ public:
         // port prefix
         std::string port_prefix = "/si_estimate_viewer/";
         port_prefix += eye_name + "_eye";
-	
+
         // open port
         bool port_ok = image_input_port.open(port_prefix + ":i");
         if (!port_ok)
@@ -111,15 +111,15 @@ public:
             return false;
 
         // frame transform client
-	yarp::os::Property propTfClient;
-	propTfClient.put("device", "FrameTransformClient");
-	propTfClient.put("local", port_prefix + "/transformClient");
-	propTfClient.put("remote", "/transformServer");
-	tf_client = nullptr;
-	bool ok_drv = drv_transform_client.open(propTfClient);
-	ok_drv = ok_drv && drv_transform_client.view(tf_client) && tf_client != nullptr;
-	if (!ok_drv)
-	    return false;
+        yarp::os::Property propTfClient;
+        propTfClient.put("device", "FrameTransformClient");
+        propTfClient.put("local", port_prefix + "/transformClient");
+        propTfClient.put("remote", "/transformServer");
+        tf_client = nullptr;
+        bool ok_drv = drv_transform_client.open(propTfClient);
+        ok_drv = ok_drv && drv_transform_client.view(tf_client) && tf_client != nullptr;
+        if (!ok_drv)
+            return false;
 
         // configure estimate CAD
         float cam_fx;
@@ -170,26 +170,26 @@ public:
 
     bool getFrame(yarp::sig::ImageOf<yarp::sig::PixelRgb>* &yarp_image)
     {
-	// try to read image from port
-	yarp_image = image_input_port.read(false);
+        // try to read image from port
+        yarp_image = image_input_port.read(false);
 
-	if (yarp_image == NULL)
-	    return false;
+        if (yarp_image == NULL)
+            return false;
 
-	return true;
+        return true;
     }
 
     bool updateModule() override
     {
-	// get image from camera
-	yarp::sig::ImageOf<yarp::sig::PixelRgb>* img_in;
-	if (!getFrame(img_in))
-	    return true;
+        // get image from camera
+        yarp::sig::ImageOf<yarp::sig::PixelRgb>* img_in;
+        if (!getFrame(img_in))
+            return true;
 
-	// get current estimate from the filter
-	yarp::sig::Matrix estimate;
-	if (!tf_client->getTransform(tf_target, tf_source, estimate))
-	    return true;
+        // get current estimate from the filter
+        yarp::sig::Matrix estimate;
+        if (!tf_client->getTransform(tf_target, tf_source, estimate))
+            return true;
 
         // store estimate as a Superimpose::ModelPoseContainer
         Superimpose::ModelPose obj_pose(7);
@@ -231,15 +231,15 @@ public:
 
     bool close() override
     {
-	// close ports
-	image_input_port.close();
-        image_output_port.close();        
-        
-	// close head kinematics
-	head_kin.close();
+        // close ports
+        image_input_port.close();
+        image_output_port.close();
+
+        // close head kinematics
+        head_kin.close();
 
         // close transform client
-        drv_transform_client.close();        
+        drv_transform_client.close();
 
         return true;
     }
