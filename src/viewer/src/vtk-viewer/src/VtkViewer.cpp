@@ -69,7 +69,7 @@ public:
     }
 
     /****************************************************************/
-    void Execute(vtkObject *caller, unsigned long vtkNotUsed(eventId), 
+    void Execute(vtkObject *caller, unsigned long vtkNotUsed(eventId),
                  void *vtkNotUsed(callData))
     {
         LockGuard lg(mutex);
@@ -185,48 +185,48 @@ public:
     /****************************************************************/
     Cube()
     {
-	// create cube
-	vtk_cube_source = vtkSmartPointer<vtkCubeSource>::New();
+        // create cube
+        vtk_cube_source = vtkSmartPointer<vtkCubeSource>::New();
 
-	// create mapper
-	vtk_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-	vtk_mapper->SetInputConnection(vtk_cube_source->GetOutputPort());
+        // create mapper
+        vtk_mapper = vtkSmartPointer<vtkPolyDataMapper>::New();
+        vtk_mapper->SetInputConnection(vtk_cube_source->GetOutputPort());
 
-	// create actor
-	vtk_actor = vtkSmartPointer<vtkActor>::New();
-	vtk_actor->SetMapper(vtk_mapper);
+        // create actor
+        vtk_actor = vtkSmartPointer<vtkActor>::New();
+        vtk_actor->SetMapper(vtk_mapper);
 
-	// set opacity
-	vtk_actor->GetProperty()->SetOpacity(0.25);
+        // set opacity
+        vtk_actor->GetProperty()->SetOpacity(0.25);
     }
 
     /****************************************************************/
     void set_sizes(const double &width, const double &depth, const double &height)
     {
-	this->width = width;
-	this->depth = depth;
-	this->height = height;
-	vtk_cube_source->SetXLength(width);
-	vtk_cube_source->SetYLength(depth);
-	vtk_cube_source->SetZLength(height);
+        this->width = width;
+        this->depth = depth;
+        this->height = height;
+        vtk_cube_source->SetXLength(width);
+        vtk_cube_source->SetYLength(depth);
+        vtk_cube_source->SetZLength(height);
     }
 
     /****************************************************************/
     void set_pose(const yarp::sig::Vector &pos, const yarp::sig::Matrix &att)
     {
-	// create a new transform
-	vtk_transform = vtkSmartPointer<vtkTransform>::New();
+        // create a new transform
+        vtk_transform = vtkSmartPointer<vtkTransform>::New();
 
-	// set translation
-	vtk_transform->Translate(pos.data());
+        // set translation
+        vtk_transform->Translate(pos.data());
 
-	// set rotation
-	yarp::sig::Vector axis_angle(4);
-	axis_angle = yarp::math::dcm2axis(att);
-	vtk_transform->RotateWXYZ(axis_angle[3] * 180 / M_PI,
-				  axis_angle[0], axis_angle[1], axis_angle[2]);
-	// apply transform
-	vtk_actor->SetUserTransform(vtk_transform);
+        // set rotation
+        yarp::sig::Vector axis_angle(4);
+        axis_angle = yarp::math::dcm2axis(att);
+        vtk_transform->RotateWXYZ(axis_angle[3] * 180 / M_PI,
+                                  axis_angle[0], axis_angle[1], axis_angle[2]);
+        // apply transform
+        vtk_actor->SetUserTransform(vtk_transform);
     }
 };
 
@@ -244,14 +244,14 @@ class Viewer : public RFModule, RateThread
 
     IFrameTransform* tf_client;
     PolyDriver drv_transform_client;
-    
+
     unique_ptr<Points> vtk_all_points;
     unique_ptr<Cube> vtk_cube;
 
     vtkSmartPointer<vtkRenderer> vtk_renderer;
     vtkSmartPointer<vtkRenderWindow> vtk_renderWindow;
     vtkSmartPointer<vtkRenderWindowInteractor> vtk_renderWindowInteractor;
-    vtkSmartPointer<vtkAxesActor> vtk_axes;     
+    vtkSmartPointer<vtkAxesActor> vtk_axes;
     vtkSmartPointer<vtkOrientationMarkerWidget> vtk_widget;
     vtkSmartPointer<vtkCamera> vtk_camera;
     vtkSmartPointer<vtkInteractorStyleSwitch> vtk_style;
@@ -295,20 +295,20 @@ class Viewer : public RFModule, RateThread
     bool configure(ResourceFinder &rf) override
     {
 
-	portPointsIn.open("/view-filtering/pointcloud:i");
+        portPointsIn.open("/view-filtering/pointcloud:i");
 
-	rpc_server.open("/view-filtering/rpc");
-	attach(rpc_server);
+        rpc_server.open("/view-filtering/rpc");
+        attach(rpc_server);
 
-	yarp::os::Property propTfClient;
-	propTfClient.put("device", "FrameTransformClient");
-	propTfClient.put("local", "/view-filtering/transformClient");
-	propTfClient.put("remote", "/transformServer");
-	tf_client = nullptr;
-	bool ok_drv = drv_transform_client.open(propTfClient);
-	ok_drv = ok_drv && drv_transform_client.view(tf_client) && tf_client != nullptr;
-	if (!ok_drv)
-	    return false;
+        yarp::os::Property propTfClient;
+        propTfClient.put("device", "FrameTransformClient");
+        propTfClient.put("local", "/view-filtering/transformClient");
+        propTfClient.put("remote", "/transformServer");
+        tf_client = nullptr;
+        bool ok_drv = drv_transform_client.open(propTfClient);
+        ok_drv = ok_drv && drv_transform_client.view(tf_client) && tf_client != nullptr;
+        if (!ok_drv)
+            return false;
 
         vtk_all_points=unique_ptr<Points>(new Points(all_points,2));
 
@@ -350,10 +350,10 @@ class Viewer : public RFModule, RateThread
         vtk_renderWindowInteractor->SetRenderWindow(vtk_renderWindow);
 
         vtk_renderer->AddActor(vtk_all_points->get_actor());
-	vtk_renderer->AddActor(vtk_cube->get_actor());
+        vtk_renderer->AddActor(vtk_cube->get_actor());
         vtk_renderer->SetBackground(0.1,0.2,0.2);
 
-        vtk_axes=vtkSmartPointer<vtkAxesActor>::New();     
+        vtk_axes=vtkSmartPointer<vtkAxesActor>::New();
         vtk_widget=vtkSmartPointer<vtkOrientationMarkerWidget>::New();
         vtk_widget->SetOutlineColor(0.9300,0.5700,0.1300);
         vtk_widget->SetOrientationMarker(vtk_axes);
@@ -371,18 +371,18 @@ class Viewer : public RFModule, RateThread
         vtk_style->SetCurrentStyleToTrackballCamera();
         vtk_renderWindowInteractor->SetInteractorStyle(vtk_style);
 
-	// start IO processing thread
-	start();
+        // start IO processing thread
+        start();
 
-	vtk_renderWindowInteractor->Initialize();
-	vtk_renderWindowInteractor->CreateRepeatingTimer(10);
+        vtk_renderWindowInteractor->Initialize();
+        vtk_renderWindowInteractor->CreateRepeatingTimer(10);
 
-	vtk_updateCallback=vtkSmartPointer<UpdateCommand>::New();
-	vtk_updateCallback->set_closing(closing);
-	vtk_renderWindowInteractor->AddObserver(vtkCommand::TimerEvent,vtk_updateCallback);
-	vtk_renderWindowInteractor->Start();
+        vtk_updateCallback=vtkSmartPointer<UpdateCommand>::New();
+        vtk_updateCallback->set_closing(closing);
+        vtk_renderWindowInteractor->AddObserver(vtkCommand::TimerEvent,vtk_updateCallback);
+        vtk_renderWindowInteractor->Start();
         yInfo() << "here!";
-        
+
         return true;
     }
 
@@ -395,24 +395,24 @@ class Viewer : public RFModule, RateThread
     /****************************************************************/
     bool updateModule() override
     {
-	return true;
+        return true;
     }
 
     /****************************************************************/
     void run() override
     {
-	PointCloudXYZRGBA *new_pc = portPointsIn.read(false);
-	if (new_pc != NULL)
-	{
-	    process(*new_pc);
-	}
+        PointCloudXYZRGBA *new_pc = portPointsIn.read(false);
+        if (new_pc != NULL)
+        {
+            process(*new_pc);
+        }
 
-	update_estimate_view();
+        update_estimate_view();
     }
 
     /****************************************************************/
     void process(const PointCloudXYZRGBA &points)
-    {   
+    {
         if (points.size()>0)
         {
             LockGuard lg(mutex);
@@ -433,7 +433,7 @@ class Viewer : public RFModule, RateThread
                 all_points.push_back(p);
                 all_colors.push_back(c);
             }
-            
+
             vtk_all_points->set_points(all_points);
             vtk_all_points->set_colors(all_colors);
         }
@@ -442,18 +442,18 @@ class Viewer : public RFModule, RateThread
     /****************************************************************/
     void update_estimate_view()
     {
-	LockGuard lg(mutex);
+        LockGuard lg(mutex);
 
-	// get current estimate from the filter
-	std::string source = "/iCub/frame";
-	std::string target = "/estimate/frame";
-	yarp::sig::Matrix estimate;
-	if (!tf_client->getTransform(target, source, estimate))
-	    return;
+        // get current estimate from the filter
+        std::string source = "/iCub/frame";
+        std::string target = "/estimate/frame";
+        yarp::sig::Matrix estimate;
+        if (!tf_client->getTransform(target, source, estimate))
+            return;
 
-	// update the view of the estimate
-	vtk_cube->set_pose(estimate.getCol(3).subVector(0, 2),
-			   estimate.submatrix(0, 2, 0, 2));
+        // update the view of the estimate
+        vtk_cube->set_pose(estimate.getCol(3).subVector(0, 2),
+                           estimate.submatrix(0, 2, 0, 2));
     }
 
     /****************************************************************/
@@ -473,23 +473,23 @@ class Viewer : public RFModule, RateThread
     {
         LockGuard lg(mutex);
 
-	std::string cmd = command.get(0).asString();
-	if (cmd == "help")
-	{
-	    reply.addVocab(yarp::os::Vocab::encode("many"));
-	    reply.addString("Available commands:");
-	    reply.addString("- center-camera");
-	    reply.addString("- help");
-	    reply.addString("- quit");
-	}
+        std::string cmd = command.get(0).asString();
+        if (cmd == "help")
+        {
+            reply.addVocab(yarp::os::Vocab::encode("many"));
+            reply.addString("Available commands:");
+            reply.addString("- center-camera");
+            reply.addString("- help");
+            reply.addString("- quit");
+        }
         else if (cmd == "center-camera")
         {
-	    center_camera();
-	    reply.addString("Camera centered.");
+            center_camera();
+            reply.addString("Camera centered.");
         }
-	else
-	    // the father class already handles the "quit" command
-	    return RFModule::respond(command,reply);
+        else
+            // the father class already handles the "quit" command
+            return RFModule::respond(command,reply);
 
         return true;
     }
@@ -504,10 +504,10 @@ class Viewer : public RFModule, RateThread
     /****************************************************************/
     bool close() override
     {
-	// close the IO processing thread
-	stop();
+        // close the IO processing thread
+        stop();
 
-	portPointsIn.close();
+        portPointsIn.close();
 
         return true;
     }
