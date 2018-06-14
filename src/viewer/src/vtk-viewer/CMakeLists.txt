@@ -20,6 +20,7 @@ list(APPEND CMAKE_MODULE_PATH
   ${ICUB_MODULE_PATH})
 
 include(YarpInstallationHelpers)
+include(${VTK_USE_FILE})
 
 # Application target calls
 add_executable(${EXE_TARGET_NAME} src/VtkViewer.cpp)
