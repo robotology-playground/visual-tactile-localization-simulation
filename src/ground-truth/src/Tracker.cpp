@@ -91,6 +91,15 @@ bool Tracker::configure(yarp::os::ResourceFinder &rf)
     if (!ok_drv)
         return false;
 
+    // gaze controller
+    const yarp::os::ResourceFinder &rf_gaze = rf.findNestedResourceFinder("gazeController");
+    if (!gaze_ctrl.configure(rf_gaze))
+    {
+        yError() << "Tracker::configure"
+                 << "error: cannot configure the gaze controller";
+        return false;
+    }
+
     return true;
 }
 

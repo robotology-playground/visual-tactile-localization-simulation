@@ -18,13 +18,19 @@
 #include <yarp/dev/PolyDriver.h>
 #include <yarp/dev/IFrameTransform.h>
 
+//
 #include <HeadKinematics.h>
+#include <Tracker.h>
+#include <GazeController.h>
 
 class Tracker : public yarp::os::RFModule
 {
 private:
     // head kinematics
     headKinematics head_kin;
+
+    // gaze controller
+    GazeController gaze_ctrl;
 
     // camera port
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb>> image_input_port;
