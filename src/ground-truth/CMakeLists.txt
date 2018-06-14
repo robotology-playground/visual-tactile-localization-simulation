@@ -25,14 +25,16 @@ include(YarpInstallationHelpers)
 
 # Source and header files
 set(${EXE_TARGET_NAME}_HDR
- include/Tracker.h
-)
+  include/Tracker.h
+  include/GazeController.h
+  )
 
 set(${EXE_TARGET_NAME}_SRC
- src/Tracker.cpp
- src/main.cpp
- ${HEAD_KIN_SRC}
-)
+  src/Tracker.cpp
+  src/GazeController.cpp
+  src/main.cpp
+  ${HEAD_KIN_SRC}
+  )
 
 # Application target calls
 add_executable(${EXE_TARGET_NAME}
