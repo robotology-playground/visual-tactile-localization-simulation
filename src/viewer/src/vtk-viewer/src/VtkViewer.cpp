@@ -257,6 +257,40 @@ class Viewer : public RFModule, RateThread
     vtkSmartPointer<vtkInteractorStyleSwitch> vtk_style;
     vtkSmartPointer<UpdateCommand> vtk_updateCallback;
 
+    /****************************************************************/    
+    bool loadListDouble(yarp::os::ResourceFinder &rf,
+                        const std::string &key,
+                        const int &size,
+                        yarp::sig::Vector &list)
+    {
+        if (rf.find(key).isNull())
+            return false;
+
+        yarp::os::Bottle* b = rf.find(key).asList();
+        if (b == nullptr)
+            return false;
+
+        if (b->size() != size)
+            return false;
+
+        list.resize(size);
+        for (size_t i=0; i<b->size(); i++)
+        {
+            yarp::os::Value item_v = b->get(i);
+            if (item_v.isNull())
+                return false;
+
+            if (!item_v.isDouble())
+            {
+                list.clear();
+                return false;
+            }
+
+            list[i] = item_v.asDouble();
+        }
+        return true;
+    }
+
     /****************************************************************/
     bool configure(ResourceFinder &rf) override
     {
@@ -278,9 +312,35 @@ class Viewer : public RFModule, RateThread
 
         vtk_all_points=unique_ptr<Points>(new Points(all_points,2));
 
+        // get the size of the object
+        if (rf.find("objName").isNull())
+        {
+            yInfo() << "VtkViewer::configure"
+                    << "error: cannot find objName in the configuration file";
+            return false;
+        }
+        std::string obj_name = rf.find("objName").asString();
+        yarp::os::ResourceFinder rf_obj;
+        rf_obj = rf.findNestedResourceFinder(obj_name.c_str());
+        if (rf_obj.find("boxSize").isNull())
+        {
+            yInfo() << "VtkViewer::configure"
+                    << "error: cannot find objSize within group"
+                    << "[" << obj_name << "] in configuration file";
+            return false;
+        }
+        yarp::sig::Vector obj_size;
+        if (!loadListDouble(rf_obj, "boxSize", 3, obj_size))
+        {
+            yInfo() << "VtkViewer::configure"
+                    << "error: cannot read objSize within group"
+                    << "[" << obj_name << "] in configuration file";
+            return false;
+        }
 	vtk_cube=unique_ptr<Cube>(new Cube());
-	//vtk_cube->set_sizes(0.23, 0.178, 0.04);
-    vtk_cube->set_sizes(0.205, 0.13, 0.055);
+        vtk_cube->set_sizes(obj_size[0], obj_size[1], obj_size[2]);
+	// vtk_cube->set_sizes(0.23, 0.178, 0.04);
+        // vtk_cube->set_sizes(0.205, 0.13, 0.055);
 
         vtk_renderer=vtkSmartPointer<vtkRenderer>::New();
         vtk_renderWindow=vtkSmartPointer<vtkRenderWindow>::New();
@@ -463,6 +523,7 @@ int main(int argc, char *argv[])
 {
     Network yarp;
     ResourceFinder rf;
+    rf.setDefaultConfigFile("vtk_viewer_config.ini");
     rf.configure(argc,argv);
 
     if (!yarp.checkNetwork())

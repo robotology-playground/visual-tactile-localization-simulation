@@ -37,4 +37,11 @@ else()
   target_link_libraries(${EXE_TARGET_NAME} vtkHybrid vtkWidgets)
 endif()
 
+# Install calls
 install(TARGETS ${EXE_TARGET_NAME} DESTINATION bin)
+
+set(${EXE_TARGET_NAME}_CONF_SETUP
+  ${CMAKE_CURRENT_SOURCE_DIR}/conf/setup/vtk_viewer_config.ini)
+
+yarp_install(FILES ${${EXE_TARGET_NAME}_CONF_SETUP}
+  DESTINATION ${ICUBCONTRIB_CONTEXTS_INSTALL_DIR}/${VISUAL_TACTILE_CONTEXT_SETUP})
