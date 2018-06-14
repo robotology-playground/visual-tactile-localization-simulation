@@ -47,6 +47,11 @@
   </module>
 
   <module>
+    <name>vtl-vtk-viewer</name>
+    <node>localhost</node>
+  </module>
+
+  <module>
     <name>vtl-si-viewer</name>
     <node>localhost</node>
     <parameters>--context visualTactileLocalization</parameters>
