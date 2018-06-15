@@ -18,9 +18,13 @@
 #include <yarp/dev/PolyDriver.h>
 #include <yarp/dev/IFrameTransform.h>
 
+// opencv
+#include <opencv2/opencv.hpp>
+
 //
 #include <HeadKinematics.h>
 #include <Tracker.h>
+#include <ArucoBoardEstimator.h>
 #include <GazeController.h>
 
 class Tracker : public yarp::os::RFModule
@@ -31,6 +35,9 @@ private:
 
     // gaze controller
     GazeController gaze_ctrl;
+
+    // aruco board estimator
+    ArucoBoardEstimator aruco_estimator;
 
     // camera port
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb>> image_input_port;
@@ -48,16 +55,10 @@ private:
     std::string tf_source;
     std::string tf_target;
 
-    // camera parameters
-    double cam_fx;
-    double cam_fy;
-    double cam_cx;
-    double cam_cy;
-
 public:
     bool configure(yarp::os::ResourceFinder &rf) override;
     double getPeriod() override;
-    bool getFrame(yarp::sig::ImageOf<yarp::sig::PixelRgb>* &yarp_image);
+    bool getFrame(cv::Mat &frame);
     bool updateModule() override;
     bool close() override;
 };

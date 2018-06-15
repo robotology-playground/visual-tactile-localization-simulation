@@ -13,9 +13,6 @@
 #include <yarp/os/ResourceFinder.h>
 #include <yarp/os/LogStream.h>
 
-// opencv
-#include <opencv2/opencv.hpp>
-
 //
 #include <Tracker.h>
 
@@ -49,20 +46,56 @@ bool Tracker::configure(yarp::os::ResourceFinder &rf)
     if (!rf.find("tfTarget").isNull())
         tf_target = rf.find("tfTarget").asString();
 
-    // set intrinsic parameters
+    // aruco board parameters
+    const yarp::os::ResourceFinder &rf_aruco = rf.findNestedResourceFinder("arucoBoard");
+    int n_x;
+    int n_y;
+    double side;
+    double separation;
+    if (!(rf_aruco.find("nX").isNull()))
+        n_x = rf_aruco.find("nX").asInt();
+    else
+        return false;
+    if (!(rf_aruco.find("nY").isNull()))
+        n_y = rf_aruco.find("nY").asInt();
+    else
+        return false;
+    if (!(rf_aruco.find("side").isNull()))
+        side = rf_aruco.find("side").asDouble();
+    else
+        return false;
+    if (!(rf_aruco.find("separation").isNull()))
+        separation = rf_aruco.find("separation").asDouble();
+    else
+        return false;
+
+    // camera parameters
     const yarp::os::ResourceFinder &rf_eye = rf.findNestedResourceFinder(eye_name.c_str());
-    cam_fx = 219.057;
-    cam_cx = 174.742;
-    cam_fy = 219.028;
-    cam_cy = 102.874;
+    double cam_fx = 219.057;
+    double cam_cx = 174.742;
+    double cam_fy = 219.028;
+    double cam_cy = 102.874;
+    double cam_k1 = -0.374173;
+    double cam_k2 = 0.205428;
+    double cam_p1 = 0.00282356;
+    double cam_p2 = 0.00270998;
+    
     if (!rf_eye.find("camFx").isNull())
         cam_fx = rf_eye.find("camFx").asDouble();
     if (!rf_eye.find("camCx").isNull())
         cam_cx = rf_eye.find("camCx").asDouble();
-    if (!rf_eye.find("camFy").asDouble())
+    if (!rf_eye.find("camFy").isNull())
         cam_fy = rf_eye.find("camFy").asDouble();
-    if (!rf_eye.find("camCy").asDouble())
+    if (!rf_eye.find("camCy").isNull())
         cam_cy = rf_eye.find("camCy").asDouble();
+    if (!rf_eye.find("camK1").isNull())
+        cam_k1 = rf_eye.find("camK1").asDouble();
+    if (!rf_eye.find("camK2").isNull())
+        cam_k2 = rf_eye.find("camK2").asDouble();
+    if (!rf_eye.find("camP1").isNull())
+        cam_p1 = rf_eye.find("camP1").asDouble();
+    if (!rf_eye.find("camP2").isNull())
+        cam_p2 = rf_eye.find("camP2").asDouble();
 
     // port prefix
     std::string port_prefix = "/gtruth_tracker/";
@@ -92,14 +125,26 @@ bool Tracker::configure(yarp::os::ResourceFinder &rf)
         return false;
 
     // gaze controller
-    const yarp::os::ResourceFinder &rf_gaze = rf.findNestedResourceFinder("gazeController");
-    if (!gaze_ctrl.configure(rf_gaze))
+    // const yarp::os::ResourceFinder &rf_gaze = rf.findNestedResourceFinder("gazeController");
+    // if (!gaze_ctrl.configure(rf_gaze))
+    // {
+    //     yError() << "Tracker::configure"
+    //              << "error: cannot configure the gaze controller";
+    //     return false;
+    // }
+
+    // aruco board estimator    
+    bool ok;
+    ok = aruco_estimator.configure(n_x, n_y, side, separation,
+                                   cam_fx, cam_fy, cam_cx, cam_cy,
+                                   cam_k1, cam_k2, cam_p1, cam_p2);
+    if (!ok)
     {
         yError() << "Tracker::configure"
-                 << "error: cannot configure the gaze controller";
+                 << "error: cannot configure the aruco board";
         return false;
     }
-
+    
     return true;
 }
 
@@ -108,13 +153,15 @@ double Tracker::getPeriod()
     return period;
 }
 
-bool Tracker::getFrame(yarp::sig::ImageOf<yarp::sig::PixelRgb>* &yarp_image)
+bool Tracker::getFrame(cv::Mat &frame)
 {
     // try to read image from port
+    yarp::sig::ImageOf<yarp::sig::PixelRgb> *yarp_image = 
     yarp_image = image_input_port.read(false);
 
     if (yarp_image == NULL)
         return false;
+    frame = cv::cvarrToMat(yarp_image->getIplImage(), true);
 
     return true;
 }
@@ -122,8 +169,8 @@ bool Tracker::getFrame(yarp::sig::ImageOf<yarp::sig::PixelRgb>* &yarp_image)
 bool Tracker::updateModule()
 {
     // get image from camera
-    yarp::sig::ImageOf<yarp::sig::PixelRgb>* img_in;
-    if (!getFrame(img_in))
+    cv::Mat frame_in;
+    if (!getFrame(frame_in))
         return true;
 
     // get current pose of eyes
@@ -133,15 +180,15 @@ bool Tracker::updateModule()
     head_kin.getEyesPose(left_eye_pose, right_eye_pose);
     eye_pose = (eye_name == "left") ? left_eye_pose : right_eye_pose;
 
-    // TODO: add aruco estimation here
-
-    // TODO: add gaze tracking here
-
     // prepare output image
-    // yarp::sig::ImageOf<yarp::sig::PixelRgb> &img_out = image_output_port.prepare();
-    // img_out = *img_in;
-    // cv::Mat cv_img;
-    // cv_img = cv::cvarrToMat(img_out.getIplImage());
+    yarp::sig::ImageOf<yarp::sig::PixelRgb> &img_out = image_output_port.prepare();
+    cv::Mat frame_out;
+    frame_out = cv::cvarrToMat(img_out.getIplImage());
+
+    // aruco board pose estimation
+    aruco_estimator.estimateBoardPose(frame_in, frame_out);
+    
+    // TODO: add gaze tracking here
 
     // send image
     image_output_port.write();
