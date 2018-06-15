@@ -166,6 +166,11 @@ bool Tracker::getFrame(cv::Mat &frame)
     return true;
 }
 
+bool evaluateEstimate(const cv::Mat &camera_pos, const cv::Mat &camera_att,
+                      yarp::sig::Vector &estimate)
+{
+}
+
 bool Tracker::updateModule()
 {
     // get image from camera
