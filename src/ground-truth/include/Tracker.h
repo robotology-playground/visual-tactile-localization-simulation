@@ -55,7 +55,7 @@ private:
     std::string tf_source;
     std::string tf_target;
 
-    bool getFrame(cv::Mat &frame);
+    bool getFrame(yarp::sig::ImageOf<yarp::sig::PixelRgb>* &yarp_image);
 
     /*
      * Evaluate the estimate of the object w.r.t the root frame given

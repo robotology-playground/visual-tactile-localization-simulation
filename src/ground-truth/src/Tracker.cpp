@@ -153,15 +153,13 @@ double Tracker::getPeriod()
     return period;
 }
 
-bool Tracker::getFrame(cv::Mat &frame)
+bool Tracker::getFrame(yarp::sig::ImageOf<yarp::sig::PixelRgb>* &yarp_image)
 {
     // try to read image from port
-    yarp::sig::ImageOf<yarp::sig::PixelRgb> *yarp_image = 
     yarp_image = image_input_port.read(false);
 
     if (yarp_image == NULL)
         return false;
-    frame = cv::cvarrToMat(yarp_image->getIplImage(), true);
 
     return true;
 }
@@ -174,8 +172,8 @@ bool evaluateEstimate(const cv::Mat &camera_pos, const cv::Mat &camera_att,
 bool Tracker::updateModule()
 {
     // get image from camera
-    cv::Mat frame_in;
-    if (!getFrame(frame_in))
+    yarp::sig::ImageOf<yarp::sig::PixelRgb>* img_in;
+    if (!getFrame(img_in))
         return true;
 
     // get current pose of eyes
@@ -185,8 +183,13 @@ bool Tracker::updateModule()
     head_kin.getEyesPose(left_eye_pose, right_eye_pose);
     eye_pose = (eye_name == "left") ? left_eye_pose : right_eye_pose;
 
+    // prepare input image
+    cv::Mat frame_in;
+    frame_in = cv::cvarrToMat(img_in->getIplImage());
+
     // prepare output image
     yarp::sig::ImageOf<yarp::sig::PixelRgb> &img_out = image_output_port.prepare();
+    // img_out = *img_in;
     cv::Mat frame_out;
     frame_out = cv::cvarrToMat(img_out.getIplImage());
 
