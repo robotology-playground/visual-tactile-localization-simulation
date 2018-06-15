@@ -54,7 +54,7 @@
 
   <module>
     <name>vtl-si-viewer</name>
-    <node>localhost</node>
+    <node>cuda</node>
     <parameters>--context visualTactileLocalization</parameters>
   </module>
 
