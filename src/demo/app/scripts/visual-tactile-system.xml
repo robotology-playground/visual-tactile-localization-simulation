@@ -58,9 +58,21 @@
   </module>
 
   <module>
+    <name>vtl-gtruth-tracker</name>
+    <node>localhost</node>
+    <parameters>--context visualTactileLocalization</parameters>
+  </module>
+
+  <module>
     <name>yarpview</name>
     <node>localhost</node>
     <parameters>--name /si_estimate_viewer/viewer:i</parameters>
+  </module>
+
+  <module>
+    <name>yarpview</name>
+    <node>localhost</node>
+    <parameters>--name /gtruth_viewer/viewer:i</parameters>
   </module>
 
   <connection>
@@ -112,5 +124,20 @@
     <from>/si_estimate_viewer/left_eye:o</from>
     <to>/si_estimate_viewer/viewer:i</to>
   </connection>
-  
+
+  <connection>
+    <from>/si_estimate_viewer/left_eye:o</from>
+    <to>/si_estimate_viewer/viewer:i</to>
+  </connection>
+
+  <connection>
+    <from>/si_estimate_viewer/left_eye:o</from>    
+    <to>/gtruth_tracker/left_eye:i</to>    
+  </connection>
+
+  <connection>
+    <from>/gtruth_tracker/left_eye:o</from>
+    <to>/gtruth_viewer/viewer:i</to>
+  </connection>
+
 </application>
