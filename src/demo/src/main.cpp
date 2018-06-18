@@ -2569,7 +2569,8 @@ public:
             }
 
             // reset flag
-            is_approach_done = false;
+            // TESTING
+            // is_approach_done = false;
 
             // go back to Idle
             status = Status::Idle;
