@@ -60,6 +60,12 @@ private:
     double obj_depth;
     double obj_height;
 
+    // estimate
+    yarp::sig::Matrix est_pose;
+    /* yarp::sig::Vector est_pos; */
+    /* yarp::sig::Vector est_att; */
+    bool is_estimate_available;
+
     bool getFrame(yarp::sig::ImageOf<yarp::sig::PixelRgb>* &yarp_image);
 
     /*
@@ -71,14 +77,13 @@ private:
      * @param att_wrt_cam estimated attitude of the object w.r.t the camera 
      * @param camera_pos position of the camera w.r.t the root frame
      * @param camera_pos attitude of the camera w.r.t the root frame
-     * @param est_pos estimated position of the object w.r.t root frame
-     * @param est_att estimated attitude (axis/angle) of the object w.r.t root frame
+     * @param est_pose estimated pose of the object w.r.t root frame
      */
     bool evaluateEstimate(const cv::Vec3d &pos_wrt_cam, const cv::Vec3d &att_wrt_cam,
                           const yarp::sig::Vector &camera_pos,
                           const yarp::sig::Vector &camera_att,
-                          yarp::sig::Vector est_pos,
-                          yarp::sig::Vector est_att);
+                          yarp::sig::Matrix est_pose);
+    void publishEstimate();
 
 public:
     bool configure(yarp::os::ResourceFinder &rf) override;

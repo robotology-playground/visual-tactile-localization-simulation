@@ -117,19 +117,19 @@ bool Tracker::configure(yarp::os::ResourceFinder &rf)
         return false;
 
     // head forward kinematics
-    // if (!head_kin.configure(robot_name, port_prefix))
-    //     return false;
+    if (!head_kin.configure(robot_name, port_prefix))
+        return false;
 
     // frame transform client
-    // yarp::os::Property propTfClient;
-    // propTfClient.put("device", "FrameTransformClient");
-    // propTfClient.put("local", port_prefix + "/transformClient");
-    // propTfClient.put("remote", "/transformServer");
-    // tf_client = nullptr;
-    // bool ok_drv = drv_transform_client.open(propTfClient);
-    // ok_drv = ok_drv && drv_transform_client.view(tf_client) && tf_client != nullptr;
-    // if (!ok_drv)
-    //     return false;
+    yarp::os::Property propTfClient;
+    propTfClient.put("device", "FrameTransformClient");
+    propTfClient.put("local", port_prefix + "/transformClient");
+    propTfClient.put("remote", "/transformServer");
+    tf_client = nullptr;
+    bool ok_drv = drv_transform_client.open(propTfClient);
+    ok_drv = ok_drv && drv_transform_client.view(tf_client) && tf_client != nullptr;
+    if (!ok_drv)
+        return false;
 
     // gaze controller
     // const yarp::os::ResourceFinder &rf_gaze = rf.findNestedResourceFinder("gazeController");
@@ -140,7 +140,7 @@ bool Tracker::configure(yarp::os::ResourceFinder &rf)
     //     return false;
     // }
 
-    // aruco/charuco board estimator    
+    // aruco/charuco board estimator
     if (board_type == "aruco")
         uco_estimator = std::unique_ptr<ArucoBoardEstimator>(
             new ArucoBoardEstimator());
@@ -163,7 +163,16 @@ bool Tracker::configure(yarp::os::ResourceFinder &rf)
                  << board_type << "board";
         return false;
     }
-    
+
+    // resize estimate matrix
+    // est_pos.resize(3, 0.0);
+    // est_att.resize(4, 0.0);
+    yarp::sig::Matrix est_pose(4, 4);
+    est_pose.zero();
+
+    // reset flag
+    is_estimate_available = false;
+
     return true;
 }
 
@@ -186,8 +195,7 @@ bool Tracker::getFrame(yarp::sig::ImageOf<yarp::sig::PixelRgb>* &yarp_image)
 bool Tracker::evaluateEstimate(const cv::Vec3d &pos_wrt_cam, const cv::Vec3d &att_wrt_cam,
                                const yarp::sig::Vector &camera_pos,
                                const yarp::sig::Vector &camera_att,
-                               yarp::sig::Vector est_pos,
-                               yarp::sig::Vector est_att)
+                               yarp::sig::Matrix est_pos)
 {
     // transformation matrix
     // from robot root to camera
@@ -229,8 +237,7 @@ bool Tracker::evaluateEstimate(const cv::Vec3d &pos_wrt_cam, const cv::Vec3d &at
             att_wrt_cam_yarp(i, j) = att_wrt_cam_matrix.at<double>(i, j);
 
     // compose transformations
-    yarp::sig::Matrix est_pose = root_to_cam * icub_to_opencv * cam_to_obj;
-    est_att = yarp::math::dcm2axis(est_pose.submatrix(0, 2, 0, 2));
+    est_pose = root_to_cam * icub_to_opencv * cam_to_obj;
 
     // pick the center of the object
     yarp::sig::Vector corner_to_center(4, 0.0);
@@ -240,8 +247,16 @@ bool Tracker::evaluateEstimate(const cv::Vec3d &pos_wrt_cam, const cv::Vec3d &at
     corner_to_center[2] = -obj_height / 2.0;
     corner_to_center[3] = 1.0;
     est_pos_homog = est_pose * corner_to_center;
+    est_pose.setCol(3, est_pos_homog);
+}
 
-    est_pos = est_pos_homog.subVector(0, 2);
+void Tracker::publishEstimate()
+{
+    if (!is_estimate_available)
+        return;
+
+    // set a new transform
+    tf_client->setTransform(tf_target, tf_source, est_pose);
 }
 
 bool Tracker::updateModule()
@@ -252,11 +267,11 @@ bool Tracker::updateModule()
         return true;
 
     // get current pose of eyes
-    // yarp::sig::Vector left_eye_pose;
-    // yarp::sig::Vector right_eye_pose;
-    // yarp::sig::Vector eye_pose;
-    // head_kin.getEyesPose(left_eye_pose, right_eye_pose);
-    // eye_pose = (eye_name == "left") ? left_eye_pose : right_eye_pose;
+    yarp::sig::Vector left_eye_pose;
+    yarp::sig::Vector right_eye_pose;
+    yarp::sig::Vector eye_pose;
+    head_kin.getEyesPose(left_eye_pose, right_eye_pose);
+    eye_pose = (eye_name == "left") ? left_eye_pose : right_eye_pose;
 
     // prepare input image
     cv::Mat frame_in;
@@ -269,16 +284,23 @@ bool Tracker::updateModule()
     frame_out = cv::cvarrToMat(img_out.getIplImage());
 
     // aruco board pose estimation
-    cv::Vec3d pos;
-    cv::Vec3d att;
+    cv::Vec3d pos_wrt_cam;
+    cv::Vec3d att_wrt_cam;
     bool ok;
     ok = uco_estimator->estimateBoardPose(frame_in, frame_out,
-                                          pos, att);
+                                          pos_wrt_cam, att_wrt_cam);
     if (ok)
     {
+        is_estimate_available = true;
 
-        // TODO: add gaze tracking here        
+        evaluateEstimate(pos_wrt_cam, att_wrt_cam,
+                         eye_pose.subVector(0, 2), eye_pose.subVector(3, 6),
+                         est_pose);
     }
+
+    publishEstimate();
+
+    // TODO: add gaze tracking
 
     // send image
     image_output_port.write();
