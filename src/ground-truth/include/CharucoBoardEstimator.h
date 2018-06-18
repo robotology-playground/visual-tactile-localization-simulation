@@ -26,7 +26,8 @@ private:
 public:
     bool configure(const int &n_x, const int &n_y, const double &size1, const double &size2,
                    const std::string &cam_calib_path) override;
-    void estimateBoardPose(const cv::Mat &img_in, cv::Mat &img_out) override;
+    bool estimateBoardPose(const cv::Mat &img_in, cv::Mat &img_out,
+                           cv::Vec3d &pos, cv::Vec3d &att) override;
 };
 
 #endif

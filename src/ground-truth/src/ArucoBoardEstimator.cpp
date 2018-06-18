@@ -45,7 +45,8 @@ bool ArucoBoardEstimator::configure(const int &n_x, const int &n_y, const double
     return true;
 }
 
-void ArucoBoardEstimator::estimateBoardPose(const cv::Mat &img_in, cv::Mat &img_out)
+bool ArucoBoardEstimator::estimateBoardPose(const cv::Mat &img_in, cv::Mat &img_out,
+                                            cv::Vec3d &pos, cv::Vec3d &att)
 {
     // perform marker detection
     std::vector<int> ids;
@@ -63,13 +64,17 @@ void ArucoBoardEstimator::estimateBoardPose(const cv::Mat &img_in, cv::Mat &img_
     if (ids.size() > 0)
     {
         cv::aruco::drawDetectedMarkers(img_out, corners, ids);
-        cv::Vec3d rvec, tvec;
         int valid = estimatePoseBoard(corners, ids, board,
                                       cam_intrinsic, cam_distortion,
-                                      rvec, tvec);
+                                      att, pos);
         // if at least one board marker detected
         if(valid > 0)
-            cv::aruco::drawAxis(img_out, cam_intrinsic, cam_distortion, rvec, tvec, axis_length);
+        {
+            cv::aruco::drawAxis(img_out, cam_intrinsic, cam_distortion, att, pos, axis_length);
+            return true;
+        }
     }
+
+    return false;
 }
 
