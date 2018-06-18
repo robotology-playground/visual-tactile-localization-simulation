@@ -16,19 +16,22 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/aruco.hpp>
 
-class ArucoBoardEstimator
+class UcoBoardEstimator
 {
-private:
+protected:
     cv::Ptr<cv::aruco::Board> board;
     cv::Ptr<cv::aruco::Dictionary> dictionary;
-    cv::Mat camIntrinsic;
-    cv::Mat camDistortion;
+    cv::Ptr<cv::aruco::DetectorParameters> detector_params;
+    cv::Mat cam_intrinsic;
+    cv::Mat cam_distortion;
+
+    // for visualization purposes
+    double axis_length;
+
+    bool readCameraParameters(std::string filename);    
 public:
     virtual bool configure(const int &n_x, const int &n_y, const double &size1, const double &size2,
-                           cv::Mat &camMatrix, cv::Mat &distCoeffs) = 0;
-    /*
-     *
-     */
+                           const std::string &cam_calib_path) = 0;
     virtual void estimateBoardPose(const cv::Mat &img_in, cv::Mat &img_out) = 0;
 };
 

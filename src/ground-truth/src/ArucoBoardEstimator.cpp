@@ -16,7 +16,7 @@
 #include <ArucoBoardEstimator.h>
 
 bool ArucoBoardEstimator::configure(const int &n_x, const int &n_y, const double &size1, const double &size2,
-                   const cv::Mat &camMatrix, const cv::Mat &distCoeffs)
+                                    const std::string &cam_calib_path)
 {
     if ((n_x <= 0) || (n_y <= 0) || (size1 <= 0) || (size2 < 0))
         return false;
@@ -25,26 +25,39 @@ bool ArucoBoardEstimator::configure(const int &n_x, const int &n_y, const double
     dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_6X6_250);
 
     // configure the board
-    // size1 is the length of the marker
-    // size2 is the distance between markers
-    board = cv::aruco::GridBoard::create(n_x, n_y, size1, size2, dictionary);
+    // size1 is the marker side (m)
+    // size2 is the distance between markers (m)
+    cv::Ptr<cv::aruco::GridBoard> gridboard =cv::aruco::GridBoard::create(n_x, n_y, size1, size2, dictionary);
+    board = gridboard.staticCast<cv::aruco::Board>();
 
-    // configure camera parameters
-    camIntrinsic = camMatrix;
-    camDistortion = distCoeffs;
+    // configure the detector
+    detector_params = cv::aruco::DetectorParameters::create();
+    // enable corner refinement
+    detector_params->doCornerRefinement = true;
+
+    // set axis length
+    axis_length = 0.5 * ((double)std::min(n_x, n_y) * (size1 + size2) + size2);
+
+    // load camera calibration
+    if (!readCameraParameters(cam_calib_path))
+        return false;
 
     return true;
 }
 
 void ArucoBoardEstimator::estimateBoardPose(const cv::Mat &img_in, cv::Mat &img_out)
 {
-    // copy input image to output image
-    img_in.copyTo(img_out);
-
     // perform marker detection
     std::vector<int> ids;
-    std::vector<std::vector<cv::Point2f> > corners;
-    cv::aruco::detectMarkers(img_in, dictionary, corners, ids);
+    std::vector<std::vector<cv::Point2f> > corners, rejected;
+    cv::aruco::detectMarkers(img_in, dictionary, corners, ids, detector_params, rejected);
+
+    // perform refinement
+    cv::aruco::refineDetectedMarkers(img_in, board, corners, ids, rejected,
+                                     cam_intrinsic, cam_distortion);
+
+    // copy input image to output image
+    img_in.copyTo(img_out);
     
     // if at least one marker detected
     if (ids.size() > 0)
@@ -52,11 +65,11 @@ void ArucoBoardEstimator::estimateBoardPose(const cv::Mat &img_in, cv::Mat &img_
         cv::aruco::drawDetectedMarkers(img_out, corners, ids);
         cv::Vec3d rvec, tvec;
         int valid = estimatePoseBoard(corners, ids, board,
-                                      camIntrinsic, camDistortion,
+                                      cam_intrinsic, cam_distortion,
                                       rvec, tvec);
         // if at least one board marker detected
         if(valid > 0)
-            cv::aruco::drawAxis(img_out, camIntrinsic, camDistortion, rvec, tvec, 0.1);
+            cv::aruco::drawAxis(img_out, cam_intrinsic, cam_distortion, rvec, tvec, axis_length);
     }
 }
 

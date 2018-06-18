@@ -9,24 +9,17 @@
  * @authors: Nicola Piga
  */
 
-#ifndef CHARUCO_BOARD_ESTIMATOR
-#define CHARUCO_BOARD_ESTIMATOR
-
-// opencv
-#include <opencv2/opencv.hpp>
-#include <opencv2/aruco/charuco.hpp>
-
 //
 #include <UcoBoardEstimator.h>
 
-class CharucoBoardEstimator : public UcoBoardEstimator
+bool UcoBoardEstimator::readCameraParameters(std::string filename)
 {
-private:
-    cv::Ptr<cv::aruco::CharucoBoard> charucoboard;
-public:
-    bool configure(const int &n_x, const int &n_y, const double &size1, const double &size2,
-                   const std::string &cam_calib_path) override;
-    void estimateBoardPose(const cv::Mat &img_in, cv::Mat &img_out) override;
-};
-
-#endif
+    cv::FileStorage fs(filename, cv::FileStorage::READ);
+    if(!fs.isOpened())
+        return false;
+    
+    fs["camera_matrix"] >> cam_intrinsic;
+    fs["distortion_coefficients"] >> cam_distortion;
+    
+    return true;
+}

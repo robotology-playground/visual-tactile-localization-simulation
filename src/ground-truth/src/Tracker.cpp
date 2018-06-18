@@ -15,6 +15,8 @@
 
 //
 #include <Tracker.h>
+#include <ArucoBoardEstimator.h>
+#include <CharucoBoardEstimator.h>
 
 bool Tracker::configure(yarp::os::ResourceFinder &rf)
 {
@@ -46,56 +48,48 @@ bool Tracker::configure(yarp::os::ResourceFinder &rf)
     if (!rf.find("tfTarget").isNull())
         tf_target = rf.find("tfTarget").asString();
 
-    // aruco board parameters
-    const yarp::os::ResourceFinder &rf_aruco = rf.findNestedResourceFinder("arucoBoard");
+    // get board type
+    std::string board_type;
+    board_type = "aruco";
+    if (!rf.find("boardType").isNull())
+        board_type = rf.find("boardType").asString();
+
+    // uco board parameters
+    std::string uco_key = board_type + "Board";
+    const yarp::os::ResourceFinder &rf_uco =
+        rf.findNestedResourceFinder(uco_key.c_str());
     int n_x;
     int n_y;
-    double side;
-    double separation;
-    if (!(rf_aruco.find("nX").isNull()))
-        n_x = rf_aruco.find("nX").asInt();
+    // for aruco boards
+    // size1 := marker side (m)
+    // size2 := marker separtion (m)
+    //
+    // for charuco boards
+    // size1 := chess square side (m)
+    // size2 := marker side (m)
+    //
+    double size1;
+    double size2;
+    if (!(rf_uco.find("nX").isNull()))
+        n_x = rf_uco.find("nX").asInt();
     else
         return false;
-    if (!(rf_aruco.find("nY").isNull()))
-        n_y = rf_aruco.find("nY").asInt();
+    if (!(rf_uco.find("nY").isNull()))
+        n_y = rf_uco.find("nY").asInt();
     else
         return false;
-    if (!(rf_aruco.find("side").isNull()))
-        side = rf_aruco.find("side").asDouble();
+    if (!(rf_uco.find("size1").isNull()))
+        size1 = rf_uco.find("size1").asDouble();
     else
         return false;
-    if (!(rf_aruco.find("separation").isNull()))
-        separation = rf_aruco.find("separation").asDouble();
+    if (!(rf_uco.find("size2").isNull()))
+        size2 = rf_uco.find("size2").asDouble();
     else
         return false;
 
-    // camera parameters
-    const yarp::os::ResourceFinder &rf_eye = rf.findNestedResourceFinder(eye_name.c_str());
-    double cam_fx = 219.057;
-    double cam_cx = 174.742;
-    double cam_fy = 219.028;
-    double cam_cy = 102.874;
-    double cam_k1 = -0.374173;
-    double cam_k2 = 0.205428;
-    double cam_p1 = 0.00282356;
-    double cam_p2 = 0.00270998;
-    
-    if (!rf_eye.find("camFx").isNull())
-        cam_fx = rf_eye.find("camFx").asDouble();
-    if (!rf_eye.find("camCx").isNull())
-        cam_cx = rf_eye.find("camCx").asDouble();
-    if (!rf_eye.find("camFy").isNull())
-        cam_fy = rf_eye.find("camFy").asDouble();
-    if (!rf_eye.find("camCy").isNull())
-        cam_cy = rf_eye.find("camCy").asDouble();
-    if (!rf_eye.find("camK1").isNull())
-        cam_k1 = rf_eye.find("camK1").asDouble();
-    if (!rf_eye.find("camK2").isNull())
-        cam_k2 = rf_eye.find("camK2").asDouble();
-    if (!rf_eye.find("camP1").isNull())
-        cam_p1 = rf_eye.find("camP1").asDouble();
-    if (!rf_eye.find("camP2").isNull())
-        cam_p2 = rf_eye.find("camP2").asDouble();
+    // camera parameters file
+    yarp::os::ResourceFinder rf_eye = rf.findNestedResourceFinder(eye_name.c_str());
+    std::string cam_calib_path = rf_eye.findFile("camCalibPath");
 
     // port prefix
     std::string port_prefix = "/gtruth_tracker/";
@@ -133,15 +127,27 @@ bool Tracker::configure(yarp::os::ResourceFinder &rf)
     //     return false;
     // }
 
-    // aruco board estimator    
+    // aruco/charuco board estimator    
+    if (board_type == "aruco")
+        uco_estimator = std::unique_ptr<ArucoBoardEstimator>(
+            new ArucoBoardEstimator());
+    else if (board_type == "charuco")
+        uco_estimator = std::unique_ptr<CharucoBoardEstimator>(
+            new CharucoBoardEstimator());
+    else
+    {
+        yError() << "Tracker::configure"
+                 << "error: invalid board type" << board_type;
+        return false;
+    }
+
     bool ok;
-    ok = aruco_estimator.configure(n_x, n_y, side, separation,
-                                   cam_fx, cam_fy, cam_cx, cam_cy,
-                                   cam_k1, cam_k2, cam_p1, cam_p2);
+    ok = uco_estimator->configure(n_x, n_y, size1, size2, cam_calib_path);
     if (!ok)
     {
         yError() << "Tracker::configure"
-                 << "error: cannot configure the aruco board";
+                 << "error: cannot configure the"
+                 << board_type << "board";
         return false;
     }
     
@@ -194,7 +200,7 @@ bool Tracker::updateModule()
     frame_out = cv::cvarrToMat(img_out.getIplImage());
 
     // aruco board pose estimation
-    aruco_estimator.estimateBoardPose(frame_in, frame_out);
+    uco_estimator->estimateBoardPose(frame_in, frame_out);
     
     // TODO: add gaze tracking here
 

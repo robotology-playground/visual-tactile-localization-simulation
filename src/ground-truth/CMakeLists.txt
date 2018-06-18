@@ -27,6 +27,7 @@ include(YarpInstallationHelpers)
 set(${EXE_TARGET_NAME}_HDR
   include/Tracker.h
   include/GazeController.h
+  include/UcoBoardEstimator.h
   include/ArucoBoardEstimator.h
   include/CharucoBoardEstimator.h
   )
@@ -34,6 +35,7 @@ set(${EXE_TARGET_NAME}_HDR
 set(${EXE_TARGET_NAME}_SRC
   src/Tracker.cpp
   src/GazeController.cpp
+  src/UcoBoardEstimator.cpp
   src/ArucoBoardEstimator.cpp
   src/CharucoBoardEstimator.cpp
   src/main.cpp
@@ -73,3 +75,9 @@ yarp_install(FILES ${${EXE_TARGET_NAME}_CONF_SIM}
 
 yarp_install(FILES ${${EXE_TARGET_NAME}_CONF_SETUP}
   DESTINATION ${ICUBCONTRIB_CONTEXTS_INSTALL_DIR}/${VISUAL_TACTILE_CONTEXT_SETUP})
+
+set(${EXE_TARGET_NAME}_CAM_CALIB
+  ${CMAKE_CURRENT_SOURCE_DIR}/conf/calibration/cam_calib)
+yarp_install(FILES ${${EXE_TARGET_NAME}_CAM_CALIB}
+  DESTINATION ${ICUBCONTRIB_CONTEXTS_INSTALL_DIR}/${VISUAL_TACTILE_CONTEXT_SETUP}/calibration)
+

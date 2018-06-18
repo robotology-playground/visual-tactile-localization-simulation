@@ -24,8 +24,7 @@
 //
 #include <HeadKinematics.h>
 #include <Tracker.h>
-#include <ArucoBoardEstimator.h>
-#include <CharucoBoardEstimator.h>
+#include <UcoBoardEstimator.h>
 #include <GazeController.h>
 
 class Tracker : public yarp::os::RFModule
@@ -37,8 +36,8 @@ private:
     // gaze controller
     GazeController gaze_ctrl;
 
-    // aruco board estimator
-    ArucoBoardEstimator aruco_estimator;
+    // aruco/charuco board estimator
+    std::unique_ptr<UcoBoardEstimator> uco_estimator;
 
     // camera port
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb>> image_input_port;
