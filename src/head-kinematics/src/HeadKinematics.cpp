@@ -62,8 +62,8 @@ bool headKinematics::configure(const std::string &robot_name,
     }
 
     // instantiate forward kinematics for eyes
-    left_eye_kin = iCub::iKin::iCubEye("left");
-    right_eye_kin = iCub::iKin::iCubEye("right");
+    left_eye_kin = iCub::iKin::iCubEye("left_v2");
+    right_eye_kin = iCub::iKin::iCubEye("right_v2");
 
     // limits update is not required to evaluate the forward kinematics
     // using angles from the encoders
