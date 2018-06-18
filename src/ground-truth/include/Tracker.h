@@ -25,6 +25,7 @@
 #include <HeadKinematics.h>
 #include <Tracker.h>
 #include <ArucoBoardEstimator.h>
+#include <CharucoBoardEstimator.h>
 #include <GazeController.h>
 
 class Tracker : public yarp::os::RFModule

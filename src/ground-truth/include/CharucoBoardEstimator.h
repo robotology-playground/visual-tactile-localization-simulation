@@ -9,23 +9,17 @@
  * @authors: Nicola Piga
  */
 
-#ifndef ARUCO_BOARD_ESTIMATOR
-#define ARUCO_BOARD_ESTIMATOR
+#ifndef CHARUCO_BOARD_ESTIMATOR
+#define CHARUCO_BOARD_ESTIMATOR
 
 // opencv
 #include <opencv2/opencv.hpp>
 #include <opencv2/aruco.hpp>
 
-//
-#include <UcoBoardEstimator.h>
-
-class ArucoBoardEstimator : public UcoBoardEstimator
+class CharucoBoardEstimator
 {
 private:
-    cv::Ptr<cv::aruco::Board> board;
-    cv::Ptr<cv::aruco::Dictionary> dictionary;
-    cv::Mat camIntrinsic;
-    cv::Mat camDistortion;
+    
 public:
     bool configure(const int &n_x, const int &n_y, const double &size1, const double &size2,
                    const cv::Mat &camMatrix, const cv::Mat &distCoeffs);

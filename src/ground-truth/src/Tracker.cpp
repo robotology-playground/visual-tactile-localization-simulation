@@ -110,19 +110,19 @@ bool Tracker::configure(yarp::os::ResourceFinder &rf)
         return false;
 
     // head forward kinematics
-    if (!head_kin.configure(robot_name, port_prefix))
-        return false;
+    // if (!head_kin.configure(robot_name, port_prefix))
+    //     return false;
 
     // frame transform client
-    yarp::os::Property propTfClient;
-    propTfClient.put("device", "FrameTransformClient");
-    propTfClient.put("local", port_prefix + "/transformClient");
-    propTfClient.put("remote", "/transformServer");
-    tf_client = nullptr;
-    bool ok_drv = drv_transform_client.open(propTfClient);
-    ok_drv = ok_drv && drv_transform_client.view(tf_client) && tf_client != nullptr;
-    if (!ok_drv)
-        return false;
+    // yarp::os::Property propTfClient;
+    // propTfClient.put("device", "FrameTransformClient");
+    // propTfClient.put("local", port_prefix + "/transformClient");
+    // propTfClient.put("remote", "/transformServer");
+    // tf_client = nullptr;
+    // bool ok_drv = drv_transform_client.open(propTfClient);
+    // ok_drv = ok_drv && drv_transform_client.view(tf_client) && tf_client != nullptr;
+    // if (!ok_drv)
+    //     return false;
 
     // gaze controller
     // const yarp::os::ResourceFinder &rf_gaze = rf.findNestedResourceFinder("gazeController");
@@ -177,11 +177,11 @@ bool Tracker::updateModule()
         return true;
 
     // get current pose of eyes
-    yarp::sig::Vector left_eye_pose;
-    yarp::sig::Vector right_eye_pose;
-    yarp::sig::Vector eye_pose;
-    head_kin.getEyesPose(left_eye_pose, right_eye_pose);
-    eye_pose = (eye_name == "left") ? left_eye_pose : right_eye_pose;
+    // yarp::sig::Vector left_eye_pose;
+    // yarp::sig::Vector right_eye_pose;
+    // yarp::sig::Vector eye_pose;
+    // head_kin.getEyesPose(left_eye_pose, right_eye_pose);
+    // eye_pose = (eye_name == "left") ? left_eye_pose : right_eye_pose;
 
     // prepare input image
     cv::Mat frame_in;
@@ -189,7 +189,7 @@ bool Tracker::updateModule()
 
     // prepare output image
     yarp::sig::ImageOf<yarp::sig::PixelRgb> &img_out = image_output_port.prepare();
-    // img_out = *img_in;
+    img_out = *img_in;
     cv::Mat frame_out;
     frame_out = cv::cvarrToMat(img_out.getIplImage());
 

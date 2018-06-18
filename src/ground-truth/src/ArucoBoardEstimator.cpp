@@ -15,32 +15,23 @@
 //
 #include <ArucoBoardEstimator.h>
 
-bool ArucoBoardEstimator::configure(const int &n_x, const int &n_y, const double &side, const double &separation,
-                                    const double &fx, const double &fy, const double &cx, const double &cy,
-                                    const double &k1, const double &k2, const double &p1, const double &p2)
+bool ArucoBoardEstimator::configure(const int &n_x, const int &n_y, const double &size1, const double &size2,
+                   const cv::Mat &camMatrix, const cv::Mat &distCoeffs)
 {
-    if ((n_x <= 0) || (n_y <= 0) || (side <= 0) || (separation < 0))
+    if ((n_x <= 0) || (n_y <= 0) || (size1 <= 0) || (size2 < 0))
         return false;
     
     // configure a standard Aruco dictionary
     dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_6X6_250);
 
     // configure the board
-    board = cv::aruco::GridBoard::create(n_x, n_y, side, separation, dictionary);
+    // size1 is the length of the marker
+    // size2 is the distance between markers
+    board = cv::aruco::GridBoard::create(n_x, n_y, size1, size2, dictionary);
 
     // configure camera parameters
-    camIntrinsic = cv::Mat::zeros(3,3, CV_64F);
-    camIntrinsic.at<double>(0,0) = fx;
-    camIntrinsic.at<double>(1,1) = fy;
-    camIntrinsic.at<double>(0,2) = cx;
-    camIntrinsic.at<double>(1,2) = cy;
-    camIntrinsic.at<double>(2,2) = 1;
-
-    camDistortion = cv::Mat::zeros(1, 4, CV_64F);    
-    camDistortion.at<double>(0,0) = k1;
-    camDistortion.at<double>(0,1) = k2;
-    camDistortion.at<double>(0,2) = p1;
-    camDistortion.at<double>(0,3) = p2;
+    camIntrinsic = camMatrix;
+    camDistortion = distCoeffs;
 
     return true;
 }

@@ -28,12 +28,14 @@ set(${EXE_TARGET_NAME}_HDR
   include/Tracker.h
   include/GazeController.h
   include/ArucoBoardEstimator.h
+  include/CharucoBoardEstimator.h
   )
 
 set(${EXE_TARGET_NAME}_SRC
   src/Tracker.cpp
   src/GazeController.cpp
   src/ArucoBoardEstimator.cpp
+  src/CharucoBoardEstimator.cpp
   src/main.cpp
   ${HEAD_KIN_SRC}
   )
