@@ -132,7 +132,7 @@
   </connection>
 
   <connection>
-    <from>/si_estimate_viewer/left_eye:o</from>    
+    <from>/icub/camcalib/left/out</from>
     <to>/gtruth_tracker/left_eye:i</to>    
   </connection>
 
