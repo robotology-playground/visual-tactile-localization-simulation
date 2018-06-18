@@ -18,6 +18,8 @@
 #include <ArucoBoardEstimator.h>
 #include <CharucoBoardEstimator.h>
 
+using namespace yarp::math;
+
 bool Tracker::configure(yarp::os::ResourceFinder &rf)
 {
     // get parameter from the configuration
@@ -86,6 +88,17 @@ bool Tracker::configure(yarp::os::ResourceFinder &rf)
         size2 = rf_uco.find("size2").asDouble();
     else
         return false;
+
+    // object sizes
+    const yarp::os::ResourceFinder &rf_object_size =
+        rf.findNestedResourceFinder("objectSizes");
+    obj_width = obj_depth = obj_height = 0.0;
+    if (!(rf_object_size.find("width").isNull()))
+        obj_width = rf_object_size.find("width").asDouble();
+    if (!(rf_object_size.find("depth").isNull()))
+        obj_depth = rf_object_size.find("depth").asDouble();
+    if (!(rf_object_size.find("height").isNull()))
+        obj_height = rf_object_size.find("height").asDouble();
 
     // camera parameters file
     yarp::os::ResourceFinder rf_eye = rf.findNestedResourceFinder(eye_name.c_str());
@@ -170,9 +183,65 @@ bool Tracker::getFrame(yarp::sig::ImageOf<yarp::sig::PixelRgb>* &yarp_image)
     return true;
 }
 
-bool evaluateEstimate(const cv::Mat &camera_pos, const cv::Mat &camera_att,
-                      yarp::sig::Vector &estimate)
+bool Tracker::evaluateEstimate(const cv::Vec3d &pos_wrt_cam, const cv::Vec3d &att_wrt_cam,
+                               const yarp::sig::Vector &camera_pos,
+                               const yarp::sig::Vector &camera_att,
+                               yarp::sig::Vector est_pos,
+                               yarp::sig::Vector est_att)
 {
+    // transformation matrix
+    // from robot root to camera
+    yarp::sig::Matrix root_to_cam(4, 4);
+    root_to_cam.zero();
+    root_to_cam(3, 3) = 1.0;
+
+    root_to_cam(0, 3) = camera_pos[0];
+    root_to_cam(1, 3) = camera_pos[1];
+    root_to_cam(2, 3) = camera_pos[2];
+
+    root_to_cam.setSubmatrix(yarp::math::axis2dcm(camera_att).submatrix(0, 2, 0, 2),
+                             0, 0);
+
+    // rotation between icub camera and opencv camera (is this needed?)
+    yarp::sig::Vector axis_angle(4, 0.0);
+    axis_angle[0] = 1.0;
+    axis_angle[3] = M_PI;
+    yarp::sig::Matrix icub_to_opencv(4, 4);
+    icub_to_opencv.zero();
+    icub_to_opencv(3, 3) = 1.0;
+    icub_to_opencv = yarp::math::axis2dcm(axis_angle);
+
+    // transformation matrix
+    // from camera to corner of the object
+    yarp::sig::Matrix cam_to_obj(4,4);
+    cam_to_obj.zero();
+    cam_to_obj(3, 3) = 1.0;
+
+    cam_to_obj(0, 3) = pos_wrt_cam[0];
+    cam_to_obj(1, 3) = pos_wrt_cam[1];
+    cam_to_obj(2, 3) = pos_wrt_cam[2];
+
+    cv::Mat att_wrt_cam_matrix;
+    cv::Rodrigues(att_wrt_cam, att_wrt_cam_matrix);
+    yarp::sig::Matrix att_wrt_cam_yarp(3, 3);
+    for (size_t i=0; i<3; i++)
+        for (size_t j=0; j<3; j++)
+            att_wrt_cam_yarp(i, j) = att_wrt_cam_matrix.at<double>(i, j);
+
+    // compose transformations
+    yarp::sig::Matrix est_pose = root_to_cam * icub_to_opencv * cam_to_obj;
+    est_att = yarp::math::dcm2axis(est_pose.submatrix(0, 2, 0, 2));
+
+    // pick the center of the object
+    yarp::sig::Vector corner_to_center(4, 0.0);
+    yarp::sig::Vector est_pos_homog(4, 0.0);
+    corner_to_center[0] = obj_width / 2.0;
+    corner_to_center[1] = obj_depth / 2.0;
+    corner_to_center[2] = -obj_height / 2.0;
+    corner_to_center[3] = 1.0;
+    est_pos_homog = est_pose * corner_to_center;
+
+    est_pos = est_pos_homog.subVector(0, 2);
 }
 
 bool Tracker::updateModule()
@@ -200,9 +269,16 @@ bool Tracker::updateModule()
     frame_out = cv::cvarrToMat(img_out.getIplImage());
 
     // aruco board pose estimation
-    uco_estimator->estimateBoardPose(frame_in, frame_out);
-    
-    // TODO: add gaze tracking here
+    cv::Vec3d pos;
+    cv::Vec3d att;
+    bool ok;
+    ok = uco_estimator->estimateBoardPose(frame_in, frame_out,
+                                          pos, att);
+    if (ok)
+    {
+
+        // TODO: add gaze tracking here        
+    }
 
     // send image
     image_output_port.write();

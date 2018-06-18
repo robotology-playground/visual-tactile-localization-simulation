@@ -55,6 +55,11 @@ private:
     std::string tf_source;
     std::string tf_target;
 
+    // object sizes
+    double obj_width;
+    double obj_depth;
+    double obj_height;
+
     bool getFrame(yarp::sig::ImageOf<yarp::sig::PixelRgb>* &yarp_image);
 
     /*
@@ -69,7 +74,7 @@ private:
      * @param est_pos estimated position of the object w.r.t root frame
      * @param est_att estimated attitude (axis/angle) of the object w.r.t root frame
      */
-    bool evaluateEstimate(const cv::Mat &pos_wrt_cam, const cv::Mat &att_wrt_cam,
+    bool evaluateEstimate(const cv::Vec3d &pos_wrt_cam, const cv::Vec3d &att_wrt_cam,
                           const yarp::sig::Vector &camera_pos,
                           const yarp::sig::Vector &camera_att,
                           yarp::sig::Vector est_pos,
