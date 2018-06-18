@@ -60,6 +60,14 @@ bool Tracker::configure(yarp::os::ResourceFinder &rf)
         rf.findNestedResourceFinder(uco_key.c_str());
     int n_x;
     int n_y;
+    if (!(rf_uco.find("nX").isNull()))
+        n_x = rf_uco.find("nX").asInt();
+    else
+        return false;
+    if (!(rf_uco.find("nY").isNull()))
+        n_y = rf_uco.find("nY").asInt();
+    else
+        return false;
     // for aruco boards
     // size1 := marker side (m)
     // size2 := marker separtion (m)
@@ -70,14 +78,6 @@ bool Tracker::configure(yarp::os::ResourceFinder &rf)
     //
     double size1;
     double size2;
-    if (!(rf_uco.find("nX").isNull()))
-        n_x = rf_uco.find("nX").asInt();
-    else
-        return false;
-    if (!(rf_uco.find("nY").isNull()))
-        n_y = rf_uco.find("nY").asInt();
-    else
-        return false;
     if (!(rf_uco.find("size1").isNull()))
         size1 = rf_uco.find("size1").asDouble();
     else
