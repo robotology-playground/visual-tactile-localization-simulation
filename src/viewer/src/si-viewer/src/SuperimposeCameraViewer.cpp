@@ -52,6 +52,8 @@ private:
     // frame transform client
     yarp::dev::PolyDriver drv_transform_client;
     yarp::dev::IFrameTransform* tf_client;
+    std::string gt_tf_source;
+    std::string gt_tf_target;
     std::string est_tf_source;
     std::string est_tf_target;
 
@@ -85,10 +87,16 @@ public:
 
         est_tf_source = "/iCub/frame";
         est_tf_target = "/estimate/frame";
+        gt_tf_source = "/iCub/frame";
+        gt_tf_target = "/ground_truth/frame";
         if (!rf.find("estTfSource").isNull())
             est_tf_source = rf.find("estTfSource").asString();
         if (!rf.find("estTfTarget").isNull())
             est_tf_target = rf.find("estTfTarget").asString();
+        if (!rf.find("gtTfSource").isNull())
+            gt_tf_source = rf.find("gtTfSource").asString();
+        if (!rf.find("gtTfTarget").isNull())
+            gt_tf_target = rf.find("gtTfTarget").asString();
 
         std::string shaders_path = ".";
         if (!rf.find("shadersPath").isNull())
