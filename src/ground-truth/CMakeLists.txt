@@ -16,6 +16,7 @@ find_package(YARP REQUIRED)
 find_package(ICUB)
 find_package(OpenCV REQUIRED)
 find_package(HEAD_KIN REQUIRED)
+find_package(GAZE_CTRL REQUIRED)
 
 list(APPEND CMAKE_MODULE_PATH
   ${YARP_MODULE_PATH}
@@ -26,7 +27,6 @@ include(YarpInstallationHelpers)
 # Source and header files
 set(${EXE_TARGET_NAME}_HDR
   include/Tracker.h
-  include/GazeController.h
   include/UcoBoardEstimator.h
   include/ArucoBoardEstimator.h
   include/CharucoBoardEstimator.h
@@ -34,12 +34,10 @@ set(${EXE_TARGET_NAME}_HDR
 
 set(${EXE_TARGET_NAME}_SRC
   src/Tracker.cpp
-  src/GazeController.cpp
   src/UcoBoardEstimator.cpp
   src/ArucoBoardEstimator.cpp
   src/CharucoBoardEstimator.cpp
   src/main.cpp
-  ${HEAD_KIN_SRC}
   )
 
 # Application target calls
@@ -47,13 +45,15 @@ add_executable(${EXE_TARGET_NAME}
   ${${EXE_TARGET_NAME}_HDR}
   ${${EXE_TARGET_NAME}_SRC}
   ${HEAD_KIN_SRC}
+  ${GAZE_CTRL_SRC}
   )
 
 target_include_directories(${EXE_TARGET_NAME} PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/include  
   ${YARP_INCLUDE_DIRS}
   ${ICUB_INCLUDE_DIRS}
-  ${HEAD_KIN_INCLUDE}  
+  ${HEAD_KIN_INCLUDE}
+  ${GAZE_CTRL_INCLUDE}
   )
 
 target_link_libraries(${EXE_TARGET_NAME}
