@@ -31,7 +31,7 @@ class Tracker : public yarp::os::RFModule
 {
 private:
     // head kinematics
-    headKinematics head_kin;
+    /* headKinematics head_kin; */
 
     // gaze controller
     GazeController gaze_ctrl;

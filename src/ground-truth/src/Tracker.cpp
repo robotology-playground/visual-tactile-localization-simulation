@@ -117,8 +117,8 @@ bool Tracker::configure(yarp::os::ResourceFinder &rf)
         return false;
 
     // head forward kinematics
-    if (!head_kin.configure(robot_name, port_prefix))
-        return false;
+    // if (!head_kin.configure(robot_name, port_prefix))
+    //     return false;
 
     // frame transform client
     yarp::os::Property propTfClient;
@@ -132,13 +132,13 @@ bool Tracker::configure(yarp::os::ResourceFinder &rf)
         return false;
 
     // gaze controller
-    // const yarp::os::ResourceFinder &rf_gaze = rf.findNestedResourceFinder("gazeController");
-    // if (!gaze_ctrl.configure(rf_gaze))
-    // {
-    //     yError() << "Tracker::configure"
-    //              << "error: cannot configure the gaze controller";
-    //     return false;
-    // }
+    const yarp::os::ResourceFinder &rf_gaze = rf.findNestedResourceFinder("gazeController");
+    if (!gaze_ctrl.configure(rf_gaze))
+    {
+        yError() << "Tracker::configure"
+                 << "error: cannot configure the gaze controller";
+        return false;
+    }
 
     // aruco/charuco board estimator
     if (board_type == "aruco")
@@ -267,11 +267,14 @@ bool Tracker::updateModule()
         return true;
 
     // get current pose of eyes
-    yarp::sig::Vector left_eye_pose;
-    yarp::sig::Vector right_eye_pose;
-    yarp::sig::Vector eye_pose;
-    head_kin.getEyesPose(left_eye_pose, right_eye_pose);
-    eye_pose = (eye_name == "left") ? left_eye_pose : right_eye_pose;
+    // yarp::sig::Vector left_eye_pose;
+    // yarp::sig::Vector right_eye_pose;
+    // yarp::sig::Vector eye_pose;
+    // head_kin.getEyesPose(left_eye_pose, right_eye_pose);
+    // eye_pose = (eye_name == "left") ? left_eye_pose : right_eye_pose;
+    yarp::sig::Vector eye_pos;
+    yarp::sig::Vector eye_att;
+    gaze_ctrl.getCameraPose(eye_name, eye_pos, eye_att);
 
     // prepare input image
     cv::Mat frame_in;
@@ -294,7 +297,7 @@ bool Tracker::updateModule()
         is_estimate_available = true;
 
         evaluateEstimate(pos_wrt_cam, att_wrt_cam,
-                         eye_pose.subVector(0, 2), eye_pose.subVector(3, 6),
+                         eye_pos, eye_att,
                          est_pose);
     }
 
@@ -315,7 +318,10 @@ bool Tracker::close()
     image_output_port.close();
 
     // close head kinematics
-    head_kin.close();
+    // head_kin.close();
+
+    // close gaze controller
+    gaze_ctrl.close();
 
     // close transform client
     drv_transform_client.close();
