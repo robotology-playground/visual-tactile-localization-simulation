@@ -435,7 +435,7 @@ class Viewer : public RFModule, RateThread
             process(*new_pc);
         }
 
-        update_estimate_view();
+        updateView();
     }
 
     /****************************************************************/
@@ -468,7 +468,7 @@ class Viewer : public RFModule, RateThread
     }
 
     /****************************************************************/
-    void update_estimate_view()
+    void updateView()
     {
         LockGuard lg(mutex);
 
