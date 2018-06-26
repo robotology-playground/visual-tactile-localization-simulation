@@ -244,6 +244,10 @@ class Viewer : public RFModule, RateThread
 
     IFrameTransform* tf_client;
     PolyDriver drv_transform_client;
+    std::string est_source_name;
+    std::string est_target_name;
+    std::string gt_source_name;
+    std::string gt_target_name;
 
     unique_ptr<Points> vtk_all_points;
     // cube for the estimate of the pose
@@ -340,6 +344,22 @@ class Viewer : public RFModule, RateThread
                     << "[" << obj_name << "] in configuration file";
             return false;
         }
+
+        // get names of source and target frames
+        // to be used with the FrameTransform client
+        est_source_name = "/iCub/frame";
+        gt_source_name = "/iCub/frame";
+        est_target_name = "/estimate/frame";
+        gt_target_name = "/ground_truth/frame";
+
+        if (!rf.find("estimateSourceFrame").isNull())
+            est_source_name = rf.find("estimateSourceFrame").asString();
+        if (!rf.find("estimateTargetFrame").isNull())
+            est_target_name = rf.find("estimateTargetFrame").asString();
+        if (!rf.find("groundTruthSourceFrame").isNull())
+            gt_source_name = rf.find("groundTruthSourceFrame").asString();
+        if (!rf.find("groundTruthTargetFrame").isNull())
+            gt_target_name = rf.find("groundTruthTargetFrame").asString();
 
         vtk_cube_est=unique_ptr<Cube>(new Cube());
         vtk_cube_gt=unique_ptr<Cube>(new Cube());
