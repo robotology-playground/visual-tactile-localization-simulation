@@ -111,9 +111,15 @@
   </module>
 
   <module>
-    <name>vtl-si-viewer</name>
+    <name>vtl-vtk-viewer</name>
     <node>localhost</node>
     <parameters>--context simVisualTactileLocalization</parameters>
+    <environment>YARP_CLOCK=/clock;YARP_FORWARD_LOG_ENABLE=1</environment>
+  </module>
+
+  <module>
+    <name>vtl-si-viewer</name>
+    <node>localhost</node>
   </module>
 
   <module>
