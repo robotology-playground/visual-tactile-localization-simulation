@@ -154,9 +154,8 @@ public:
         mesh_cad = std::unique_ptr<SICAD>(new SICAD(mesh_container,
                                                     cam_width, cam_height, cam_fx, cam_fy, cam_cx, cam_cy,
                                                     1,
-                                                    {1.0, 0.0, 0.0, static_cast<float>(M_PI)},
                                                     shaders_path,
-                                                    false));
+                                                    {1.0, 0.0, 0.0, static_cast<float>(M_PI)}));
         mesh_cad->setBackgroundOpt(true);
         mesh_cad->setWireframeOpt(true);
 
