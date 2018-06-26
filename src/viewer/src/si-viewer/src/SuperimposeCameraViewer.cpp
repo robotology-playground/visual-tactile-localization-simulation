@@ -42,9 +42,10 @@ private:
     // selected eye name
     std::string eye_name;
 
-    // object mesh
+    // SICAD objects
     SICAD::ModelPathContainer mesh_container;
-    std::unique_ptr<SICAD> mesh_cad;
+    std::unique_ptr<SICAD> est_mesh_cad;
+    std::unique_ptr<SICAD> gt_mesh_cad;
 
     // period
     double period;
@@ -56,6 +57,14 @@ private:
     std::string gt_tf_target;
     std::string est_tf_source;
     std::string est_tf_target;
+
+    // poses
+    yarp::sig::Matrix estimate;
+    yarp::sig::Matrix ground_truth;
+
+    // flags
+    bool is_est_available;
+    bool is_gt_available;
 
 public:
     bool configure(yarp::os::ResourceFinder &rf) override
@@ -98,9 +107,12 @@ public:
         if (!rf.find("gtTfTarget").isNull())
             gt_tf_target = rf.find("gtTfTarget").asString();
 
-        std::string shaders_path = ".";
-        if (!rf.find("shadersPath").isNull())
-            shaders_path = rf.findPath("shadersPath");
+        std::string green_shaders_path = ".";
+        std::string red_shaders_path = ".";
+        if (!rf.find("greenShadersPath").isNull())
+            green_shaders_path = rf.findPath("greenShadersPath");
+        if (!rf.find("redShadersPath").isNull())
+            red_shaders_path = rf.findPath("redShadersPath");
 
         // port prefix
         std::string port_prefix = "/si_estimate_viewer/";
@@ -158,14 +170,31 @@ public:
                 cam_cy = 113.51;
             }
         }
+
+        // initialize SICAD objects
         mesh_container.emplace("object", mesh_path);
-        mesh_cad = std::unique_ptr<SICAD>(new SICAD(mesh_container,
-                                                    cam_width, cam_height, cam_fx, cam_fy, cam_cx, cam_cy,
-                                                    1,
-                                                    shaders_path,
-                                                    {1.0, 0.0, 0.0, static_cast<float>(M_PI)}));
-        mesh_cad->setBackgroundOpt(true);
-        mesh_cad->setWireframeOpt(true);
+
+        // estimate
+        est_mesh_cad = std::unique_ptr<SICAD>(new SICAD(mesh_container,
+                                                        cam_width, cam_height, cam_fx, cam_fy, cam_cx, cam_cy,
+                                                        1,
+                                                        red_shaders_path,
+                                                        {1.0, 0.0, 0.0, static_cast<float>(M_PI)}));
+        est_mesh_cad->setBackgroundOpt(true);
+        est_mesh_cad->setWireframeOpt(true);
+
+        // ground truth
+        gt_mesh_cad = std::unique_ptr<SICAD>(new SICAD(mesh_container,
+                                                       cam_width, cam_height, cam_fx, cam_fy, cam_cx, cam_cy,
+                                                       1,
+                                                       green_shaders_path,
+                                                       {1.0, 0.0, 0.0, static_cast<float>(M_PI)}));
+        gt_mesh_cad->setBackgroundOpt(true);
+        gt_mesh_cad->setWireframeOpt(true);
+
+        // reset flags
+        is_est_available = false;
+        is_gt_available = false;
 
         return true;
     }
@@ -186,6 +215,21 @@ public:
         return true;
     }
 
+    void homogeneousToSIModelPose(const yarp::sig::Matrix &homog,
+                                  Superimpose::ModelPose& model_pose)
+    {
+        // convert a homogeneous transformation to a Superimpose::ModelPose
+        model_pose.resize(7);
+        model_pose[0] = homog(0, 3);
+        model_pose[1] = homog(1, 3);
+        model_pose[2] = homog(2, 3);
+        yarp::sig::Vector axis_angle = yarp::math::dcm2axis(homog.submatrix(0, 2, 0, 2));
+        model_pose[3] = axis_angle[0];
+        model_pose[4] = axis_angle[1];
+        model_pose[5] = axis_angle[2];
+        model_pose[6] = axis_angle[3];
+    }
+
     bool updateModule() override
     {
         // get image from camera
@@ -194,22 +238,30 @@ public:
             return true;
 
         // get current estimate from the filter
-        yarp::sig::Matrix estimate;
-        if (!tf_client->getTransform(est_tf_target, est_tf_source, estimate))
+        if (tf_client->getTransform(est_tf_target, est_tf_source, estimate))
+            is_est_available = true;
+        // get current ground truth
+        if (tf_client->getTransform(gt_tf_target, gt_tf_source, ground_truth))
+            is_gt_available = true;
+
+        // if never received anything stops here
+        if ((!is_est_available) && (!is_gt_available))
             return true;
 
-        // store estimate as a Superimpose::ModelPoseContainer
-        Superimpose::ModelPose obj_pose(7);
-        obj_pose[0] = estimate(0, 3);
-        obj_pose[1] = estimate(1, 3);
-        obj_pose[2] = estimate(2, 3);
-        yarp::sig::Vector axis_angle = yarp::math::dcm2axis(estimate.submatrix(0, 2, 0, 2));
-        obj_pose[3] = axis_angle[0];
-        obj_pose[4] = axis_angle[1];
-        obj_pose[5] = axis_angle[2];
-        obj_pose[6] = axis_angle[3];
-        Superimpose::ModelPoseContainer objpose_map;
-        objpose_map.emplace("object", obj_pose);
+        Superimpose::ModelPoseContainer est_pose_map;
+        Superimpose::ModelPoseContainer gt_pose_map;
+        Superimpose::ModelPose est_pose;
+        Superimpose::ModelPose gt_pose;
+        if (is_est_available)
+        {
+            homogeneousToSIModelPose(estimate, est_pose);
+            est_pose_map.emplace("object", est_pose);
+        }
+        if (is_gt_available)
+        {
+            homogeneousToSIModelPose(ground_truth, gt_pose);
+            gt_pose_map.emplace("object", gt_pose);
+        }
 
         // get current pose of eyes
         yarp::sig::Vector left_eye_pose;
@@ -225,11 +277,16 @@ public:
         cv_img = cv::cvarrToMat(img_out.getIplImage());
 
         // superimpose estimate on image
-        mesh_cad->superimpose(objpose_map,
-                              eye_pose.subVector(0, 2).data(),
-                              eye_pose.subVector(3, 6).data(),
-                              cv_img);
-
+        if (is_est_available)
+            est_mesh_cad->superimpose(est_pose_map,
+                                      eye_pose.subVector(0, 2).data(),
+                                      eye_pose.subVector(3, 6).data(),
+                                      cv_img);
+        if (is_gt_available)
+            gt_mesh_cad->superimpose(gt_pose_map,
+                                     eye_pose.subVector(0, 2).data(),
+                                     eye_pose.subVector(3, 6).data(),
+                                     cv_img);
         // send image
         image_output_port.write();
 
