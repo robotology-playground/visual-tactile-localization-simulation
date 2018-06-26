@@ -201,6 +201,12 @@ public:
     }
 
     /****************************************************************/
+    void set_color(const double &r, const double &g, const double &b)
+    {
+        vtk_actor->GetProperty()->SetColor(r, g, b);
+    }
+
+    /****************************************************************/
     void set_sizes(const double &width, const double &depth, const double &height)
     {
         this->width = width;
@@ -368,6 +374,9 @@ class Viewer : public RFModule, RateThread
         vtk_cube_gt->set_sizes(obj_size[0], obj_size[1], obj_size[2]);
 	// vtk_cube_est->set_sizes(0.23, 0.178, 0.04);
         // vtk_cube_est->set_sizes(0.205, 0.13, 0.055);
+
+        vtk_cube_est->set_color(1.0, 0.0, 0.0);
+        vtk_cube_gt->set_color(0.0, 1.0, 0.0);
 
         vtk_renderer=vtkSmartPointer<vtkRenderer>::New();
         vtk_renderWindow=vtkSmartPointer<vtkRenderWindow>::New();
