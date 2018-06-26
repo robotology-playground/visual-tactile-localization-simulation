@@ -475,22 +475,19 @@ class Viewer : public RFModule, RateThread
         yarp::sig::Matrix estimate;
         yarp::sig::Matrix ground_truth;
 
-        std::string source = "/iCub/frame";
-        std::string target = "/estimate/frame";
-
         // try to get the current estimate of the filter
-        if (tf_client->getTransform(target, source, estimate))
+        if (tf_client->getTransform(est_target_name, est_source_name, estimate))
         {
             vtk_cube_est->set_pose(estimate.getCol(3).subVector(0, 2),
                                    estimate.submatrix(0, 2, 0, 2));
         }
 
         // try to get the current ground truth
-        // if (tf_client->getTransform(target, source, estimate))
-        // {
-        //     vtk_cube_gt->set_pose(ground_truth.getCol(3).subVector(0, 2),
-        //                           ground_truth.submatrix(0, 2, 0, 2));
-        // }
+        if (tf_client->getTransform(gt_target_name, gt_source_name, ground_truth))
+        {
+            vtk_cube_gt->set_pose(ground_truth.getCol(3).subVector(0, 2),
+                                  ground_truth.submatrix(0, 2, 0, 2));
+        }
     }
 
     /****************************************************************/
