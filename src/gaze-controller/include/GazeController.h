@@ -9,13 +9,13 @@
  * @authors: Nicola Piga
  */
 
+#ifndef GAZE_CONTROLLER_H
+#define GAZE_CONTROLLER_H
+
 // yarp
 #include <yarp/os/ResourceFinder.h>
 #include <yarp/dev/PolyDriver.h>
 #include <yarp/dev/GazeControl.h>
-
-#ifndef GAZE_CONTROLLER_H
-#define GAZE_CONTROLLER_H
 
 class GazeController
 {
@@ -29,8 +29,8 @@ class GazeController
     int startup_cart_context;
 
     // default trajectory time
-    int eyes_traj_time;
-    int neck_traj_time;
+    double eyes_traj_time;
+    double neck_traj_time;
 
 public:
     bool configure(const yarp::os::ResourceFinder &rf);
@@ -39,6 +39,7 @@ public:
     bool getCameraPose(const std::string &eye_name,
                        yarp::sig::Vector &pos,
                        yarp::sig::Vector &att);
+    bool setTrajectoryTimes();
 };
 
 #endif

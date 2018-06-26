@@ -91,10 +91,6 @@ bool GazeController::configure(const yarp::os::ResourceFinder &rf)
         return false;
     }
 
-    // set the default trajectory time
-    igaze->setEyesTrajTime(eyes_traj_time);
-    igaze->setNeckTrajTime(neck_traj_time);
-
     return true;
 }
 
@@ -146,4 +142,14 @@ bool GazeController::getCameraPose(const std::string &eye_name,
         return igaze->getRightEyePose(pos, att);
     else if(eye_name == "left")
         return igaze->getLeftEyePose(pos, att);
+}
+
+bool GazeController::setTrajectoryTimes()
+{
+    // set the default trajectory time
+    if (!igaze->setEyesTrajTime(eyes_traj_time))
+        return false;
+    
+    if (!igaze->setNeckTrajTime(neck_traj_time))
+        return false;
 }
