@@ -29,7 +29,7 @@
 #include <HeadKinematics.h>
 #include <cstdlib>
 
-class EstimateViewer : public yarp::os::RFModule
+class SuperimposeViewer : public yarp::os::RFModule
 {
 private:
     // head kinematics
@@ -257,6 +257,6 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    EstimateViewer viewer;
+    SuperimposeViewer viewer;
     return viewer.runModule(rf);
 }
