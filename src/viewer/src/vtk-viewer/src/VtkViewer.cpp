@@ -246,7 +246,10 @@ class Viewer : public RFModule, RateThread
     PolyDriver drv_transform_client;
 
     unique_ptr<Points> vtk_all_points;
-    unique_ptr<Cube> vtk_cube;
+    // cube for the estimate of the pose
+    unique_ptr<Cube> vtk_cube_est;
+    // cube for the ground truth
+    unique_ptr<Cube> vtk_cube_gt;
 
     vtkSmartPointer<vtkRenderer> vtk_renderer;
     vtkSmartPointer<vtkRenderWindow> vtk_renderWindow;
@@ -337,10 +340,14 @@ class Viewer : public RFModule, RateThread
                     << "[" << obj_name << "] in configuration file";
             return false;
         }
-	vtk_cube=unique_ptr<Cube>(new Cube());
-        vtk_cube->set_sizes(obj_size[0], obj_size[1], obj_size[2]);
-	// vtk_cube->set_sizes(0.23, 0.178, 0.04);
-        // vtk_cube->set_sizes(0.205, 0.13, 0.055);
+
+        vtk_cube_est=unique_ptr<Cube>(new Cube());
+        vtk_cube_gt=unique_ptr<Cube>(new Cube());
+
+        vtk_cube_est->set_sizes(obj_size[0], obj_size[1], obj_size[2]);
+        vtk_cube_gt->set_sizes(obj_size[0], obj_size[1], obj_size[2]);
+	// vtk_cube_est->set_sizes(0.23, 0.178, 0.04);
+        // vtk_cube_est->set_sizes(0.205, 0.13, 0.055);
 
         vtk_renderer=vtkSmartPointer<vtkRenderer>::New();
         vtk_renderWindow=vtkSmartPointer<vtkRenderWindow>::New();
@@ -350,7 +357,8 @@ class Viewer : public RFModule, RateThread
         vtk_renderWindowInteractor->SetRenderWindow(vtk_renderWindow);
 
         vtk_renderer->AddActor(vtk_all_points->get_actor());
-        vtk_renderer->AddActor(vtk_cube->get_actor());
+        vtk_renderer->AddActor(vtk_cube_est->get_actor());
+        vtk_renderer->AddActor(vtk_cube_gt->get_actor());
         vtk_renderer->SetBackground(0.1,0.2,0.2);
 
         vtk_axes=vtkSmartPointer<vtkAxesActor>::New();
@@ -444,16 +452,25 @@ class Viewer : public RFModule, RateThread
     {
         LockGuard lg(mutex);
 
-        // get current estimate from the filter
+        yarp::sig::Matrix estimate;
+        yarp::sig::Matrix ground_truth;
+
         std::string source = "/iCub/frame";
         std::string target = "/estimate/frame";
-        yarp::sig::Matrix estimate;
-        if (!tf_client->getTransform(target, source, estimate))
-            return;
 
-        // update the view of the estimate
-        vtk_cube->set_pose(estimate.getCol(3).subVector(0, 2),
-                           estimate.submatrix(0, 2, 0, 2));
+        // try to get the current estimate of the filter
+        if (tf_client->getTransform(target, source, estimate))
+        {
+            vtk_cube_est->set_pose(estimate.getCol(3).subVector(0, 2),
+                                   estimate.submatrix(0, 2, 0, 2));
+        }
+
+        // try to get the current ground truth
+        // if (tf_client->getTransform(target, source, estimate))
+        // {
+        //     vtk_cube_gt->set_pose(ground_truth.getCol(3).subVector(0, 2),
+        //                           ground_truth.submatrix(0, 2, 0, 2));
+        // }
     }
 
     /****************************************************************/
