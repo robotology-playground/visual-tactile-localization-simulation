@@ -52,8 +52,8 @@ private:
     // frame transform client
     yarp::dev::PolyDriver drv_transform_client;
     yarp::dev::IFrameTransform* tf_client;
-    std::string tf_source;
-    std::string tf_target;
+    std::string est_tf_source;
+    std::string est_tf_target;
 
 public:
     bool configure(yarp::os::ResourceFinder &rf) override
@@ -83,12 +83,12 @@ public:
         if (!rf.find("period").isNull())
             period = rf.find("period").asDouble();
 
-        tf_source = "/iCub/frame";
-        if (!rf.find("tfSource").isNull())
-            tf_source = rf.find("tfSource").asString();
-        tf_target = "/estimate/frame";
-        if (!rf.find("tfTarget").isNull())
-            tf_target = rf.find("tfTarget").asString();
+        est_tf_source = "/iCub/frame";
+        est_tf_target = "/estimate/frame";
+        if (!rf.find("estTfSource").isNull())
+            est_tf_source = rf.find("estTfSource").asString();
+        if (!rf.find("estTfTarget").isNull())
+            est_tf_target = rf.find("estTfTarget").asString();
 
         std::string shaders_path = ".";
         if (!rf.find("shadersPath").isNull())
@@ -187,7 +187,7 @@ public:
 
         // get current estimate from the filter
         yarp::sig::Matrix estimate;
-        if (!tf_client->getTransform(tf_target, tf_source, estimate))
+        if (!tf_client->getTransform(est_tf_target, est_tf_source, estimate))
             return true;
 
         // store estimate as a Superimpose::ModelPoseContainer
