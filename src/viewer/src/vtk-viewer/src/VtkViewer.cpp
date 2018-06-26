@@ -491,18 +491,6 @@ class Viewer : public RFModule, RateThread
     }
 
     /****************************************************************/
-    void center_camera()
-    {
-        vector<double> bounds(6),centroid(3);
-        vtk_all_points->get_polydata()->GetBounds(bounds.data());
-        for (size_t i=0; i<centroid.size(); i++)
-            centroid[i]=0.5*(bounds[i<<1]+bounds[(i<<1)+1]);
-
-        vtk_camera->SetPosition(centroid[0]+1.0,centroid[1],centroid[2]+0.5);
-        vtk_camera->SetFocalPoint(centroid.data());
-    }
-
-    /****************************************************************/
     bool respond(const Bottle &command, Bottle &reply) override
     {
         LockGuard lg(mutex);
@@ -512,14 +500,8 @@ class Viewer : public RFModule, RateThread
         {
             reply.addVocab(yarp::os::Vocab::encode("many"));
             reply.addString("Available commands:");
-            reply.addString("- center-camera");
             reply.addString("- help");
             reply.addString("- quit");
-        }
-        else if (cmd == "center-camera")
-        {
-            center_camera();
-            reply.addString("Camera centered.");
         }
         else
             // the father class already handles the "quit" command
