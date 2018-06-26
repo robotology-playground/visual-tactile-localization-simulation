@@ -56,19 +56,32 @@ yarp_install(FILES ${${EXE_TARGET_NAME}_CONF_SETUP}
   DESTINATION ${ICUBCONTRIB_CONTEXTS_INSTALL_DIR}/${VISUAL_TACTILE_CONTEXT_SETUP})
 
 # Shader
-set(SHADER_RESOURCES
-  ${CMAKE_CURRENT_SOURCE_DIR}/shader/shader_background.vert
-  ${CMAKE_CURRENT_SOURCE_DIR}/shader/shader_model.vert
-  ${CMAKE_CURRENT_SOURCE_DIR}/shader/shader_frame.vert
-  ${CMAKE_CURRENT_SOURCE_DIR}/shader/shader_background.frag
-  ${CMAKE_CURRENT_SOURCE_DIR}/shader/shader_model.frag
-  ${CMAKE_CURRENT_SOURCE_DIR}/shader/shader_frame.frag
+set(SHADER_GREEN_RESOURCES
+  ${CMAKE_CURRENT_SOURCE_DIR}/shader/green_shader/shader_background.vert
+  ${CMAKE_CURRENT_SOURCE_DIR}/shader/green_shader/shader_model.vert
+  ${CMAKE_CURRENT_SOURCE_DIR}/shader/green_shader/shader_frame.vert
+  ${CMAKE_CURRENT_SOURCE_DIR}/shader/green_shader/shader_background.frag
+  ${CMAKE_CURRENT_SOURCE_DIR}/shader/green_shader/shader_model.frag
+  ${CMAKE_CURRENT_SOURCE_DIR}/shader/green_shader/shader_frame.frag
   )
 
-yarp_install(FILES ${SHADER_RESOURCES}
-  DESTINATION ${ICUBCONTRIB_CONTEXTS_INSTALL_DIR}/${VISUAL_TACTILE_CONTEXT_SIM}/shader)
-yarp_install(FILES ${SHADER_RESOURCES}
-  DESTINATION ${ICUBCONTRIB_CONTEXTS_INSTALL_DIR}/${VISUAL_TACTILE_CONTEXT_SETUP}/shader)
+set(SHADER_RED_RESOURCES
+  ${CMAKE_CURRENT_SOURCE_DIR}/shader/red_shader/shader_background.vert
+  ${CMAKE_CURRENT_SOURCE_DIR}/shader/red_shader/shader_model.vert
+  ${CMAKE_CURRENT_SOURCE_DIR}/shader/red_shader/shader_frame.vert
+  ${CMAKE_CURRENT_SOURCE_DIR}/shader/red_shader/shader_background.frag
+  ${CMAKE_CURRENT_SOURCE_DIR}/shader/red_shader/shader_model.frag
+  ${CMAKE_CURRENT_SOURCE_DIR}/shader/red_shader/shader_frame.frag
+  )
+
+yarp_install(FILES ${SHADER_GREEN_RESOURCES}
+  DESTINATION ${ICUBCONTRIB_CONTEXTS_INSTALL_DIR}/${VISUAL_TACTILE_CONTEXT_SIM}/shader_green)
+yarp_install(FILES ${SHADER_GREEN_RESOURCES}
+  DESTINATION ${ICUBCONTRIB_CONTEXTS_INSTALL_DIR}/${VISUAL_TACTILE_CONTEXT_SETUP}/shader_green)
+yarp_install(FILES ${SHADER_RED_RESOURCES}
+  DESTINATION ${ICUBCONTRIB_CONTEXTS_INSTALL_DIR}/${VISUAL_TACTILE_CONTEXT_SIM}/shader_red)
+yarp_install(FILES ${SHADER_RED_RESOURCES}
+  DESTINATION ${ICUBCONTRIB_CONTEXTS_INSTALL_DIR}/${VISUAL_TACTILE_CONTEXT_SETUP}/shader_red)
 
 # Mesh
 set(MESH_RESOURCES
