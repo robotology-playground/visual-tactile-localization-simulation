@@ -15,7 +15,8 @@
 //
 #include <GazeController.h>
 
-bool GazeController::configure(const yarp::os::ResourceFinder &rf)
+bool GazeController::configure(const yarp::os::ResourceFinder &rf,
+                               const std::string &port_prefix)
 {
     yarp::os::Property prop;
     bool ok;
@@ -50,7 +51,7 @@ bool GazeController::configure(const yarp::os::ResourceFinder &rf)
     // prepare properties for the GazeController
     prop.put("device", "gazecontrollerclient");
     prop.put("remote", "/iKinGazeCtrl");
-    prop.put("local", "/ground-truth-tracker/gazecontroller");
+    prop.put("local", port_prefix + "/gazecontroller");
 
     // let's give the controller some time to warm up
     ok = false;

@@ -33,7 +33,8 @@ class GazeController
     double neck_traj_time;
 
 public:
-    bool configure(const yarp::os::ResourceFinder &rf);
+    bool configure(const yarp::os::ResourceFinder &rf,
+                   const std::string &port_prefix);
     bool close();
     bool setReference(const yarp::sig::Vector &fixation_point);
     bool getCameraPose(const std::string &eye_name,
