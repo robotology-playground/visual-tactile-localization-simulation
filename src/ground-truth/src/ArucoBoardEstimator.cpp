@@ -22,7 +22,7 @@ bool ArucoBoardEstimator::configure(const int &n_x, const int &n_y, const double
         return false;
     
     // configure a standard Aruco dictionary
-    dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_6X6_250);
+    dictionary = cv::aruco::getPredefinedDictionary(cv::aruco::DICT_4X4_250);
 
     // configure the board
     // size1 is the marker side (m)
