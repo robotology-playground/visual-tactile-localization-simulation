@@ -33,7 +33,7 @@ public:
     virtual bool configure(const int &n_x, const int &n_y, const double &size1, const double &size2,
                            const std::string &cam_calib_path) = 0;
     virtual bool estimateBoardPose(const cv::Mat &img_in, cv::Mat &img_out,
-                                   cv::Vec3d &pos, cv::Vec3d &att) = 0;
+                                   cv::Mat &pos, cv::Mat &att) = 0;
 };
 
 #endif

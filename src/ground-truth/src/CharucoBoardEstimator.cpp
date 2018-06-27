@@ -46,7 +46,7 @@ bool CharucoBoardEstimator::configure(const int &n_x, const int &n_y, const doub
 }
 
 bool CharucoBoardEstimator::estimateBoardPose(const cv::Mat &img_in, cv::Mat &img_out,
-                                              cv::Vec3d &pos, cv::Vec3d &att)
+                                              cv::Mat &pos, cv::Mat &att)
 {
     std::vector<int> marker_ids, charuco_ids;
     std::vector<std::vector<cv::Point2f> > marker_corners, rejected_markers;

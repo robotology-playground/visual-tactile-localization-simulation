@@ -46,7 +46,7 @@ bool ArucoBoardEstimator::configure(const int &n_x, const int &n_y, const double
 }
 
 bool ArucoBoardEstimator::estimateBoardPose(const cv::Mat &img_in, cv::Mat &img_out,
-                                            cv::Vec3d &pos, cv::Vec3d &att)
+                                            cv::Mat &pos, cv::Mat &att)
 {
     // perform marker detection
     std::vector<int> ids;
