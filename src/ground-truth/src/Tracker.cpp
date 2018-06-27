@@ -220,16 +220,6 @@ bool Tracker::evaluateEstimate(const cv::Mat &pos_wrt_cam, const cv::Mat &att_wr
     root_to_cam.setSubmatrix(yarp::math::axis2dcm(camera_att).submatrix(0, 2, 0, 2),
                              0, 0);
 
-    // rotation between icub camera and opencv camera (is this needed?)
-    yarp::sig::Vector axis_angle(4, 0.0);
-    axis_angle[0] = 1.0;
-    axis_angle[3] = M_PI;
-    yarp::sig::Matrix icub_to_opencv(4, 4);
-    icub_to_opencv.zero();
-    icub_to_opencv(3, 3) = 1.0;
-    icub_to_opencv.setSubmatrix(yarp::math::axis2dcm(axis_angle).submatrix(0, 2, 0, 2),
-                                0, 0);
-
     // transformation matrix
     // from camera to corner of the object
     yarp::sig::Matrix cam_to_obj(4,4);
@@ -249,7 +239,7 @@ bool Tracker::evaluateEstimate(const cv::Mat &pos_wrt_cam, const cv::Mat &att_wr
     cam_to_obj.setSubmatrix(att_wrt_cam_yarp, 0, 0);
 
     // compose transformations
-    est_pose = root_to_cam * icub_to_opencv * cam_to_obj;
+    est_pose = root_to_cam * cam_to_obj;
 
     // pick the center of the object
     yarp::sig::Vector corner_to_center(4, 0.0);
