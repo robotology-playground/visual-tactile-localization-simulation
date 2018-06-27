@@ -17,6 +17,7 @@ find_package(ICUB)
 find_package(OpenCV REQUIRED)
 find_package(SuperimposeMesh REQUIRED)
 find_package(HEAD_KIN REQUIRED)
+find_package(GAZE_CTRL)
 
 list(APPEND CMAKE_MODULE_PATH
   ${YARP_MODULE_PATH}
@@ -28,12 +29,14 @@ include(YarpInstallationHelpers)
 add_executable(${EXE_TARGET_NAME}
   src/SuperimposeCameraViewer.cpp
   ${HEAD_KIN_SRC}
+  ${GAZE_CTRL_SRC}
   )
 
 target_include_directories(${EXE_TARGET_NAME} PRIVATE
   ${YARP_INCLUDE_DIRS}
   ${ICUB_INCLUDE_DIRS}
-  ${HEAD_KIN_INCLUDE}  
+  ${HEAD_KIN_INCLUDE}
+  ${GAZE_CTRL_INCLUDE}
   )
 
 target_link_libraries(${EXE_TARGET_NAME}
