@@ -246,6 +246,7 @@ bool Tracker::evaluateEstimate(const cv::Mat &pos_wrt_cam, const cv::Mat &att_wr
     for (size_t i=0; i<3; i++)
         for (size_t j=0; j<3; j++)
             att_wrt_cam_yarp(i, j) = att_wrt_cam_matrix.at<double>(i, j);
+    cam_to_obj.setSubmatrix(att_wrt_cam_yarp, 0, 0);
 
     // compose transformations
     est_pose = root_to_cam * icub_to_opencv * cam_to_obj;
