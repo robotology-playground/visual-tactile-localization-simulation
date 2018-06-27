@@ -168,10 +168,10 @@ public:
         {
             if (eye_name == "left")
             {
-                cam_fx = 219.057;
-                cam_cx = 174.742;
-                cam_fy = 219.028;
-                cam_cy = 102.874;
+                cam_fx = 234.88;
+                cam_cx = 160.77;
+                cam_fy = 234.582;
+                cam_cy = 123.491;
             }
             else if (eye_name == "right")
             {
