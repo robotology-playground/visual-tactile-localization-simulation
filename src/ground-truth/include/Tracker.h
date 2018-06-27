@@ -84,6 +84,7 @@ private:
                           const yarp::sig::Vector &camera_att,
                           yarp::sig::Matrix est_pose);
     void publishEstimate();
+    void trackObjectWithEyes();
 
 public:
     bool configure(yarp::os::ResourceFinder &rf) override;

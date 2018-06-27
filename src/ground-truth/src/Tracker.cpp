@@ -261,6 +261,14 @@ void Tracker::publishEstimate()
     tf_client->setTransform(tf_target, tf_source, est_pose);
 }
 
+void Tracker::trackObjectWithEyes()
+{
+    yarp::sig::Vector fix_point(3);
+    fix_point = est_pose.getCol(3).subVector(0, 2);
+
+    gaze_ctrl.setReference(fix_point);
+}
+
 bool Tracker::updateModule()
 {
     // get image from camera
@@ -305,7 +313,7 @@ bool Tracker::updateModule()
 
     publishEstimate();
 
-    // TODO: add gaze tracking
+    trackObjectWithEyes();
 
     // send image
     image_output_port.write();
