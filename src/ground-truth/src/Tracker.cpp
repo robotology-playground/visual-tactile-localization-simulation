@@ -202,7 +202,7 @@ bool Tracker::getFrame(yarp::sig::ImageOf<yarp::sig::PixelRgb>* &yarp_image)
     return true;
 }
 
-bool Tracker::evaluateEstimate(const cv::Vec3d &pos_wrt_cam, const cv::Vec3d &att_wrt_cam,
+bool Tracker::evaluateEstimate(const cv::Mat &pos_wrt_cam, const cv::Mat &att_wrt_cam,
                                const yarp::sig::Vector &camera_pos,
                                const yarp::sig::Vector &camera_att,
                                yarp::sig::Matrix est_pos)
@@ -227,7 +227,8 @@ bool Tracker::evaluateEstimate(const cv::Vec3d &pos_wrt_cam, const cv::Vec3d &at
     yarp::sig::Matrix icub_to_opencv(4, 4);
     icub_to_opencv.zero();
     icub_to_opencv(3, 3) = 1.0;
-    icub_to_opencv = yarp::math::axis2dcm(axis_angle);
+    icub_to_opencv.setSubmatrix(yarp::math::axis2dcm(axis_angle).submatrix(0, 2, 0, 2),
+                                0, 0);
 
     // transformation matrix
     // from camera to corner of the object
@@ -235,9 +236,9 @@ bool Tracker::evaluateEstimate(const cv::Vec3d &pos_wrt_cam, const cv::Vec3d &at
     cam_to_obj.zero();
     cam_to_obj(3, 3) = 1.0;
 
-    cam_to_obj(0, 3) = pos_wrt_cam[0];
-    cam_to_obj(1, 3) = pos_wrt_cam[1];
-    cam_to_obj(2, 3) = pos_wrt_cam[2];
+    cam_to_obj(0, 3) = pos_wrt_cam.at<double>(0, 0);
+    cam_to_obj(1, 3) = pos_wrt_cam.at<double>(1, 0);
+    cam_to_obj(2, 3) = pos_wrt_cam.at<double>(2, 0);
 
     cv::Mat att_wrt_cam_matrix;
     cv::Rodrigues(att_wrt_cam, att_wrt_cam_matrix);
@@ -297,8 +298,8 @@ bool Tracker::updateModule()
     frame_out = cv::cvarrToMat(img_out.getIplImage());
 
     // aruco board pose estimation
-    cv::Vec3d pos_wrt_cam;
-    cv::Vec3d att_wrt_cam;
+    cv::Mat pos_wrt_cam;
+    cv::Mat att_wrt_cam;
     bool ok;
     ok = uco_estimator->estimateBoardPose(frame_in, frame_out,
                                           pos_wrt_cam, att_wrt_cam);

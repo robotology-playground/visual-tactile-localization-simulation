@@ -79,7 +79,7 @@ private:
      * @param camera_pos attitude of the camera w.r.t the root frame
      * @param est_pose estimated pose of the object w.r.t root frame
      */
-    bool evaluateEstimate(const cv::Vec3d &pos_wrt_cam, const cv::Vec3d &att_wrt_cam,
+    bool evaluateEstimate(const cv::Mat &pos_wrt_cam, const cv::Mat &att_wrt_cam,
                           const yarp::sig::Vector &camera_pos,
                           const yarp::sig::Vector &camera_att,
                           yarp::sig::Matrix est_pose);
