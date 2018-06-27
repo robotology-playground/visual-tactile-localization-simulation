@@ -17,6 +17,7 @@
 #include <yarp/sig/Image.h>
 #include <yarp/dev/PolyDriver.h>
 #include <yarp/dev/IFrameTransform.h>
+#include <yarp/math/Math.h>
 
 // opencv
 #include <opencv2/opencv.hpp>
@@ -26,14 +27,18 @@
 #include <SuperimposeMesh/SICAD.h>
 
 //
-#include <HeadKinematics.h>
+// #include <HeadKinematics.h>
+#include <GazeController.h>
 #include <cstdlib>
 
 class SuperimposeViewer : public yarp::os::RFModule
 {
 private:
     // head kinematics
-    headKinematics head_kin;
+    // headKinematics head_kin;
+
+    // gaze controller
+    GazeController gaze_ctrl;
 
     // camera port
     yarp::os::BufferedPort<yarp::sig::ImageOf<yarp::sig::PixelRgb>> image_input_port;
@@ -127,8 +132,14 @@ public:
             return false;
 
         // head forward kinematics
-        if (!head_kin.configure(robot_name, port_prefix))
+        // if (!head_kin.configure(robot_name, port_prefix))
+        //     return false;
+        if (!gaze_ctrl.configure(rf, port_prefix))
+        {
+            yError() << "SuperimposeViewer::configure"
+                     << "error: cannot configure the gaze controller";
             return false;
+        }
 
         // frame transform client
         yarp::os::Property propTfClient;
@@ -264,11 +275,14 @@ public:
         }
 
         // get current pose of eyes
-        yarp::sig::Vector left_eye_pose;
-        yarp::sig::Vector right_eye_pose;
-        yarp::sig::Vector eye_pose;
-        head_kin.getEyesPose(left_eye_pose, right_eye_pose);
-        eye_pose = (eye_name == "left") ? left_eye_pose : right_eye_pose;
+        // yarp::sig::Vector left_eye_pose;
+        // yarp::sig::Vector right_eye_pose;
+        // yarp::sig::Vector eye_pose;
+        // head_kin.getEyesPose(left_eye_pose, right_eye_pose);
+        // eye_pose = (eye_name == "left") ? left_eye_pose : right_eye_pose;
+        yarp::sig::Vector eye_pos;
+        yarp::sig::Vector eye_att;
+        gaze_ctrl.getCameraPose(eye_name, eye_pos, eye_att);
 
         // prepare output image
         yarp::sig::ImageOf<yarp::sig::PixelRgb> &img_out = image_output_port.prepare();
@@ -279,13 +293,13 @@ public:
         // superimpose estimate on image
         if (is_est_available)
             est_mesh_cad->superimpose(est_pose_map,
-                                      eye_pose.subVector(0, 2).data(),
-                                      eye_pose.subVector(3, 6).data(),
+                                      eye_pos.data(),
+                                      eye_att.data(),
                                       cv_img);
         if (is_gt_available)
             gt_mesh_cad->superimpose(gt_pose_map,
-                                     eye_pose.subVector(0, 2).data(),
-                                     eye_pose.subVector(3, 6).data(),
+                                     eye_pos.data(),
+                                     eye_att.data(),
                                      cv_img);
         // send image
         image_output_port.write();
@@ -300,7 +314,10 @@ public:
         image_output_port.close();
 
         // close head kinematics
-        head_kin.close();
+        // head_kin.close();
+
+        // close gaze controller
+        gaze_ctrl.close();
 
         // close transform client
         drv_transform_client.close();
