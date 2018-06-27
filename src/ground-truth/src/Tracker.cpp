@@ -289,6 +289,7 @@ bool Tracker::updateModule()
     // prepare input image
     cv::Mat frame_in;
     frame_in = cv::cvarrToMat(img_in->getIplImage());
+    cv::cvtColor(frame_in, frame_in, cv::COLOR_RGB2BGR);
 
     // prepare output image
     yarp::sig::ImageOf<yarp::sig::PixelRgb> &img_out = image_output_port.prepare();
@@ -316,6 +317,7 @@ bool Tracker::updateModule()
     trackObjectWithEyes();
 
     // send image
+    cv::cvtColor(frame_out, frame_out, cv::COLOR_BGR2RGB);
     image_output_port.write();
 
     return true;
