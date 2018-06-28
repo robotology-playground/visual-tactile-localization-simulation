@@ -296,12 +296,6 @@ void Tracker::fixateWithEyesAndHold()
     gaze_ctrl.enableTrackingMode();
 }
 
-void Tracker::disableTrackingWithEyes()
-{
-    // disable tracking mode
-    gaze_ctrl.disableTrackingMode();
-}
-
 bool Tracker::updateModule()
 {
     /*
@@ -423,7 +417,7 @@ bool Tracker::respond(const yarp::os::Bottle &command, yarp::os::Bottle &reply)
         mutex.lock();
         
         // disable tracking mode of iKinGazeCtrl
-        disableTrackingWithEyes();
+        gaze_ctrl.disableTrackingMode();
 
         // unblock the eyes in case they were blocked
         gaze_ctrl.clearEyes();

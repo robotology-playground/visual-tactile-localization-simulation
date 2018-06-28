@@ -99,7 +99,6 @@ private:
     void publishEstimate();
     void fixateWithEyes();
     void fixateWithEyesAndHold();
-    void disableTrackingWithEyes();
 public:
     bool configure(yarp::os::ResourceFinder &rf) override;
     double getPeriod() override;
