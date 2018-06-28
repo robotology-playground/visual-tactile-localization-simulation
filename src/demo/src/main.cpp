@@ -471,6 +471,7 @@ protected:
             reply = "[FAILED] Wait for completion of the current phase";
         else if ((hand_name != "right") && (hand_name != "left"))
             reply = "[FAILED] You should specify a valid hand name";
+        // TESTING
         // else if (!is_approach_done)
         //     reply = "[FAILED]You should approach the object before approaching with fingers";
         // else if (hand_name != seq_action_arm_name)
