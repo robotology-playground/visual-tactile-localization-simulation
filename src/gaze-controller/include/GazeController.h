@@ -37,6 +37,8 @@ public:
                    const std::string &port_prefix);
     bool close();
     bool setReference(const yarp::sig::Vector &fixation_point);
+    bool enableTrackingMode();
+    bool disableTrackingMode();
     bool getCameraPose(const std::string &eye_name,
                        yarp::sig::Vector &pos,
                        yarp::sig::Vector &att);

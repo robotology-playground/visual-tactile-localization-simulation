@@ -132,6 +132,16 @@ bool GazeController::setReference(const yarp::sig::Vector &fixation_point)
     return igaze->lookAtFixationPoint(fixation_point);
 }
 
+bool GazeController::enableTrackingMode()
+{
+    return igaze->setTrackingMode(true);
+}
+
+bool GazeController::disableTrackingMode()
+{
+    return igaze->setTrackingMode(false);
+}
+
 bool GazeController::getCameraPose(const std::string &eye_name,
                                    yarp::sig::Vector &pos,
                                    yarp::sig::Vector &att)
