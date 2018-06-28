@@ -16,6 +16,7 @@ find_package(YARP REQUIRED)
 find_package(ICUB REQUIRED)
 find_package(IKIN_FWD_EXT REQUIRED)
 find_package(HAND_CTRL_CMD REQUIRED)
+find_package(GAZE_CTRL REQUIRED)
 
 list(APPEND CMAKE_MODULE_PATH
   ${YARP_MODULE_PATH}
@@ -66,6 +67,7 @@ add_executable(${EXE_TARGET_NAME}
   ${${EXE_TARGET_NAME}_HDR}
   ${${EXE_TARGET_NAME}_SRC}
   ${${EXE_TARGET_NAME}_THRIFT_SRC}
+  ${GAZE_CTRL_SRC}
   )
 
 target_include_directories(${EXE_TARGET_NAME} PRIVATE
@@ -75,6 +77,7 @@ target_include_directories(${EXE_TARGET_NAME} PRIVATE
   ${YARP_INCLUDE_DIRS}
   ${ICUB_INCLUDE_DIRS}
   ${${EXE_TARGET_NAME}_THRIFT_INCLUDE}
+  ${GAZE_CTRL_INCLUDE}
   )
 
 target_link_libraries(${EXE_TARGET_NAME} ${YARP_LIBRARIES} ${ICUB_LIBRARIES})
