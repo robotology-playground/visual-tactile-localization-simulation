@@ -100,6 +100,10 @@ bool GazeController::stop()
     return igaze->stopControl();
 }
 
+bool GazeController::clearEyes()
+{
+    return igaze->clearEyes();
+}
 bool GazeController::close()
 {
     bool ok;
