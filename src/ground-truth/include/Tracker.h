@@ -27,7 +27,7 @@
 #include <UcoBoardEstimator.h>
 #include <GazeController.h>
 
-enum class Status { Idle, Track};
+enum class Status { Idle, Hold, Track};
 
 class Tracker : public yarp::os::RFModule
 {
@@ -75,6 +75,10 @@ private:
     // with the superimposed estimated pose or not
     bool publish_images;
 
+    // rpc server
+    yarp::os::RpcServer rpc_port;
+    yarp::os::Mutex mutex;
+
     bool getFrame(yarp::sig::ImageOf<yarp::sig::PixelRgb>* &yarp_image);
 
     /*
@@ -100,6 +104,7 @@ public:
     bool configure(yarp::os::ResourceFinder &rf) override;
     double getPeriod() override;
     bool updateModule() override;
+    bool respond(const yarp::os::Bottle &command, yarp::os::Bottle &reply);
     bool close() override;
 };
 

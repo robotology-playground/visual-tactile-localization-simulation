@@ -146,16 +146,16 @@ bool Tracker::configure(yarp::os::ResourceFinder &rf)
                  << "error: cannot configure the gaze controller";
         return false;
     }
-    if (!gaze_ctrl.setTrajectoryTimes())
-    {
-        yError() << "Tracker::configure"
-                 << "error: cannot set the trajectory times for the gaze controller";
+    // if (!gaze_ctrl.setTrajectoryTimes())
+    // {
+    //     yError() << "Tracker::configure"
+    //              << "error: cannot set the trajectory times for the gaze controller";
 
-        // close the gaze controller
-        gaze_ctrl.close();
+    //     // close the gaze controller
+    //     gaze_ctrl.close();
 
-        return false;
-    }
+    //     return false;
+    // }
 
     // aruco/charuco board estimator
     if (board_type == "aruco")
@@ -190,6 +190,10 @@ bool Tracker::configure(yarp::os::ResourceFinder &rf)
     // reset flags
     is_estimate_available = false;
     status = Status::Idle;
+
+    // start rpc server
+    rpc_port.open("/vtl-gtruth-tracker/rpc");
+    attach(rpc_port);
 
     return true;
 }
@@ -306,79 +310,90 @@ bool Tracker::updateModule()
 
     // get image from camera
     yarp::sig::ImageOf<yarp::sig::PixelRgb>* img_in;
-    if (!getFrame(img_in))
-        return true;
+    bool is_image = false;
+    is_image = getFrame(img_in);
 
-    // get current pose of eyes
-    // yarp::sig::Vector left_eye_pose;
-    // yarp::sig::Vector right_eye_pose;
-    // yarp::sig::Vector eye_pose;
-    // head_kin.getEyesPose(left_eye_pose, right_eye_pose);
-    // eye_pose = (eye_name == "left") ? left_eye_pose : right_eye_pose;
-    yarp::sig::Vector eye_pos;
-    yarp::sig::Vector eye_att;
-    gaze_ctrl.getCameraPose(eye_name, eye_pos, eye_att);
-
-    // prepare input image
-    cv::Mat frame_in;
-    frame_in = cv::cvarrToMat(img_in->getIplImage());
-    cv::cvtColor(frame_in, frame_in, cv::COLOR_RGB2BGR);
-
-    cv::Mat frame_out;
-    if (publish_images)
+    cv::Mat frame_out;    
+    if (is_image)
     {
-        // prepare output image
-        yarp::sig::ImageOf<yarp::sig::PixelRgb> &img_out = image_output_port.prepare();
-        img_out = *img_in;
-        frame_out = cv::cvarrToMat(img_out.getIplImage());
-    }
+        // get current pose of eyes
+        // yarp::sig::Vector left_eye_pose;
+        // yarp::sig::Vector right_eye_pose;
+        // yarp::sig::Vector eye_pose;
+        // head_kin.getEyesPose(left_eye_pose, right_eye_pose);
+        // eye_pose = (eye_name == "left") ? left_eye_pose : right_eye_pose;
+        yarp::sig::Vector eye_pos;
+        yarp::sig::Vector eye_att;
+        gaze_ctrl.getCameraPose(eye_name, eye_pos, eye_att);
 
-    // aruco board pose estimation
-    cv::Mat pos_wrt_cam;
-    cv::Mat att_wrt_cam;
-    bool ok;
-    ok = uco_estimator->estimateBoardPose(frame_in, frame_out,
-                                          pos_wrt_cam, att_wrt_cam,
-                                          publish_images);
-    if (ok)
-    {
-        is_estimate_available = true;
+        // prepare input image
+        cv::Mat frame_in;
+        frame_in = cv::cvarrToMat(img_in->getIplImage());
+        cv::cvtColor(frame_in, frame_in, cv::COLOR_RGB2BGR);
 
-        evaluateEstimate(pos_wrt_cam, att_wrt_cam,
-                         eye_pos, eye_att,
-                         est_pose);
+        if (publish_images)
+        {
+            // prepare output image
+            yarp::sig::ImageOf<yarp::sig::PixelRgb> &img_out = image_output_port.prepare();
+            img_out = *img_in;
+            frame_out = cv::cvarrToMat(img_out.getIplImage());
+        }
+
+        // aruco board pose estimation
+        cv::Mat pos_wrt_cam;
+        cv::Mat att_wrt_cam;
+        bool ok;
+        ok = uco_estimator->estimateBoardPose(frame_in, frame_out,
+                                              pos_wrt_cam, att_wrt_cam,
+                                              publish_images);
+        if (ok)
+        {
+            is_estimate_available = true;
+
+            evaluateEstimate(pos_wrt_cam, att_wrt_cam,
+                             eye_pos, eye_att,
+                             est_pose);
+        }
+
+        if (publish_images)
+        {
+            // send image
+            cv::cvtColor(frame_out, frame_out, cv::COLOR_BGR2RGB);
+            image_output_port.write();
+        }
+        
     }
 
     // publish the last available estimate
     publishEstimate();
 
-    if (publish_images)
-    {
-        // send image
-        cv::cvtColor(frame_out, frame_out, cv::COLOR_BGR2RGB);
-        image_output_port.write();
-    }
-
     /*
      * Tracking with eyes
      */
-    switch (status)
+    mutex.lock();
+    Status st = status;
+    mutex.unlock();
+    switch (st)
     {
     case Status::Idle:
     {
         // nothing to do here
         break;
     }
-    // case Status::Hold:
-    // {
-    //     // the tracker fixate at the object
-    //     // using the current estimate
-    //     // and enable tracking mode of the iKinGaze controller
-    //     fixateWithEyesAndHold();
-    //     // go back to Idle
-    //     status = Status::Idle;
-    //     break;
-    // }
+    case Status::Hold:
+    {
+        // the tracker fixate at the object
+        // using the current estimate
+        // and enable tracking mode of the iKinGaze controller
+        fixateWithEyesAndHold();
+
+        // go back to idle
+        mutex.lock();
+        status = Status::Idle;
+        mutex.unlock();
+
+        break;
+    }
     case Status::Track:
     {
         // the tracker continuously tracks
@@ -387,6 +402,61 @@ bool Tracker::updateModule()
         break;
     }
     }
+
+    return true;
+}
+
+bool Tracker::respond(const yarp::os::Bottle &command, yarp::os::Bottle &reply)
+{
+    std::string cmd = command.get(0).asString();
+    if (cmd == "help")
+    {
+        reply.addVocab(yarp::os::Vocab::encode("many"));
+        reply.addString("Available commands:");
+        reply.addString("- eyes-track");
+        reply.addString("- eyes-fixate-and-hold");
+        reply.addString("- eyes-stop");
+        reply.addString("- quit");
+    }
+    else if (cmd == "eyes-track")
+    {
+        mutex.lock();
+        
+        // disable tracking mode of iKinGazeCtrl
+        disableTrackingWithEyes();
+        
+        status = Status::Track;
+        
+        mutex.unlock();
+
+        reply.addString("ok");
+    }
+    else if (cmd == "eyes-fixate-and-hold")
+    {
+        mutex.lock();
+
+        status = Status::Hold;
+        
+        mutex.unlock();
+
+        reply.addString("ok");        
+    }
+    else if (cmd == "eyes-stop")
+    {
+        mutex.lock();
+
+        gaze_ctrl.stop();
+        gaze_ctrl.disableTrackingMode();
+
+        status = Status::Idle;
+
+        mutex.unlock();
+
+        reply.addString("ok");        
+    }
+    else
+        // the father class already handles the "quit" command
+        return RFModule::respond(command,reply);
 
     return true;
 }
