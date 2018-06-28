@@ -180,8 +180,9 @@ bool Tracker::configure(yarp::os::ResourceFinder &rf)
     yarp::sig::Matrix est_pose(4, 4);
     est_pose.zero();
 
-    // reset flag
+    // reset flags
     is_estimate_available = false;
+    status = Status::Idle;
 
     return true;
 }
@@ -271,6 +272,10 @@ void Tracker::trackObjectWithEyes()
 
 bool Tracker::updateModule()
 {
+    /*
+     * Ground truth estimation
+     */
+
     // get image from camera
     yarp::sig::ImageOf<yarp::sig::PixelRgb>* img_in;
     if (!getFrame(img_in))
@@ -314,11 +319,15 @@ bool Tracker::updateModule()
 
     publishEstimate();
 
-    trackObjectWithEyes();
+    // trackObjectWithEyes();
 
     // send image
     cv::cvtColor(frame_out, frame_out, cv::COLOR_BGR2RGB);
     image_output_port.write();
+
+    /*
+     * Tracking with eyes
+     */
 
     return true;
 }

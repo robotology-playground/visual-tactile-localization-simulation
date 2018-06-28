@@ -27,6 +27,8 @@
 #include <UcoBoardEstimator.h>
 #include <GazeController.h>
 
+enum class Status { Idle, Hold, Track};
+
 class Tracker : public yarp::os::RFModule
 {
 private:
@@ -65,6 +67,9 @@ private:
     /* yarp::sig::Vector est_pos; */
     /* yarp::sig::Vector est_att; */
     bool is_estimate_available;
+
+    // status
+    Status status;
 
     bool getFrame(yarp::sig::ImageOf<yarp::sig::PixelRgb>* &yarp_image);
 
