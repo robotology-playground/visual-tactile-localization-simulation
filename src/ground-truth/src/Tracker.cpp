@@ -50,6 +50,10 @@ bool Tracker::configure(yarp::os::ResourceFinder &rf)
     if (!rf.find("tfTarget").isNull())
         tf_target = rf.find("tfTarget").asString();
 
+    publish_images = false;
+    if (!rf.find("publishImages").isNull())
+        publish_images = rf.find("publishImages").asBool();
+
     // get board type
     std::string board_type;
     board_type = "aruco";
@@ -112,9 +116,12 @@ bool Tracker::configure(yarp::os::ResourceFinder &rf)
     bool port_ok = image_input_port.open(port_prefix + ":i");
     if (!port_ok)
         return false;
-    port_ok = image_output_port.open(port_prefix + ":o");
-    if (!port_ok)
-        return false;
+    if (publish_images)
+    {
+        port_ok = image_output_port.open(port_prefix + ":o");
+        if (!port_ok)
+            return false;
+    }
 
     // head forward kinematics
     // if (!head_kin.configure(robot_name, port_prefix))
@@ -296,18 +303,22 @@ bool Tracker::updateModule()
     frame_in = cv::cvarrToMat(img_in->getIplImage());
     cv::cvtColor(frame_in, frame_in, cv::COLOR_RGB2BGR);
 
-    // prepare output image
-    yarp::sig::ImageOf<yarp::sig::PixelRgb> &img_out = image_output_port.prepare();
-    img_out = *img_in;
     cv::Mat frame_out;
-    frame_out = cv::cvarrToMat(img_out.getIplImage());
+    if (publish_images)
+    {
+        // prepare output image
+        yarp::sig::ImageOf<yarp::sig::PixelRgb> &img_out = image_output_port.prepare();
+        img_out = *img_in;
+        frame_out = cv::cvarrToMat(img_out.getIplImage());
+    }
 
     // aruco board pose estimation
     cv::Mat pos_wrt_cam;
     cv::Mat att_wrt_cam;
     bool ok;
     ok = uco_estimator->estimateBoardPose(frame_in, frame_out,
-                                          pos_wrt_cam, att_wrt_cam);
+                                          pos_wrt_cam, att_wrt_cam,
+                                          publish_images);
     if (ok)
     {
         is_estimate_available = true;
@@ -317,13 +328,17 @@ bool Tracker::updateModule()
                          est_pose);
     }
 
+    // publish the last available estimate
     publishEstimate();
 
     // trackObjectWithEyes();
 
-    // send image
-    cv::cvtColor(frame_out, frame_out, cv::COLOR_BGR2RGB);
-    image_output_port.write();
+    if (publish_images)
+    {
+        // send image
+        cv::cvtColor(frame_out, frame_out, cv::COLOR_BGR2RGB);
+        image_output_port.write();
+    }
 
     /*
      * Tracking with eyes

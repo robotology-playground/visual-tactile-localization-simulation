@@ -71,6 +71,10 @@ private:
     // status
     Status status;
 
+    //  whether to publish images
+    // with the superimposed estimated pose or not
+    bool publish_images;
+
     bool getFrame(yarp::sig::ImageOf<yarp::sig::PixelRgb>* &yarp_image);
 
     /*
