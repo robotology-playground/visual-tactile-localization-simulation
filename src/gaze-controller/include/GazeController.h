@@ -40,6 +40,7 @@ public:
     bool enableTrackingMode();
     bool disableTrackingMode();
     bool clearEyes();
+    bool blockEyes(const double &vergence);
     bool stop();
     bool getCameraPose(const std::string &eye_name,
                        yarp::sig::Vector &pos,

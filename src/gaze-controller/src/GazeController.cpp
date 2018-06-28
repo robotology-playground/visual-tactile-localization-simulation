@@ -104,6 +104,12 @@ bool GazeController::clearEyes()
 {
     return igaze->clearEyes();
 }
+
+bool GazeController::blockEyes(const double &vergence)
+{
+    return igaze->blockEyes(vergence);
+}
+
 bool GazeController::close()
 {
     bool ok;
