@@ -27,7 +27,7 @@
 #include <UcoBoardEstimator.h>
 #include <GazeController.h>
 
-enum class Status { Idle, Hold, Track};
+enum class Status { Idle, Track};
 
 class Tracker : public yarp::os::RFModule
 {
@@ -93,8 +93,9 @@ private:
                           const yarp::sig::Vector &camera_att,
                           yarp::sig::Matrix est_pose);
     void publishEstimate();
-    void trackObjectWithEyes();
-
+    void fixateWithEyes();
+    void fixateWithEyesAndHold();
+    void disableTrackingWithEyes();
 public:
     bool configure(yarp::os::ResourceFinder &rf) override;
     double getPeriod() override;

@@ -269,12 +269,33 @@ void Tracker::publishEstimate()
     tf_client->setTransform(tf_target, tf_source, est_pose);
 }
 
-void Tracker::trackObjectWithEyes()
+void Tracker::fixateWithEyes()
 {
+    // this function can be called once
+    // or in streaming mode
+
     yarp::sig::Vector fix_point(3);
     fix_point = est_pose.getCol(3).subVector(0, 2);
 
     gaze_ctrl.setReference(fix_point);
+}
+
+void Tracker::fixateWithEyesAndHold()
+{
+    // this function should be called once
+
+    // set the fixation point
+    // using the current estimate
+    fixateWithEyes();
+
+    // enable tracking mode
+    gaze_ctrl.enableTrackingMode();
+}
+
+void Tracker::disableTrackingWithEyes()
+{
+    // disable tracking mode
+    gaze_ctrl.disableTrackingMode();
 }
 
 bool Tracker::updateModule()
@@ -331,8 +352,6 @@ bool Tracker::updateModule()
     // publish the last available estimate
     publishEstimate();
 
-    // trackObjectWithEyes();
-
     if (publish_images)
     {
         // send image
@@ -343,6 +362,31 @@ bool Tracker::updateModule()
     /*
      * Tracking with eyes
      */
+    switch (status)
+    {
+    case Status::Idle:
+    {
+        // nothing to do here
+        break;
+    }
+    // case Status::Hold:
+    // {
+    //     // the tracker fixate at the object
+    //     // using the current estimate
+    //     // and enable tracking mode of the iKinGaze controller
+    //     fixateWithEyesAndHold();
+    //     // go back to Idle
+    //     status = Status::Idle;
+    //     break;
+    // }
+    case Status::Track:
+    {
+        // the tracker continuously tracks
+        // the object using the last estimate available
+        fixateWithEyes();
+        break;
+    }
+    }
 
     return true;
 }
