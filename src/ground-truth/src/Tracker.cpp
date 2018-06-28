@@ -424,6 +424,9 @@ bool Tracker::respond(const yarp::os::Bottle &command, yarp::os::Bottle &reply)
         
         // disable tracking mode of iKinGazeCtrl
         disableTrackingWithEyes();
+
+        // unblock the eyes in case they were blocked
+        gaze_ctrl.clearEyes();
         
         status = Status::Track;
         
@@ -434,6 +437,9 @@ bool Tracker::respond(const yarp::os::Bottle &command, yarp::os::Bottle &reply)
     else if (cmd == "eyes-fixate-and-hold")
     {
         mutex.lock();
+
+        // unblock the eyes in case they were blocked
+        gaze_ctrl.clearEyes();
 
         status = Status::Hold;
         
