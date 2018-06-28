@@ -46,7 +46,8 @@ bool CharucoBoardEstimator::configure(const int &n_x, const int &n_y, const doub
 }
 
 bool CharucoBoardEstimator::estimateBoardPose(const cv::Mat &img_in, cv::Mat &img_out,
-                                              cv::Mat &pos, cv::Mat &att)
+                                              cv::Mat &pos, cv::Mat &att,
+                                              const bool &draw_estimate)
 {
     std::vector<int> marker_ids, charuco_ids;
     std::vector<std::vector<cv::Point2f> > marker_corners, rejected_markers;
@@ -74,13 +75,19 @@ bool CharucoBoardEstimator::estimateBoardPose(const cv::Mat &img_in, cv::Mat &im
                                                          cam_intrinsic, cam_distortion, att, pos);
 
     // copy input image to output image
-    img_in.copyTo(img_out);
-    if(marker_ids.size() > 0)
-        cv::aruco::drawDetectedMarkers(img_out, marker_corners);
+    if (draw_estimate)
+    {
+        img_in.copyTo(img_out);
+        if(marker_ids.size() > 0)
+            cv::aruco::drawDetectedMarkers(img_out, marker_corners);
+    }
 
     if(valid_pose)
     {
-        cv::aruco::drawAxis(img_out, cam_intrinsic, cam_distortion, att, pos, axis_length);
+        if (draw_estimate)
+        {
+            cv::aruco::drawAxis(img_out, cam_intrinsic, cam_distortion, att, pos, axis_length);
+        }
 
         return true;
     }
