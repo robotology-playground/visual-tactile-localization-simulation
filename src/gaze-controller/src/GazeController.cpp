@@ -95,6 +95,11 @@ bool GazeController::configure(const yarp::os::ResourceFinder &rf,
     return true;
 }
 
+bool GazeController::stop()
+{
+    return igaze->stopControl();
+}
+
 bool GazeController::close()
 {
     bool ok;
