@@ -43,6 +43,7 @@
 #include <RotationTrajectoryGenerator.h>
 #include <ModelHelper.h>
 #include <VIS_TAC_IDL.h>
+#include <GazeController.h>
 
 using namespace yarp::math;
 
@@ -71,6 +72,12 @@ protected:
     // arm controllers
     ArmController right_arm;
     ArmController left_arm;
+
+    // gaze controller
+    // used to block vergence before performing localization
+    // this is required since point clouds used for localization
+    // are obtained using SFM
+    GazeController gaze_ctrl;
 
     // hand controller modules ports
     yarp::os::RpcClient port_hand_right;
@@ -1600,6 +1607,17 @@ public:
         }
 
         /**
+         * Gaze Controller
+         */
+
+        ok = gaze_ctrl.configure(rf, "/vtl-demo");
+        if (!ok)
+        {
+            yError() << "VisuoTactileLocalizationDemo: unable to configure the gaze controller";
+            return false;
+        }
+
+        /**
          * Defaults
          */
 
@@ -1711,6 +1729,9 @@ public:
         case Status::Localize:
         {
             bool ok;
+
+            // block eyes vergence
+            gaze_ctrl.blockEyes(5.0);
 
             // issue localization
             ok = sendCommandToFilter("enable", "visual");
