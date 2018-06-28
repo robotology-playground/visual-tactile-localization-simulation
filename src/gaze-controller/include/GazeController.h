@@ -45,6 +45,9 @@ public:
     bool getCameraPose(const std::string &eye_name,
                        yarp::sig::Vector &pos,
                        yarp::sig::Vector &att);
+    bool getCameraIntrinsics(const std::string eye_name,
+                             double &fx, double &fy,
+                             double &cx, double &cy);
     bool setTrajectoryTimes();
 };
 

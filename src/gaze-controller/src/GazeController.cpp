@@ -11,6 +11,7 @@
 
 // yarp
 #include <yarp/os/LogStream.h>
+#include <yarp/os/Bottle.h>
 
 //
 #include <GazeController.h>
@@ -168,6 +169,27 @@ bool GazeController::getCameraPose(const std::string &eye_name,
         return igaze->getRightEyePose(pos, att);
     else if(eye_name == "left")
         return igaze->getLeftEyePose(pos, att);
+}
+
+bool GazeController::getCameraIntrinsics(const std::string eye_name,
+                                         double &fx, double &fy,
+                                         double &cx, double &cy);
+{
+    yarp::os::Bottle info;
+    igaze->getInfo(info);
+    std::string key = "camera_intrinsics_" + eye_name;
+
+    if (info.find(key).isNull())
+        return false;
+
+    yarp::os::Bottle *list = info.find("camera_intrinsics_" + eye_name).asList();
+
+    fx = list->get(0).asDouble();
+    cx = list->get(2).asDouble();
+    fy = list->get(5).asDouble();
+    cy = list->get(6).asDouble();
+
+    return true;
 }
 
 bool GazeController::setTrajectoryTimes()
