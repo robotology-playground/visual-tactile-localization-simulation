@@ -2091,7 +2091,8 @@ public:
                 status = Status::Idle;
 
                 // reset arm name
-                seq_action_arm_name.clear();
+                // TESTING
+                // seq_action_arm_name.clear();
 
                 mutex.unlock();
 
