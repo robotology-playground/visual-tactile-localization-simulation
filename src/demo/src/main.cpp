@@ -48,7 +48,7 @@
 using namespace yarp::math;
 
 enum class Status { Idle,
-                    Localize, ResetFilter,
+                    VisualLocalizationOn, LocalizationOff, ResetFilter,
                     MoveHandUpward, WaitMoveHandUpwardDone,
                     MoveArmRestPosition, WaitMoveArmRestPositionDone,
                     ArmApproach, WaitArmApproachDone,
@@ -217,7 +217,7 @@ protected:
         return this->yarp().attachAsServer(source);
     }
 
-    std::string localize()
+    std::string start_visual_localization()
     {
         mutex.lock();
 
@@ -229,7 +229,29 @@ protected:
         {
             // change status
             previous_status = status;
-            status = Status::Localize;
+            status = Status::VisualLocalizationOn;
+
+            reply = "[OK] Command issued";
+        }
+
+        mutex.unlock();
+
+        return reply;
+    }
+
+    std::string stop_localization()
+    {
+        mutex.lock();
+
+        std::string reply;
+
+        if (status != Status::Idle)
+            reply = "[FAILED] Wait for completion of the current phase";
+        else
+        {
+            // change status
+            previous_status = status;
+            status = Status::LocalizationOff;
 
             reply = "[OK] Command issued";
         }
@@ -1727,7 +1749,7 @@ public:
             break;
         }
 
-        case Status::Localize:
+        case Status::VisualLocalizationOn:
         {
             bool ok;
 
@@ -1736,6 +1758,24 @@ public:
 
             // issue localization
             ok = sendCommandToFilter("enable", "visual");
+
+            if (!ok)
+                yError() << "[LOCALIZE] error while sending command to the filter";
+
+            // go back to Idle
+            mutex.lock();
+            status = Status::Idle;
+            mutex.unlock();
+
+            break;
+        }
+
+        case Status::LocalizationOff:
+        {
+            bool ok;
+
+            // issue localization
+            ok = sendCommandToFilter("disable");
 
             if (!ok)
                 yError() << "[LOCALIZE] error while sending command to the filter";

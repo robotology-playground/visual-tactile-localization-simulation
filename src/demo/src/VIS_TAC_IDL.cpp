@@ -6,7 +6,15 @@
 
 
 
-class VIS_TAC_IDL_localize : public yarp::os::Portable {
+class VIS_TAC_IDL_start_visual_localization : public yarp::os::Portable {
+public:
+  std::string _return;
+  void init();
+  virtual bool write(yarp::os::ConnectionWriter& connection) override;
+  virtual bool read(yarp::os::ConnectionReader& connection) override;
+};
+
+class VIS_TAC_IDL_stop_localization : public yarp::os::Portable {
 public:
   std::string _return;
   void init();
@@ -155,14 +163,14 @@ public:
   virtual bool read(yarp::os::ConnectionReader& connection) override;
 };
 
-bool VIS_TAC_IDL_localize::write(yarp::os::ConnectionWriter& connection) {
+bool VIS_TAC_IDL_start_visual_localization::write(yarp::os::ConnectionWriter& connection) {
   yarp::os::idl::WireWriter writer(connection);
-  if (!writer.writeListHeader(1)) return false;
-  if (!writer.writeTag("localize",1,1)) return false;
+  if (!writer.writeListHeader(3)) return false;
+  if (!writer.writeTag("start_visual_localization",1,3)) return false;
   return true;
 }
 
-bool VIS_TAC_IDL_localize::read(yarp::os::ConnectionReader& connection) {
+bool VIS_TAC_IDL_start_visual_localization::read(yarp::os::ConnectionReader& connection) {
   yarp::os::idl::WireReader reader(connection);
   if (!reader.readListReturn()) return false;
   if (!reader.readString(_return)) {
@@ -172,7 +180,28 @@ bool VIS_TAC_IDL_localize::read(yarp::os::ConnectionReader& connection) {
   return true;
 }
 
-void VIS_TAC_IDL_localize::init() {
+void VIS_TAC_IDL_start_visual_localization::init() {
+  _return = "";
+}
+
+bool VIS_TAC_IDL_stop_localization::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(2)) return false;
+  if (!writer.writeTag("stop_localization",1,2)) return false;
+  return true;
+}
+
+bool VIS_TAC_IDL_stop_localization::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.readString(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void VIS_TAC_IDL_stop_localization::init() {
   _return = "";
 }
 
@@ -541,12 +570,22 @@ void VIS_TAC_IDL_quit::init() {
 VIS_TAC_IDL::VIS_TAC_IDL() {
   yarp().setOwner(*this);
 }
-std::string VIS_TAC_IDL::localize() {
+std::string VIS_TAC_IDL::start_visual_localization() {
   std::string _return = "";
-  VIS_TAC_IDL_localize helper;
+  VIS_TAC_IDL_start_visual_localization helper;
   helper.init();
   if (!yarp().canWrite()) {
-    yError("Missing server method '%s'?","std::string VIS_TAC_IDL::localize()");
+    yError("Missing server method '%s'?","std::string VIS_TAC_IDL::start_visual_localization()");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
+std::string VIS_TAC_IDL::stop_localization() {
+  std::string _return = "";
+  VIS_TAC_IDL_stop_localization helper;
+  helper.init();
+  if (!yarp().canWrite()) {
+    yError("Missing server method '%s'?","std::string VIS_TAC_IDL::stop_localization()");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -721,9 +760,20 @@ bool VIS_TAC_IDL::read(yarp::os::ConnectionReader& connection) {
   if (direct) tag = reader.readTag();
   while (!reader.isError()) {
     // TODO: use quick lookup, this is just a test
-    if (tag == "localize") {
+    if (tag == "start_visual_localization") {
       std::string _return;
-      _return = localize();
+      _return = start_visual_localization();
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.writeString(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
+    if (tag == "stop_localization") {
+      std::string _return;
+      _return = stop_localization();
       yarp::os::idl::WireWriter writer(reader);
       if (!writer.isNull()) {
         if (!writer.writeListHeader(1)) return false;
@@ -1007,7 +1057,8 @@ std::vector<std::string> VIS_TAC_IDL::help(const std::string& functionName) {
   std::vector<std::string> helpString;
   if(showAll) {
     helpString.push_back("*** Available commands:");
-    helpString.push_back("localize");
+    helpString.push_back("start_visual_localization");
+    helpString.push_back("stop_localization");
     helpString.push_back("reset_filter");
     helpString.push_back("set_min_allowed_z");
     helpString.push_back("get_min_allowed_z");
@@ -1027,8 +1078,11 @@ std::vector<std::string> VIS_TAC_IDL::help(const std::string& functionName) {
     helpString.push_back("help");
   }
   else {
-    if (functionName=="localize") {
-      helpString.push_back("std::string localize() ");
+    if (functionName=="start_visual_localization") {
+      helpString.push_back("std::string start_visual_localization() ");
+    }
+    if (functionName=="stop_localization") {
+      helpString.push_back("std::string stop_localization() ");
     }
     if (functionName=="reset_filter") {
       helpString.push_back("std::string reset_filter() ");

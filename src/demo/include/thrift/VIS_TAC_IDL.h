@@ -13,7 +13,8 @@ class VIS_TAC_IDL;
 class VIS_TAC_IDL : public yarp::os::Wire {
 public:
   VIS_TAC_IDL();
-  virtual std::string localize();
+  virtual std::string start_visual_localization();
+  virtual std::string stop_localization();
   virtual std::string reset_filter();
   virtual std::string set_min_allowed_z(const double minZ);
   virtual std::string get_min_allowed_z();

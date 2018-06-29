@@ -1,6 +1,7 @@
 service VIS_TAC_IDL
 {
-    string localize();
+    string start_visual_localization();
+    string stop_localization();
     string reset_filter();
     string set_min_allowed_z(1:double minZ);
     string get_min_allowed_z();
