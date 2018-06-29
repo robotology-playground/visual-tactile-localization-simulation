@@ -40,11 +40,11 @@
     <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
   </module>
 
-  <module>
-    <name>vtl-filter-point-cloud</name>
-    <node>localhost</node>
-    <parameters>--uniform-sample 30</parameters>
-  </module>
+  <!-- <module> -->
+  <!--   <name>vtl-filter-point-cloud</name> -->
+  <!--   <node>localhost</node> -->
+  <!--   <parameters>uniform-sample 30</parameters> -->
+  <!-- </module> -->
 
   <module>
     <name>vtl-vtk-viewer</name>
@@ -76,10 +76,10 @@
     <parameters>--name /gtruth_viewer/viewer:i</parameters>
   </module>
 
-  <connection>
-    <from>/pointCloudRead/pointCloud:o</from>
-    <to>/filter-point-cloud/pointcloud:i</to>
-  </connection>
+  <!-- <connection> -->
+  <!--   <from>/pointCloudRead/pointCloud:o</from> -->
+  <!--   <to>/filter-point-cloud/pointcloud:i</to> -->
+  <!-- </connection> -->
 
   <connection>
     <from>/pointCloudRead/pointCloud:o</from>
@@ -91,10 +91,10 @@
     <to>/upf-localizer/pc:i</to>
   </connection>
 
-  <connection>
-    <from>/filter-point-cloud/filtered-pointcloud:o</from>
-    <to>/upf-localizer/filtered-pc:i</to>
-  </connection>
+  <!-- <connection> -->
+  <!--   <from>/filter-point-cloud/filtered-pointcloud:o</from> -->
+  <!--   <to>/upf-localizer/filtered-pc:i</to> -->
+  <!-- </connection> -->
 
   <!-- <connection> -->
   <!--   <from>/icub/skin/right_hand_comp</from> -->
