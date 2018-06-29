@@ -173,7 +173,7 @@ bool GazeController::getCameraPose(const std::string &eye_name,
 
 bool GazeController::getCameraIntrinsics(const std::string eye_name,
                                          double &fx, double &fy,
-                                         double &cx, double &cy);
+                                         double &cx, double &cy)
 {
     yarp::os::Bottle info;
     igaze->getInfo(info);
