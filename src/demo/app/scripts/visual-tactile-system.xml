@@ -91,6 +91,11 @@
     <to>/upf-localizer/pc:i</to>
   </connection>
 
+  <connection>
+    <from>/vis_tac_localization/tracker/rpc:o</from>
+    <to>/vtl-gtruth-tracker/rpc</to>
+  </connection>
+
   <!-- <connection> -->
   <!--   <from>/filter-point-cloud/filtered-pointcloud:o</from> -->
   <!--   <to>/upf-localizer/filtered-pc:i</to> -->
