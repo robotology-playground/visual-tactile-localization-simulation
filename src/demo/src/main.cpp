@@ -1398,15 +1398,15 @@ public:
         std::string tracker_rpc_port_name;
         if (!simulation_mode)
         {
-            iol_rpc_port_name = rf.module.find("iolRpcPort").asString();
+            iol_rpc_port_name = rf_module.find("iolRpcPort").asString();
             if (rf_module.find("iolRpcPort").isNull())
                 iol_rpc_port_name = "/vis_tac_localizaton/iol/rpc:o";
 
-            lbpextract_rpc_port_name = rf.module.find("lbpextractRpcPort").asString();
+            lbpextract_rpc_port_name = rf_module.find("lbpextractRpcPort").asString();
             if (rf_module.find("lbpextractRpcPort").isNull())
                 lbpextract_rpc_port_name = "/vis_tac_localizaton/lbpextract/rpc:o";
 
-            tracker_rpc_port_name = rf.module.find("trackerRpcPort").asString();
+            tracker_rpc_port_name = rf_module.find("trackerRpcPort").asString();
             if (rf_module.find("trackerRpcPort").isNull())
                 tracker_rpc_port_name = "/vis_tac_localizaton/tracker/rpc:o";
         }
@@ -1709,6 +1709,34 @@ public:
         }
 
         /**
+         * Rpc clients
+         */
+
+        if (!simulation_mode)
+        {
+            ok = rpc_iol.open(iol_rpc_port_name);
+            if (!ok)
+            {
+                yError() << "VisuoTactileLocalizationDemo: unable to open the iol rpc client port";
+                return false;
+            }
+
+            ok = rpc_tracker.open(tracker_rpc_port_name);
+            if (!ok)
+            {
+                yError() << "VisuoTactileLocalizationDemo: unable to open the tracker rpc client port";
+                return false;
+            }
+
+            ok = rpc_lbpextract.open(lbpextract_rpc_port_name);
+            if (!ok)
+            {
+                yError() << "VisuoTactileLocalizationDemo: unable to open the lbpextract rpc client port";
+                return false;
+            }
+        }
+
+        /**
          * Rpc server
          */
 
@@ -1736,6 +1764,12 @@ public:
         // close ports
         rpc_port.close();
         port_filter.close();
+        if (!simulation_mode)
+        {
+            rpc_tracker.close();
+            rpc_lbpextract.close();
+            rpc_iol.close();
+        }
     }
 
     double getPeriod()
