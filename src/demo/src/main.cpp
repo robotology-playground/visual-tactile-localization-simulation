@@ -1393,6 +1393,24 @@ public:
         if (rf_module.find("tfClientLocalPort").isNull())
             tfclient_local_port_name = "/vis_tac_localization/transformClient";
 
+        std::string iol_rpc_port_name;
+        std::string lbpextract_rpc_port_name;
+        std::string tracker_rpc_port_name;
+        if (!simulation_mode)
+        {
+            iol_rpc_port_name = rf.module.find("iolRpcPort").asString();
+            if (rf_module.find("iolRpcPort").isNull())
+                iol_rpc_port_name = "/vis_tac_localizaton/iol/rpc:o";
+
+            lbpextract_rpc_port_name = rf.module.find("lbpextractRpcPort").asString();
+            if (rf_module.find("lbpextractRpcPort").isNull())
+                lbpextract_rpc_port_name = "/vis_tac_localizaton/lbpextract/rpc:o";
+
+            tracker_rpc_port_name = rf.module.find("trackerRpcPort").asString();
+            if (rf_module.find("trackerRpcPort").isNull())
+                tracker_rpc_port_name = "/vis_tac_localizaton/tracker/rpc:o";
+        }
+
         // robot name
         std::string robot_name = rf_module.find("robotName").asString();
         if (rf_module.find("robotName").isNull())
