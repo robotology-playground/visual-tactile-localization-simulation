@@ -1646,11 +1646,14 @@ public:
          * Gaze Controller
          */
 
-        ok = gaze_ctrl.configure(rf, "/vtl-demo");
-        if (!ok)
+        if (!simulation_mode)
         {
-            yError() << "VisuoTactileLocalizationDemo: unable to configure the gaze controller";
-            return false;
+            ok = gaze_ctrl.configure(rf, "/vtl-demo");
+            if (!ok)
+            {
+                yError() << "VisuoTactileLocalizationDemo: unable to configure the gaze controller";
+                return false;
+            }
         }
 
         /**
@@ -1765,8 +1768,11 @@ public:
         {
             bool ok;
 
-            // block eyes vergence
-            gaze_ctrl.blockEyes(5.0);
+            if (!simulation_mode)
+            {
+                // block eyes vergence
+                gaze_ctrl.blockEyes(5.0);
+            }
 
             // issue localization
             ok = sendCommandToFilter("enable", "visual");

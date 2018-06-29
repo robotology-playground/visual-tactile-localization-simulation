@@ -91,13 +91,6 @@
   </module>
 
   <module>
-    <name>iKinGazeCtrl</name>
-    <node>localhost</node>
-    <parameters>--from configSim.ini </parameters>
-    <environment>YARP_CLOCK=/clock;YARP_FORWARD_LOG_ENABLE=1</environment>
-  </module>
-
-  <module>
     <name>vtl-hand-ctrl</name>
     <node>localhost</node>
     <parameters>--context simVisualTactileLocalization --robotName icubSim --handName right --useSimulatedContacts true</parameters>
