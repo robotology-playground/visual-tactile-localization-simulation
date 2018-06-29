@@ -12,6 +12,6 @@ camera_matrix: !!opencv-matrix
           0.0, 0.0, 1.0]
 distortion_coefficients: !!opencv-matrix
    rows: 1
-   cols: 4
+   cols: 5
    dt: d
-   data: [-0.412323, 0.151472, 0.000156673, 0.0005931]
+   data: [0.0, 0.0, 0.0, 0.0, 0.0]
