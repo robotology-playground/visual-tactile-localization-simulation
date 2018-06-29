@@ -185,6 +185,9 @@ protected:
      * Status, booleans, defaults and names
      */
 
+    // simulation modes
+    bool simulation_mode;
+
     // status of the module
     Status status;
     Status previous_status;
@@ -1367,6 +1370,11 @@ public:
         /**
          * Parameters from configuration
          */
+
+        // simulation mode
+        simulation_mode = rf_module.find("simulationMode").asBool();
+        if (rf_module.find("simulationMode").isNull())
+            simulation_mode = "false";
 
         // port names
         std::string filter_port_name = rf_module.find("filterPort").asString();
