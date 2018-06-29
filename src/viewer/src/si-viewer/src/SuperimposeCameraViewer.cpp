@@ -153,10 +153,10 @@ public:
             return false;
 
         // configure estimate CAD
-        float cam_fx;
-        float cam_cx;
-        float cam_fy;
-        float cam_cy;
+        double cam_fx;
+        double cam_cx;
+        double cam_fy;
+        double cam_cy;
         if (robot_name == "icubSim")
         {
             cam_fx = 343.121107282;
@@ -166,20 +166,9 @@ public:
         }
         else if (robot_name == "icub")
         {
-            if (eye_name == "left")
-            {
-                cam_fx = 234.88;
-                cam_cx = 160.77;
-                cam_fy = 234.582;
-                cam_cy = 123.491;
-            }
-            else if (eye_name == "right")
-            {
-                cam_fx = 225.904;
-                cam_cx = 157.858;
-                cam_fy = 227.041;
-                cam_cy = 113.51;
-            }
+            gaze_ctrl.getCameraIntrinsics(eye_name,
+                                          cam_fx, cam_fy,
+                                          cam_cx, cam_cy);
         }
 
         // initialize SICAD objects
