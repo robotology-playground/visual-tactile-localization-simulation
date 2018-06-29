@@ -1679,8 +1679,7 @@ public:
          */
 
         // open the rpc server
-        // TODO: take name from config
-        rpc_port.open("/service");
+        rpc_port.open("/vtl-demo/rpc:i");
         attach(rpc_port);
 
         return true;
