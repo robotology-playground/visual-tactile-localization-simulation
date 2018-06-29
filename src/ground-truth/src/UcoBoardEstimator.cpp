@@ -23,3 +23,12 @@ bool UcoBoardEstimator::readCameraParameters(std::string filename)
     
     return true;
 }
+
+bool UcoBoardEstimator::setCameraIntrinsics(const double &fx, const double &fy,
+                                            const double &cx, const double &cy)
+{
+    cam_intrinsic.at<double>(0, 0) = fx;
+    cam_intrinsic.at<double>(0, 2) = cx;
+    cam_intrinsic.at<double>(1, 1) = fy;
+    cam_intrinsic.at<double>(1, 2) = cy;
+}

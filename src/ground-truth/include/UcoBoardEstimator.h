@@ -35,6 +35,8 @@ public:
     virtual bool estimateBoardPose(const cv::Mat &img_in, cv::Mat &img_out,
                                    cv::Mat &pos, cv::Mat &att,
                                    const bool &draw_estimate = false) = 0;
+    bool setCameraIntrinsics(const double &fx, const double &fy,
+                             const double &cx, const double &cy);
 };
 
 #endif
