@@ -721,6 +721,21 @@ protected:
         return true;
     }
 
+    bool sendCommandToTracker(const std::string &cmd_name)
+    {
+        yarp::os::Bottle cmd;
+        yarp::os::Bottle reply;
+        cmd.addString(cmd_name);
+        rpc_tracker.write(cmd, reply);
+
+        if ((reply.size() == 1) &&
+            (reply.get(0).isString()) &&
+            (reply.get(0).asString() == "ok"))
+            return true;
+
+        return false;
+    }
+
     /*
      * Get an arm controller.
      * @param arm_name the required arm controller
@@ -2063,6 +2078,12 @@ public:
             // disable visual filtering
             ok = sendCommandToFilter("disable");
 
+            if (!simulation_mode)
+            {
+                // fixate with eyes
+                ok = ok && sendCommandToTracker("eyes-fixate-and-hold");
+            }
+
             // issue approach with arm
             ok = ok && approachObjectWithArm(seq_act_arm);
 
@@ -2241,6 +2262,12 @@ public:
             // prepare controller for push
             ok = preparePullObject(seq_act_arm);
 
+            if (!simulation_mode)
+            {
+                // enable tracking with eyes
+                ok = ok && sendCommandToTracker("eyes-track");
+            }
+
             if (!ok)
             {
                 yError() << "[PREPARE PULL] error while trying to issue pulling phase";
@@ -2342,6 +2369,13 @@ public:
 
                 // disable filtering
                 sendCommandToFilter("disable");
+
+                // stop eyes tracking
+                if (!simulation_mode)
+                {
+                    // disable tracking with eyes
+                    sendCommandToTracker("eyes-stop");
+                }
 
                 // restore arm controller context
                 // that was changed in preparePullObject(seq_act_arm)
