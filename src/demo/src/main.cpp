@@ -1760,7 +1760,7 @@ public:
             ok = sendCommandToFilter("enable", "visual");
 
             if (!ok)
-                yError() << "[LOCALIZE] error while sending command to the filter";
+                yError() << "[VISUAL LOCALIZATION ON] error while sending command to the filter";
 
             // go back to Idle
             mutex.lock();
@@ -1778,7 +1778,7 @@ public:
             ok = sendCommandToFilter("disable");
 
             if (!ok)
-                yError() << "[LOCALIZE] error while sending command to the filter";
+                yError() << "[LOCALIZATION OFF] error while sending command to the filter";
 
             // go back to Idle
             mutex.lock();
@@ -1796,7 +1796,7 @@ public:
             ok = sendCommandToFilter("reset");
 
             if (!ok)
-                yError() << "[LOCALIZE] error while sending command to the filter";
+                yError() << "[RESET FILTER] error while sending command to the filter";
 
             // go back to Idle
             mutex.lock();
