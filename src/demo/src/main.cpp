@@ -1990,8 +1990,11 @@ public:
         {
             bool ok;
 
+            // disable visual filtering
+            ok = sendCommandToFilter("disable");
+
             // issue approach with arm
-            ok = approachObjectWithArm(seq_act_arm);
+            ok = ok && approachObjectWithArm(seq_act_arm);
 
             if (!ok)
             {
@@ -2591,9 +2594,9 @@ public:
                 // reset arm name
                 single_action_arm_name.clear();
 
-                // go back to Idle
+                // go back to VisualFilteringOn
                 mutex.lock();
-                status = Status::Idle;
+                status = Status::VisualLocalizationOn;
                 mutex.unlock();
             }
 
