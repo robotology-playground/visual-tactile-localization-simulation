@@ -180,6 +180,11 @@ bool Tracker::configure(yarp::os::ResourceFinder &rf)
                  << board_type << "board";
         return false;
     }
+    // override camera intrinsics using information
+    // from the iKinGazeCtrl
+    double fx, fy, cx, cy;
+    gaze_ctrl.getCameraIntrinsics(eye_name, fx, fy, cx, cy);
+    uco_estimator->setCameraIntrinsics(fx, fy, cx, cy);
 
     // resize estimate matrix
     // est_pos.resize(3, 0.0);
