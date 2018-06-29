@@ -172,6 +172,11 @@ protected:
     // rpc server
     yarp::os::RpcServer rpc_port;
 
+    // rpc clients
+    yarp::os::RpcClient rpc_tracker;
+    yarp::os::RpcClient rpc_lbpextract;
+    yarp::os::RpcClient rpc_iol;
+
     // mutexes required to share data between
     // the RFModule thread and the rpc thread
     yarp::os::Mutex mutex;
