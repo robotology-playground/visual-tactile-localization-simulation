@@ -22,7 +22,7 @@ public:
   virtual std::string get_approach_position(const std::string& whereToApproach);
   virtual std::string move_hand_upward(const std::string& armToMove);
   virtual std::string move_arm_rest_pose(const std::string& armToMove);
-  virtual std::string home(const std::string& armToPutHome);
+  virtual std::string home_arm(const std::string& armToPutHome);
   virtual std::string approach(const std::string& armToUse, const std::string& whereToApproach);
   virtual std::string fingers_approach(const std::string& armToUse);
   virtual std::string fingers_restore(const std::string& armToUse);

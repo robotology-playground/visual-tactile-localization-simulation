@@ -82,7 +82,7 @@ public:
   virtual bool read(yarp::os::ConnectionReader& connection) override;
 };
 
-class VIS_TAC_IDL_home : public yarp::os::Portable {
+class VIS_TAC_IDL_home_arm : public yarp::os::Portable {
 public:
   std::string armToPutHome;
   std::string _return;
@@ -368,15 +368,15 @@ void VIS_TAC_IDL_move_arm_rest_pose::init(const std::string& armToMove) {
   this->armToMove = armToMove;
 }
 
-bool VIS_TAC_IDL_home::write(yarp::os::ConnectionWriter& connection) {
+bool VIS_TAC_IDL_home_arm::write(yarp::os::ConnectionWriter& connection) {
   yarp::os::idl::WireWriter writer(connection);
-  if (!writer.writeListHeader(2)) return false;
-  if (!writer.writeTag("home",1,1)) return false;
+  if (!writer.writeListHeader(3)) return false;
+  if (!writer.writeTag("home_arm",1,2)) return false;
   if (!writer.writeString(armToPutHome)) return false;
   return true;
 }
 
-bool VIS_TAC_IDL_home::read(yarp::os::ConnectionReader& connection) {
+bool VIS_TAC_IDL_home_arm::read(yarp::os::ConnectionReader& connection) {
   yarp::os::idl::WireReader reader(connection);
   if (!reader.readListReturn()) return false;
   if (!reader.readString(_return)) {
@@ -386,7 +386,7 @@ bool VIS_TAC_IDL_home::read(yarp::os::ConnectionReader& connection) {
   return true;
 }
 
-void VIS_TAC_IDL_home::init(const std::string& armToPutHome) {
+void VIS_TAC_IDL_home_arm::init(const std::string& armToPutHome) {
   _return = "";
   this->armToPutHome = armToPutHome;
 }
@@ -689,12 +689,12 @@ std::string VIS_TAC_IDL::move_arm_rest_pose(const std::string& armToMove) {
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
 }
-std::string VIS_TAC_IDL::home(const std::string& armToPutHome) {
+std::string VIS_TAC_IDL::home_arm(const std::string& armToPutHome) {
   std::string _return = "";
-  VIS_TAC_IDL_home helper;
+  VIS_TAC_IDL_home_arm helper;
   helper.init(armToPutHome);
   if (!yarp().canWrite()) {
-    yError("Missing server method '%s'?","std::string VIS_TAC_IDL::home(const std::string& armToPutHome)");
+    yError("Missing server method '%s'?","std::string VIS_TAC_IDL::home_arm(const std::string& armToPutHome)");
   }
   bool ok = yarp().write(helper,helper);
   return ok?helper._return:_return;
@@ -918,14 +918,14 @@ bool VIS_TAC_IDL::read(yarp::os::ConnectionReader& connection) {
       reader.accept();
       return true;
     }
-    if (tag == "home") {
+    if (tag == "home_arm") {
       std::string armToPutHome;
       if (!reader.readString(armToPutHome)) {
         reader.fail();
         return false;
       }
       std::string _return;
-      _return = home(armToPutHome);
+      _return = home_arm(armToPutHome);
       yarp::os::idl::WireWriter writer(reader);
       if (!writer.isNull()) {
         if (!writer.writeListHeader(1)) return false;
@@ -1116,7 +1116,7 @@ std::vector<std::string> VIS_TAC_IDL::help(const std::string& functionName) {
     helpString.push_back("get_approach_position");
     helpString.push_back("move_hand_upward");
     helpString.push_back("move_arm_rest_pose");
-    helpString.push_back("home");
+    helpString.push_back("home_arm");
     helpString.push_back("approach");
     helpString.push_back("fingers_approach");
     helpString.push_back("fingers_restore");
@@ -1156,8 +1156,8 @@ std::vector<std::string> VIS_TAC_IDL::help(const std::string& functionName) {
     if (functionName=="move_arm_rest_pose") {
       helpString.push_back("std::string move_arm_rest_pose(const std::string& armToMove) ");
     }
-    if (functionName=="home") {
-      helpString.push_back("std::string home(const std::string& armToPutHome) ");
+    if (functionName=="home_arm") {
+      helpString.push_back("std::string home_arm(const std::string& armToPutHome) ");
     }
     if (functionName=="approach") {
       helpString.push_back("std::string approach(const std::string& armToUse, const std::string& whereToApproach) ");

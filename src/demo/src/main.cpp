@@ -49,6 +49,7 @@ using namespace yarp::math;
 
 enum class Status { Idle,
                     VisualLocalizationOn, LocalizationOff, ResetFilter,
+                    MoveHeadHome,
                     MoveHandUpward, WaitMoveHandUpwardDone,
                     MoveArmRestPosition, WaitMoveArmRestPositionDone,
                     ArmApproach, WaitArmApproachDone,
@@ -420,7 +421,7 @@ protected:
         return reply;
     }
 
-    std::string home(const std::string &arm_name)
+    std::string home_arm(const std::string &arm_name)
     {
         mutex.lock();
 
