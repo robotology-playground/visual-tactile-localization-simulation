@@ -1,3 +1,3 @@
-include/VIS_TAC_IDL.h
-src/VIS_TAC_IDL.cpp
-idl_thrift.cmake
+src/demo/include/thrift/*
+src/demo/src/VIS_TAC_IDL.cpp
+src/demo/thrift_visual_tactile_loc_thrift.cmake
