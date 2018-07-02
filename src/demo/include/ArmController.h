@@ -71,6 +71,14 @@ public:
                    const std::string& arm_name);
 
     /*
+     * Set the home pose for the arm.
+     * @param postiion the positional part of the pose
+     * @param attitude the rotational part of the pose
+     */
+    void setHomePose(const yarp::sig::Vector& position,
+                     const yarp::sig::Vector& attitude);
+
+    /*
      * Stop the controller, restore the startup context,
      * close all the drivers.
      */

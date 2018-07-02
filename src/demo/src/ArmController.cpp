@@ -110,8 +110,8 @@ bool ArmController::configure(const std::string &robot_name,
 
     // store home pose
     // wait until the pose is available
-    while(!icart->getPose(home_pos, home_att))
-        yarp::os::Time::yield();
+    // while(!icart->getPose(home_pos, home_att))
+    //     yarp::os::Time::yield();
 
     /*
      *
@@ -134,6 +134,14 @@ bool ArmController::configure(const std::string &robot_name,
 
     return true;
 }
+
+void ArmController::setHomePose(const yarp::sig::Vector& position,
+                                const yarp::sig::Vector& attitude)
+{
+    home_pos = position;
+    home_att = attitude;
+}
+
 
 void ArmController::close()
 {
