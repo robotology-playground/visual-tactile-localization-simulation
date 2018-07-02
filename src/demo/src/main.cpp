@@ -735,6 +735,22 @@ protected:
         return false;
     }
 
+    bool setLbpExtractMaxArea(const int &max_area)
+    {
+        yarp::os::Bottle cmd;
+        yarp::os::Bottle reply;
+        cmd.addString("setMaxArea");
+        cmd.addInt(max_area);
+        rpc_lbpextract.write(cmd, reply);
+
+        if ((reply.size() == 1) &&
+            (reply.get(0).isBool()) &&
+            (reply.get(0).asBool() == true))
+            return true;
+
+        return false;
+    }
+
     /*
      * Get an arm controller.
      * @param arm_name the required arm controller
