@@ -49,7 +49,7 @@ using namespace yarp::math;
 
 enum class Status { Idle,
                     VisualLocalizationOn, LocalizationOff, ResetFilter,
-                    MoveHeadHome,
+                    MoveHeadHome, WaitMoveHeadDone,
                     MoveHandUpward, WaitMoveHandUpwardDone,
                     MoveArmRestPosition, WaitMoveArmRestPositionDone,
                     ArmApproach, WaitArmApproachDone,
@@ -213,6 +213,7 @@ protected:
     double arm_restore_timeout;
     double arm_upward_timeout;
     double arm_rest_timeout;
+    double head_motion_timeout;
     double fingers_approach_timeout;
     double fingers_restore_timeout;
 
@@ -439,6 +440,28 @@ protected:
 
             // set current hand
             single_action_arm_name = arm_name;
+
+            reply = "[OK] Command issued";
+        }
+
+        mutex.unlock();
+
+        return reply;
+    }
+
+    std::string home_head()
+    {
+        mutex.lock();
+
+        std::string reply;
+
+        if (status != Status::Idle)
+            reply = "[FAILED] Wait for completion of the current phase";
+        else
+        {
+            // change status
+            previous_status = status;
+            status = Status::MoveHeadHome;
 
             reply = "[OK] Command issued";
         }
@@ -808,6 +831,16 @@ protected:
             return arm->cartesian()->checkMotionDone(&is_done);
         else
             return false;
+    }
+
+    /*
+     * Check if head motion is done.
+     * @param is_done whether the head motion is done or not
+     * @return true for success, false for failure
+     */
+    bool checkHeadMotionDone(bool &is_done)
+    {
+        return gaze_ctrl.isMotionDone(is_done);
     }
 
     /*
@@ -1515,6 +1548,13 @@ public:
         if (rf_module.find("armRestTimeout").isNull())
             arm_rest_timeout = 7.0;
 
+        if(!simulation_mode)
+        {
+            head_motion_timeout = rf_module.find("headMotionTimeout").asDouble();
+            if (rf_module.find("headMotionTimeout").isNull())
+                head_motion_timeout = 5.0;
+        }
+
         fingers_approach_timeout = rf_module.find("fingersApproachTimeout").asDouble();
         if (rf_module.find("fingersApproachTimeout").isNull())
             fingers_approach_timeout = 10.0;
@@ -1900,6 +1940,68 @@ public:
             mutex.lock();
             status = Status::Idle;
             mutex.unlock();
+
+            break;
+        }
+
+        case Status::MoveHeadHome:
+        {
+            bool ok;
+
+            // issue head home command
+            ok = gaze_ctrl.goHome();
+
+            if (!ok)
+                yError() << "[MOVE HOME HEAD] error while trying to move head in home position";
+
+            // go to WaitMoveHeadDone
+            mutex.lock();
+            status = Status::WaitMoveHeadDone;
+            mutex.unlock();
+
+            break;
+        }
+
+        case Status::WaitMoveHeadDone:
+        {
+            // check status
+            bool is_done = false;
+            bool ok = checkHeadMotionDone(is_done);
+
+            // handle failure and timeout
+            if (!ok ||
+                ((yarp::os::Time::now() - last_time > head_motion_timeout)))
+            {
+                yError() << "[WAIT MOVE HEAD DONE] check motion done failed or timeout reached";
+
+                // stop control
+                gaze_ctrl.stop();
+
+                mutex.lock();
+
+                // go back to Idle
+                status = Status::Idle;
+
+                mutex.unlock();
+
+                break;
+            }
+
+            if (is_done)
+            {
+                // approach completed
+                yInfo() << "[WAIT MOVE HEAD DONE] done";
+
+                // stop control
+                gaze_ctrl.stop();
+
+                mutex.lock();
+
+                // go to Idle
+                status = Status::Idle;
+
+                mutex.unlock();
+            }
 
             break;
         }
