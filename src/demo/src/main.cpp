@@ -1675,21 +1675,13 @@ public:
             yError() << "VisuoTactileLocalizationDemo: unable to load home pose for left arm";
             return false;
         }
-        left_arm_home_pos = left_arm_home_pose.subVector(0, 2);
-        left_arm_home_att = left_arm_home_pose.subVector(3, 6);
-        yInfo() << left_arm_home_pos.toString();
-        yInfo() << left_arm_home_att.toString();
         yarp::sig::Vector right_arm_home_pose;
         if (!loadListDouble(rf_module, "rightArmHomePose",
                             7, right_arm_home_pose))
         {
             yError() << "VisuoTactileLocalizationDemo: unable to load home pose for right arm";
             return false;
-        }
-        right_arm_home_pos = right_arm_home_pose.subVector(0, 2);
-        right_arm_home_att = right_arm_home_pose.subVector(3, 6);
-        yInfo() << right_arm_home_pos.toString();
-        yInfo() << right_arm_home_att.toString();
+        }        
 
         /**
          * Ports
@@ -1752,6 +1744,8 @@ public:
             yError() << "VisuoTactileLocalizationDemo: unable to configure the right arm controller";
             return false;
         }
+        right_arm.setHomePose(right_arm_home_pose.subVector(0, 2),
+                              right_arm_home_pose.subVector(3, 6));
 
         ok = left_arm.configure(robot_name, "left");
         if (!ok)
@@ -1759,6 +1753,8 @@ public:
             yError() << "VisuoTactileLocalizationDemo: unable to configure the left arm controller";
             return false;
         }
+        left_arm.setHomePose(left_arm_home_pose.subVector(0, 2),
+                             left_arm_home_pose.subVector(3, 6));
 
         /**
          * Gaze Controller
