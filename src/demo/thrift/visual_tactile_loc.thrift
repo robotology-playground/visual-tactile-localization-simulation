@@ -1,5 +1,6 @@
 service VIS_TAC_IDL
 {
+    string init();
     string start_visual_localization();
     string stop_localization();
     string reset_filter();

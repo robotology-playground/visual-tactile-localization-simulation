@@ -13,6 +13,7 @@ class VIS_TAC_IDL;
 class VIS_TAC_IDL : public yarp::os::Wire {
 public:
   VIS_TAC_IDL();
+  virtual std::string init();
   virtual std::string start_visual_localization();
   virtual std::string stop_localization();
   virtual std::string reset_filter();

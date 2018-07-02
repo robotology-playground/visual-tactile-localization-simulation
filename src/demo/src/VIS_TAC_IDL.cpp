@@ -6,6 +6,14 @@
 
 
 
+class VIS_TAC_IDL_init : public yarp::os::Portable {
+public:
+  std::string _return;
+  void init();
+  virtual bool write(yarp::os::ConnectionWriter& connection) override;
+  virtual bool read(yarp::os::ConnectionReader& connection) override;
+};
+
 class VIS_TAC_IDL_start_visual_localization : public yarp::os::Portable {
 public:
   std::string _return;
@@ -162,6 +170,27 @@ public:
   virtual bool write(yarp::os::ConnectionWriter& connection) override;
   virtual bool read(yarp::os::ConnectionReader& connection) override;
 };
+
+bool VIS_TAC_IDL_init::write(yarp::os::ConnectionWriter& connection) {
+  yarp::os::idl::WireWriter writer(connection);
+  if (!writer.writeListHeader(1)) return false;
+  if (!writer.writeTag("init",1,1)) return false;
+  return true;
+}
+
+bool VIS_TAC_IDL_init::read(yarp::os::ConnectionReader& connection) {
+  yarp::os::idl::WireReader reader(connection);
+  if (!reader.readListReturn()) return false;
+  if (!reader.readString(_return)) {
+    reader.fail();
+    return false;
+  }
+  return true;
+}
+
+void VIS_TAC_IDL_init::init() {
+  _return = "";
+}
 
 bool VIS_TAC_IDL_start_visual_localization::write(yarp::os::ConnectionWriter& connection) {
   yarp::os::idl::WireWriter writer(connection);
@@ -570,6 +599,16 @@ void VIS_TAC_IDL_quit::init() {
 VIS_TAC_IDL::VIS_TAC_IDL() {
   yarp().setOwner(*this);
 }
+std::string VIS_TAC_IDL::init() {
+  std::string _return = "";
+  VIS_TAC_IDL_init helper;
+  helper.init();
+  if (!yarp().canWrite()) {
+    yError("Missing server method '%s'?","std::string VIS_TAC_IDL::init()");
+  }
+  bool ok = yarp().write(helper,helper);
+  return ok?helper._return:_return;
+}
 std::string VIS_TAC_IDL::start_visual_localization() {
   std::string _return = "";
   VIS_TAC_IDL_start_visual_localization helper;
@@ -760,6 +799,17 @@ bool VIS_TAC_IDL::read(yarp::os::ConnectionReader& connection) {
   if (direct) tag = reader.readTag();
   while (!reader.isError()) {
     // TODO: use quick lookup, this is just a test
+    if (tag == "init") {
+      std::string _return;
+      _return = init();
+      yarp::os::idl::WireWriter writer(reader);
+      if (!writer.isNull()) {
+        if (!writer.writeListHeader(1)) return false;
+        if (!writer.writeString(_return)) return false;
+      }
+      reader.accept();
+      return true;
+    }
     if (tag == "start_visual_localization") {
       std::string _return;
       _return = start_visual_localization();
@@ -1057,6 +1107,7 @@ std::vector<std::string> VIS_TAC_IDL::help(const std::string& functionName) {
   std::vector<std::string> helpString;
   if(showAll) {
     helpString.push_back("*** Available commands:");
+    helpString.push_back("init");
     helpString.push_back("start_visual_localization");
     helpString.push_back("stop_localization");
     helpString.push_back("reset_filter");
@@ -1078,6 +1129,9 @@ std::vector<std::string> VIS_TAC_IDL::help(const std::string& functionName) {
     helpString.push_back("help");
   }
   else {
+    if (functionName=="init") {
+      helpString.push_back("std::string init() ");
+    }
     if (functionName=="start_visual_localization") {
       helpString.push_back("std::string start_visual_localization() ");
     }
