@@ -117,7 +117,7 @@ bool GazeController::blockEyes(const double &vergence)
 
 bool GazeController::goHome()
 {
-    igaze->lookAtFixationPointSync(home_fix);
+    return igaze->lookAtFixationPointSync(home_fix);
 }
 
 bool GazeController::close()
