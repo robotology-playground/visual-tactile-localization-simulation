@@ -134,12 +134,6 @@ protected:
     yarp::sig::Vector right_arm_rest_pos;
     yarp::sig::Vector right_arm_rest_att;
 
-    // left and righ arm home positions
-    yarp::sig::Vector left_arm_home_pos;
-    yarp::sig::Vector left_arm_home_att;
-    yarp::sig::Vector right_arm_home_pos;
-    yarp::sig::Vector right_arm_home_att;
-
     /**
      * Filter
      */
