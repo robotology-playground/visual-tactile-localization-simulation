@@ -175,7 +175,6 @@ protected:
     // rpc clients
     yarp::os::RpcClient rpc_tracker;
     yarp::os::RpcClient rpc_lbpextract;
-    yarp::os::RpcClient rpc_iol;
 
     // mutexes required to share data between
     // the RFModule thread and the rpc thread
@@ -1408,15 +1407,10 @@ public:
         if (rf_module.find("tfClientLocalPort").isNull())
             tfclient_local_port_name = "/vis_tac_localization/transformClient";
 
-        std::string iol_rpc_port_name;
         std::string lbpextract_rpc_port_name;
         std::string tracker_rpc_port_name;
         if (!simulation_mode)
         {
-            iol_rpc_port_name = rf_module.find("iolRpcPort").asString();
-            if (rf_module.find("iolRpcPort").isNull())
-                iol_rpc_port_name = "/vis_tac_localization/iol/rpc:o";
-
             lbpextract_rpc_port_name = rf_module.find("lbpextractRpcPort").asString();
             if (rf_module.find("lbpextractRpcPort").isNull())
                 lbpextract_rpc_port_name = "/vis_tac_localization/lbpextract/rpc:o";
@@ -1729,13 +1723,6 @@ public:
 
         if (!simulation_mode)
         {
-            ok = rpc_iol.open(iol_rpc_port_name);
-            if (!ok)
-            {
-                yError() << "VisuoTactileLocalizationDemo: unable to open the iol rpc client port";
-                return false;
-            }
-
             ok = rpc_tracker.open(tracker_rpc_port_name);
             if (!ok)
             {
@@ -1783,7 +1770,6 @@ public:
         {
             rpc_tracker.close();
             rpc_lbpextract.close();
-            rpc_iol.close();
         }
     }
 
