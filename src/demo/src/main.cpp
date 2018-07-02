@@ -224,6 +224,16 @@ protected:
         return this->yarp().attachAsServer(source);
     }
 
+    std::string init()
+    {
+        // set max area used by module lbpExtract
+        setLbpExtractMaxArea(11000);
+
+        // block vergence of eyes
+        // as required by SFM
+        gaze_ctrl.blockEyes(5.0);
+    }
+
     std::string start_visual_localization()
     {
         mutex.lock();
