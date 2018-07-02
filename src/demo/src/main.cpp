@@ -61,7 +61,7 @@ enum class Status { Idle,
                     Stop };
 
 class VisuoTactileLocalizationDemo: public yarp::os::RFModule,
-                          public VIS_TAC_IDL
+                                    public VIS_TAC_IDL
 {
 protected:
     double module_period;
