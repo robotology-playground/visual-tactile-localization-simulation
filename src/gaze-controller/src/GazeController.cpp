@@ -210,3 +210,8 @@ bool GazeController::setTrajectoryTimes()
     if (!igaze->setNeckTrajTime(neck_traj_time))
         return false;
 }
+
+bool GazeController::isMotionDone(bool &done)
+{
+    return igaze->checkMotionDone(&done);
+}

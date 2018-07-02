@@ -53,6 +53,7 @@ public:
                              double &fx, double &fy,
                              double &cx, double &cy);
     bool setTrajectoryTimes();
+    bool isMotionDone(bool &done);
 };
 
 #endif
