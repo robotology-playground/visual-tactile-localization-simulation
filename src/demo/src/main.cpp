@@ -128,7 +128,7 @@ protected:
     // fingers to be used in restore mode
     std::vector<std::string> fingers_list_restore;
 
-    // left arm rest position
+    // left and right arm rest positions
     yarp::sig::Vector left_arm_rest_pos;
     yarp::sig::Vector left_arm_rest_att;
     yarp::sig::Vector right_arm_rest_pos;
