@@ -134,6 +134,12 @@ protected:
     yarp::sig::Vector right_arm_rest_pos;
     yarp::sig::Vector right_arm_rest_att;
 
+    // left and righ arm home positions
+    yarp::sig::Vector left_arm_home_pos;
+    yarp::sig::Vector left_arm_home_att;
+    yarp::sig::Vector right_arm_home_pos;
+    yarp::sig::Vector right_arm_home_att;
+
     /**
      * Filter
      */
@@ -1666,6 +1672,30 @@ public:
         right_arm_rest_att = right_arm_rest_pose.subVector(3, 6);
         yInfo() << right_arm_rest_pos.toString();
         yInfo() << right_arm_rest_att.toString();
+
+        // home poses for left and right arm
+        yarp::sig::Vector left_arm_home_pose;
+        if (!loadListDouble(rf_module, "leftArmHomePose",
+                            7, left_arm_home_pose))
+        {
+            yError() << "VisuoTactileLocalizationDemo: unable to load home pose for left arm";
+            return false;
+        }
+        left_arm_home_pos = left_arm_home_pose.subVector(0, 2);
+        left_arm_home_att = left_arm_home_pose.subVector(3, 6);
+        yInfo() << left_arm_home_pos.toString();
+        yInfo() << left_arm_home_att.toString();
+        yarp::sig::Vector right_arm_home_pose;
+        if (!loadListDouble(rf_module, "rightArmHomePose",
+                            7, right_arm_home_pose))
+        {
+            yError() << "VisuoTactileLocalizationDemo: unable to load home pose for right arm";
+            return false;
+        }
+        right_arm_home_pos = right_arm_home_pose.subVector(0, 2);
+        right_arm_home_att = right_arm_home_pose.subVector(3, 6);
+        yInfo() << right_arm_home_pos.toString();
+        yInfo() << right_arm_home_att.toString();
 
         /**
          * Ports
