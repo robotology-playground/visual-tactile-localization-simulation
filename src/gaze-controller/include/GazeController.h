@@ -32,9 +32,13 @@ class GazeController
     double eyes_traj_time;
     double neck_traj_time;
 
+    // home fixation point
+    yarp::sig::Vector home_fix;
+
 public:
     bool configure(const yarp::os::ResourceFinder &rf,
                    const std::string &port_prefix);
+    bool goHome();
     bool close();
     bool setReference(const yarp::sig::Vector &fixation_point);
     bool enableTrackingMode();

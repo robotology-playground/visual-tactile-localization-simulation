@@ -93,6 +93,10 @@ bool GazeController::configure(const yarp::os::ResourceFinder &rf,
         return false;
     }
 
+    // store the home fixation point
+    home_fix.resize(3, 0.0);
+    home_fix[0] = -0.3;
+
     return true;
 }
 
@@ -109,6 +113,11 @@ bool GazeController::clearEyes()
 bool GazeController::blockEyes(const double &vergence)
 {
     return igaze->blockEyes(vergence);
+}
+
+bool GazeController::goHome()
+{
+    igaze->lookAtFixationPointSync(home_fix);
 }
 
 bool GazeController::close()
