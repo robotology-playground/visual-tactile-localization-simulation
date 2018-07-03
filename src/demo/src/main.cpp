@@ -188,6 +188,9 @@ protected:
     // simulation modes
     bool simulation_mode;
 
+    // whether to use gaze or not
+    bool use_gaze;
+
     // status of the module
     Status status;
     Status previous_status;
@@ -231,9 +234,12 @@ protected:
         // set max area used by module lbpExtract
         setLbpExtractMaxArea(11000);
 
-        // block vergence of eyes
-        // as required by SFM
-        gaze_ctrl.blockEyes(5.0);
+        if (use_gaze)
+        {
+            // block vergence of eyes
+            // as required by SFM
+            gaze_ctrl.blockEyes(5.0);
+        }
     }
 
     std::string start_visual_localization()
@@ -457,6 +463,8 @@ protected:
 
         if (status != Status::Idle)
             reply = "[FAILED] Wait for completion of the current phase";
+        else if (!use_gaze)
+            reply = "[FAILED] Control of gaze is disabled";
         else
         {
             // change status
@@ -1478,6 +1486,11 @@ public:
         if (rf_module.find("simulationMode").isNull())
             simulation_mode = "false";
 
+        // whether to use gaze or not
+        use_gaze = rf_module.find("useGaze").asBool();
+        if (rf_module.find("useGaze").isNull())
+            use_gaze = false;
+
         // port names
         std::string filter_port_name = rf_module.find("filterPort").asString();
         if (rf_module.find("filterPortName").isNull())
@@ -1788,7 +1801,7 @@ public:
          * Gaze Controller
          */
 
-        if (!simulation_mode)
+        if (use_gaze)
         {
             ok = gaze_ctrl.configure(rf, "/vtl-demo");
             if (!ok)
@@ -1936,7 +1949,7 @@ public:
         {
             bool ok;
 
-            if (!simulation_mode)
+            if (use_gaze)
             {
                 // block eyes vergence
                 gaze_ctrl.blockEyes(5.0);
