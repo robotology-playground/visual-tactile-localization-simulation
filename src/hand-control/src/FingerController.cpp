@@ -1080,3 +1080,20 @@ bool FingerController::undoThumbParking()
     }
     return true;
 }
+
+bool FingerController::switchToPositionControl()
+{
+    bool ok = setControlMode(VOCAB_CM_POSITION);
+    if (!ok)
+    {
+        yError() << "FingerController:switchToPositionControl"
+                 << "Error: unable to set the position control"
+                 << "mode for the joints of the"
+                 << hand_name << finger_name
+                 << "finger";
+
+        return false;
+    }
+
+    return true;
+}

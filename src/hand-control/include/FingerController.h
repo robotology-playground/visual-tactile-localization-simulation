@@ -298,6 +298,13 @@ public:
      * @return true/false on success/failure
      */
     bool stop();
+
+    /*
+     * Switch to position control.
+     *
+     * @return true/false on success/failure
+     */
+    bool switchToPositionControl();
 };
 
 #endif
