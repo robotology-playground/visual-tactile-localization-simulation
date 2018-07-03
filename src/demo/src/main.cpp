@@ -1722,7 +1722,18 @@ public:
         {
             yError() << "VisuoTactileLocalizationDemo: unable to load home pose for right arm";
             return false;
-        }        
+        }
+
+        // home fixation point
+        yarp::sig::Vector home_fixation;
+        if (use_gaze)
+        {
+            if (!loadListDouble(rf_module, "homeFixationPoint", 3, home_fixation))
+            {
+                yError() << "VisuoTactileLocalizationDemo: unable to load home fixation point";
+                return false;
+            }
+        }
 
         /**
          * Ports
@@ -1809,6 +1820,7 @@ public:
                 yError() << "VisuoTactileLocalizationDemo: unable to configure the gaze controller";
                 return false;
             }
+            gaze_ctrl.setHomeFixation(home_fixation);
         }
 
         /**
