@@ -158,7 +158,8 @@ void HandControlModule::processCommand(const HandControlCommand &cmd,
         command == Command::Restore ||
         command == Command::Stop ||
         command == Command::ProbeContacts ||
-        command == Command::Idle)
+        command == Command::Idle ||
+        command == Command::SwitchToPositionControl)
     {
         // change the current command
         current_command = command;
@@ -268,6 +269,15 @@ void HandControlModule::performControl()
         }
 
         break;
+    }
+
+    case Command::SwitchToPositionControl:
+    {
+        hand.switchToPositionControl(commanded_fingers);
+
+        mutex.lock();
+        current_command = Command::Idle;
+        mutex.unlock();
     }
 
     case Command::Approach:
