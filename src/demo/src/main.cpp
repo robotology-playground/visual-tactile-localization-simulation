@@ -2273,8 +2273,13 @@ public:
                 // go back to Idle
                 status = Status::Idle;
 
+                // TESTING
                 // reset arm name
-                seq_action_arm_name.clear();
+                // seq_action_arm_name.clear();
+
+                // TESTING
+                // update flag
+                is_approach_done = true;
 
                 mutex.unlock();
 
