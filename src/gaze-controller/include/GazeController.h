@@ -53,6 +53,7 @@ public:
                              double &fx, double &fy,
                              double &cx, double &cy);
     bool setTrajectoryTimes();
+    bool setHomeFixation(const yarp::sig::Vector &home);
     bool isMotionDone(bool &done);
 };
 

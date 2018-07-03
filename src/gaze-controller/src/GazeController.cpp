@@ -211,6 +211,11 @@ bool GazeController::setTrajectoryTimes()
         return false;
 }
 
+bool GazeController::setHomeFixation(const yarp::sig::Vector &home)
+{
+    home_fix = home;
+}
+
 bool GazeController::isMotionDone(bool &done)
 {
     return igaze->checkMotionDone(&done);
