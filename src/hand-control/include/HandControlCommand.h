@@ -26,7 +26,8 @@ enum class Command { Empty = 0, Idle = 1,
                      Follow = 4, Restore = 5,
                      WaitRestoreDone = 6,
                      ApproachStatus = 7, RestoreStatus = 8,
-                     ProbeContacts = 9};
+                     ProbeContacts = 9,
+                     SwitchToPositionControl = 10};
 
 class HandControlCommand : public yarp::os::Portable
 {
@@ -127,6 +128,11 @@ public:
      * Request the restore of the initial configuration of the fingers
      */
     void commandFingersRestore();
+
+    /*
+     * Request to switch to position control.
+     */
+    void switchToPositionControl();
 
     /*
      * Request the immediate stop of any movement of the fingers

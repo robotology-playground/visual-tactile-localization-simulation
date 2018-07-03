@@ -101,6 +101,11 @@ void HandControlCommand::commandFingersRestore()
     cmd = Command::Restore;
 }
 
+void HandControlCommand::switchToPositionControl()
+{
+    cmd = Command::SwitchToPositionControl;
+}
+
 void HandControlCommand::commandStop()
 {
     cmd = Command::Stop;
