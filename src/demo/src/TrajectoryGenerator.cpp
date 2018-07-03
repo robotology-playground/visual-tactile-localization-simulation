@@ -28,11 +28,14 @@ TrajectoryGenerator::TrajectoryGenerator()
     // clear trajectory duration
     traj_duration = 1.0;
 
+    // clear mean velocity
+    mean_vel = 0.0;
+
     // clear trajectory constants
-    a0.resize(3, 0.0);
-    a3.resize(3, 0.0);
-    a4.resize(3, 0.0);
-    a5.resize(3, 0.0);
+    // a0.resize(3, 0.0);
+    // a3.resize(3, 0.0);
+    // a4.resize(3, 0.0);
+    // a5.resize(3, 0.0);
 }
 
 bool TrajectoryGenerator::setInitialPosition(const yarp::sig::Vector &pos)
@@ -68,16 +71,19 @@ bool TrajectoryGenerator::setDuration(const double &duration)
 void TrajectoryGenerator::init()
 {
     // set initial conditions
-    a0 = pos_i;
+    // a0 = pos_i;
 
     // set difference between initial
     // and final conditions
-    a5 = a4 = a3 = a0 - pos_f;
+    // a5 = a4 = a3 = a0 - pos_f;
 
     // eval the polynomial trajectory constants
-    a3 *= (-10.0 / pow(traj_duration, 3));
-    a4 *= (15.0 / pow(traj_duration, 4));
-    a5 *= (-6.0 / pow(traj_duration, 5));
+    // a3 *= (-10.0 / pow(traj_duration, 3));
+    // a4 *= (15.0 / pow(traj_duration, 4));
+    // a5 *= (-6.0 / pow(traj_duration, 5));
+
+    // evaluate direction of motion
+    mean_vel = (pos_f - pos_i) / (traj_duration);
 }
 
 bool TrajectoryGenerator::getTrajectory(const double &time,
@@ -91,18 +97,23 @@ bool TrajectoryGenerator::getTrajectory(const double &time,
     // enforce duration of the trajectory
     double t = time;
     if (t > traj_duration)
+    {
         t = traj_duration;
 
+        velocity = 0.0;
+    }
+
     // eval current position
-    position = a0
-             + a3 * pow(t, 3.0)
-             + a4 * pow(t, 4.0)
-             + a5 * pow(t, 5.0);
+    // position = // a0
+    //          // + a3 * pow(t, 3.0)
+    //          // + a4 * pow(t, 4.0)
+    //          // + a5 * pow(t, 5.0);
 
     // eval current velocity
-    velocity = 3.0 * a3 * pow(t, 2.0)
-             + 4.0 * a4 * pow(t, 3.0)
-             + 5.0 * a5 * pow(t, 4.0);
+    // velocity = 3.0 * a3 * pow(t, 2.0)
+    //          + 4.0 * a4 * pow(t, 3.0)
+    //          + 5.0 * a5 * pow(t, 4.0);
+    velocity = mean_vel;
 
     return true;
 }

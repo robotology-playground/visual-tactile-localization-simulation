@@ -26,14 +26,16 @@ private:
     yarp::sig::Vector pos_f;
 
     // polynomoinal trajectory constants
-    yarp::sig::Vector a0;
-    yarp::sig::Vector a3;
-    yarp::sig::Vector a4;
-    yarp::sig::Vector a5;
+    /* yarp::sig::Vector a0; */
+    /* yarp::sig::Vector a3; */
+    /* yarp::sig::Vector a4; */
+    /* yarp::sig::Vector a5; */
 
     // trajectory duration
     double traj_duration;
 
+    // mean velocity
+    yarp::sig::Vector mean_vel;
 public:
     /**
      * Constructor
