@@ -2269,7 +2269,7 @@ public:
             // disable visual filtering
             ok = sendCommandToFilter("disable");
 
-            if (!simulation_mode)
+            if (use_gaze)
             {
                 // fixate with eyes
                 ok = ok && sendCommandToTracker("eyes-fixate-and-hold");
@@ -2458,7 +2458,7 @@ public:
             // prepare controller for push
             ok = preparePullObject(seq_act_arm);
 
-            if (!simulation_mode)
+            if (use_gaze)
             {
                 // enable tracking with eyes
                 ok = ok && sendCommandToTracker("eyes-track");
@@ -2572,7 +2572,7 @@ public:
                 sendCommandToFilter("disable");
 
                 // stop eyes tracking
-                if (!simulation_mode)
+                if (use_gaze)
                 {
                     // disable tracking with eyes
                     sendCommandToTracker("eyes-stop");
