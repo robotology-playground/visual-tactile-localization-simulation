@@ -394,3 +394,21 @@ bool HandController::stopFingers(const std::vector<std::string> finger_list)
 
     return true;
 }
+
+bool HandController::switchToPositionControl(const std::vector<std::string> finger_list)
+{
+    bool ok;
+
+    for (const std::string &finger_name : finger_list)
+    {
+        // get the finger controller
+        FingerController &ctl = fingers[finger_name];
+
+        // try to switch to position control
+        ok = ctl.switchToPositionControl();
+        if (!ok)
+            return false;
+    }
+
+    return true;
+}

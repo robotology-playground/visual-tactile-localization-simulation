@@ -147,6 +147,13 @@ public:
      * @return true/false con success/failure
      */
     bool stopFingers(const std::vector<std::string> finger_list);
+
+    /*
+     * Switch to position control for the specified fingers
+     * @param finger_list the list of the fingers
+     * @return true/false con success/failure
+     */
+    bool switchToPositionControl(const std::vector<std::string> finger_list);
 };
 
 #endif
