@@ -1087,6 +1087,34 @@ protected:
     }
 
     /*
+     * Enable fingers following mode.
+     * @param arm_name hand arm to use
+     * @return true/false con success/failure
+     */
+    bool switchFingersToPositionControl(const std::string &hand_name)
+    {
+        // check if the hand name is valid
+        if ((hand_name.empty()) ||
+            ((hand_name != "right") && (hand_name != "left")))
+            return false;
+
+        // pick the correct hand
+        yarp::os::RpcClient* hand_port = getHandPort(hand_name);
+        if (hand_port == nullptr)
+            return false;
+
+        // enable fingers movements towards the object
+        HandControlCommand hand_cmd;
+        HandControlResponse response;
+        hand_cmd.setCommandedHand(hand_name);
+        hand_cmd.setCommandedFingers(fingers_list_following);
+        hand_cmd.switchToPositionControl();
+        hand_port->write(hand_cmd, response);
+
+        return true;
+    }
+
+    /*
      * Enable/disable fingers contacts probe.
      * @param enable true if the probe should be activated
      * @param hand_name hand to be used
@@ -2436,8 +2464,13 @@ public:
             sendCommandToFilter("enable", "tactile", seq_act_arm);
 
             // enable fingers following mode
-            if (use_fingers_following)
-                enableFingersFollowing(seq_act_arm);
+            if (simulation_mode)
+            {
+                if (use_fingers_following)
+                    enableFingersFollowing(seq_act_arm);
+            }
+            else
+                switchFingersToPositionControl(seq_act_arm);
 
             // reset flag
             is_timer_started = false;
