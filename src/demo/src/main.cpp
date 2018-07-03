@@ -1589,7 +1589,7 @@ public:
         if (rf_module.find("armRestTimeout").isNull())
             arm_rest_timeout = 7.0;
 
-        if(!simulation_mode)
+        if(use_gaze)
         {
             head_motion_timeout = rf_module.find("headMotionTimeout").asDouble();
             if (rf_module.find("headMotionTimeout").isNull())
@@ -2014,6 +2014,9 @@ public:
 
             if (!ok)
                 yError() << "[MOVE HOME HEAD] error while trying to move head in home position";
+
+            // reset timer
+            last_time = yarp::os::Time::now();
 
             // go to WaitMoveHeadDone
             mutex.lock();
