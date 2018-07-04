@@ -2066,8 +2066,17 @@ public:
         {
             bool ok;
 
+            // store current context
+            gaze_ctrl.storeContext();
+
+            // set default trajectory times
+            gaze_ctrl.setTrajectoryTimes();
+
             // issue head home command
             ok = gaze_ctrl.goHome();
+
+            // restore context
+            gaze_ctrl.restoreContext();
 
             if (!ok)
                 yError() << "[MOVE HOME HEAD] error while trying to move head in home position";
