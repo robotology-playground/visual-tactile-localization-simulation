@@ -146,6 +146,7 @@ bool Tracker::configure(yarp::os::ResourceFinder &rf)
                  << "error: cannot configure the gaze controller";
         return false;
     }
+    gaze_ctrl.storeContext();
     if (!gaze_ctrl.setTrajectoryTimes())
     {
         yError() << "Tracker::configure"
@@ -476,6 +477,7 @@ bool Tracker::close()
     // head_kin.close();
 
     // close gaze controller
+    gaze_ctrl.restoreContext();
     gaze_ctrl.close();
 
     // close transform client
