@@ -167,7 +167,7 @@ protected:
     ModelHelper mod_helper;
 
     /**
-     * Rpc server
+     * Rpc
      */
 
     // rpc server
@@ -179,7 +179,7 @@ protected:
     yarp::os::RpcClient rpc_pcr;
 
     // mutexes required to share data between
-    // the RFModule thread and the rpc thread
+    // the RFModule thread and the rpc server thread
     yarp::os::Mutex mutex;
 
     /**
