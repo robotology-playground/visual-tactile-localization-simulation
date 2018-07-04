@@ -801,6 +801,22 @@ protected:
         return false;
     }
 
+    bool startPointCloudReadStream(const std::string &object_name)
+    {
+        yarp::os::Bottle cmd;
+        yarp::os::Bottle reply;
+        cmd.addString("stream_start");
+        cmd.addString(object_name);
+        rpc_lbpextract.write(cmd, reply);
+
+        if ((reply.size() == 1) &&
+            (reply.get(0).isBool()) &&
+            (reply.get(0).asBool() == true))
+            return true;
+
+        return false;
+    }
+
     /*
      * Get an arm controller.
      * @param arm_name the required arm controller
