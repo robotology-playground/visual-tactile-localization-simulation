@@ -25,8 +25,8 @@ class GazeController
     // view
     yarp::dev::IGazeControl *igaze;
 
-    // cartesian controller initial context
-    int startup_cart_context;
+    // cartesian controller context
+    int context;
 
     // default trajectory time
     double eyes_traj_time;
@@ -55,6 +55,8 @@ public:
     bool setTrajectoryTimes();
     bool setHomeFixation(const yarp::sig::Vector &home);
     bool isMotionDone(bool &done);
+    bool storeContext();
+    bool restoreContext();
 };
 
 #endif

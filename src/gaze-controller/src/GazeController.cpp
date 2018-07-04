@@ -85,13 +85,13 @@ bool GazeController::configure(const yarp::os::ResourceFinder &rf,
     }
 
     // store the initial context
-    ok = igaze->storeContext(&startup_cart_context);
-    if (!ok)
-    {
-        yError() << "GazeController::configure"
-                 << "error: Unable to store the initial context";
-        return false;
-    }
+    // ok = igaze->storeContext(&startup_cart_context);
+    // if (!ok)
+    // {
+    //     yError() << "GazeController::configure"
+    //              << "error: Unable to store the initial context";
+    //     return false;
+    // }
 
     // store the home fixation point
     home_fix.resize(3, 0.0);
@@ -137,14 +137,14 @@ bool GazeController::close()
     }
 
     // restore initial context
-    ok = igaze->restoreContext(startup_cart_context);
-    if (!ok)
-    {
-        yError() << "GazeController::close"
-                 << "error: unable to restore the initial context";
+    // ok = igaze->restoreContext(startup_cart_context);
+    // if (!ok)
+    // {
+    //     yError() << "GazeController::close"
+    //              << "error: unable to restore the initial context";
         
-        return false;
-    }
+    //     return false;
+    // }
 
     // close the driver
     drv_gaze.close();
@@ -219,4 +219,14 @@ bool GazeController::setHomeFixation(const yarp::sig::Vector &home)
 bool GazeController::isMotionDone(bool &done)
 {
     return igaze->checkMotionDone(&done);
+}
+
+bool GazeController::storeContext()
+{
+    return igaze->storeContext(&context);
+}
+
+bool GazeController::restoreContext()
+{
+    return igaze->restoreContext(context);
 }
