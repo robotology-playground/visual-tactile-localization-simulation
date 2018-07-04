@@ -231,6 +231,8 @@ protected:
 
     std::string init()
     {
+        std::string reply;
+
         // set max area used by module lbpExtract
         setLbpExtractMaxArea(11000);
 
@@ -240,6 +242,10 @@ protected:
             // as required by SFM
             gaze_ctrl.blockEyes(5.0);
         }
+
+        reply = "[OK] initialization completed.";
+
+        return reply;
     }
 
     std::string start_visual_localization()
