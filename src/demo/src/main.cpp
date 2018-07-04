@@ -800,8 +800,7 @@ protected:
         rpc_lbpextract.write(cmd, reply);
 
         if ((reply.size() == 1) &&
-            (reply.get(0).isBool()) &&
-            (reply.get(0).asBool() == true))
+            (reply.get(0).asVocab() == yarp::os::Vocab::encode("ok")))
             return true;
 
         return false;
@@ -816,8 +815,7 @@ protected:
         rpc_lbpextract.write(cmd, reply);
 
         if ((reply.size() == 1) &&
-            (reply.get(0).isBool()) &&
-            (reply.get(0).asBool() == true))
+            (reply.get(0).asVocab() == yarp::os::Vocab::encode("ok")))
             return true;
 
         return false;
