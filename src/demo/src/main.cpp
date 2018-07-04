@@ -176,6 +176,7 @@ protected:
     // rpc clients
     yarp::os::RpcClient rpc_tracker;
     yarp::os::RpcClient rpc_lbpextract;
+    yarp::os::RpcClient rpc_pcr;
 
     // mutexes required to share data between
     // the RFModule thread and the rpc thread
@@ -1885,6 +1886,13 @@ public:
             if (!ok)
             {
                 yError() << "VisuoTactileLocalizationDemo: unable to open the lbpextract rpc client port";
+                return false;
+            }
+
+            ok = rpc_pcr.open(pcr_rpc_port_name);
+            if (!ok)
+            {
+                yError() << "VisuoTactileLocalizationDemo: unable to open the pcr rpc client port";
                 return false;
             }
         }
