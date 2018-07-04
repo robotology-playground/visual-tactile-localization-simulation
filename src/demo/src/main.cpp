@@ -1956,6 +1956,7 @@ public:
         {
             rpc_tracker.close();
             rpc_lbpextract.close();
+            rpc_pcr.close();
         }
     }
 
