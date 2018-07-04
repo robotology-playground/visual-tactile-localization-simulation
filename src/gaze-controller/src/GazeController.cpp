@@ -23,7 +23,7 @@ bool GazeController::configure(const yarp::os::ResourceFinder &rf,
     bool ok;
 
     // default trajectory times for neck and eyes
-    neck_traj_time = 3.0;
+    neck_traj_time = 1.0;
     if (!rf.find("neckTrajTime").isNull())
     {
         yarp::os::Value time_v = rf.find("neckTrajTime");
@@ -34,7 +34,7 @@ bool GazeController::configure(const yarp::os::ResourceFinder &rf,
             << "neck trajectory time is"
             << neck_traj_time;
 
-    eyes_traj_time = 3.0;
+    eyes_traj_time = 1.0;
     if (!rf.find("eyesTrajTime").isNull())
     {
         yarp::os::Value time_v = rf.find("eyesTrajTime");
