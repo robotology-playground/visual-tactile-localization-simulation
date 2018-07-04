@@ -146,16 +146,16 @@ bool Tracker::configure(yarp::os::ResourceFinder &rf)
                  << "error: cannot configure the gaze controller";
         return false;
     }
-    // if (!gaze_ctrl.setTrajectoryTimes())
-    // {
-    //     yError() << "Tracker::configure"
-    //              << "error: cannot set the trajectory times for the gaze controller";
+    if (!gaze_ctrl.setTrajectoryTimes())
+    {
+        yError() << "Tracker::configure"
+                 << "error: cannot set the trajectory times for the gaze controller";
 
-    //     // close the gaze controller
-    //     gaze_ctrl.close();
+        // close the gaze controller
+        gaze_ctrl.close();
 
-    //     return false;
-    // }
+        return false;
+    }
 
     // aruco/charuco board estimator
     if (board_type == "aruco")
