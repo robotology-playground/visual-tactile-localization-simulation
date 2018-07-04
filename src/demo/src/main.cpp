@@ -177,6 +177,7 @@ protected:
     yarp::os::RpcClient rpc_tracker;
     yarp::os::RpcClient rpc_lbpextract;
     yarp::os::RpcClient rpc_pcr;
+    std::string pcr_object_name;
 
     // mutexes required to share data between
     // the RFModule thread and the rpc server thread
@@ -1531,6 +1532,10 @@ public:
             pcr_rpc_port_name = rf_module.find("pcrRpcPort").asString();
             if (rf_module.find("pcrRpcPort").isNull())
                 pcr_rpc_port_name = "/vis_tac_localization/pcr/rpc:o";
+
+            pcr_object_name = rf_module.find("pointCloudReadObjName").asString();
+            if (rf_module.find("pointCloudReadObjName").isNull())
+                pcr_object_name = "Box";
         }
 
         // robot name
