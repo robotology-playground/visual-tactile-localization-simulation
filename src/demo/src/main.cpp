@@ -1516,6 +1516,7 @@ public:
 
         std::string lbpextract_rpc_port_name;
         std::string tracker_rpc_port_name;
+        std::string pcr_rpc_port_name;
         if (!simulation_mode)
         {
             lbpextract_rpc_port_name = rf_module.find("lbpextractRpcPort").asString();
@@ -1525,6 +1526,10 @@ public:
             tracker_rpc_port_name = rf_module.find("trackerRpcPort").asString();
             if (rf_module.find("trackerRpcPort").isNull())
                 tracker_rpc_port_name = "/vis_tac_localization/tracker/rpc:o";
+
+            pcr_rpc_port_name = rf_module.find("pcrRpcPort").asString();
+            if (rf_module.find("pcrRpcPort").isNull())
+                pcr_rpc_port_name = "/vis_tac_localization/pcr/rpc:o";
         }
 
         // robot name
