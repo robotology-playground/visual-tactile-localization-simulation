@@ -245,6 +245,12 @@ protected:
             gaze_ctrl.blockEyes(5.0);
         }
 
+        if (!simulation_mode)
+        {
+            // start point cloud streaming
+            startPointCloudReadStream(pcr_object_name);
+        }
+
         reply = "[OK] initialization completed.";
 
         return reply;
