@@ -130,6 +130,57 @@
     <parameters>--name /si_estimate_viewer/viewer:i</parameters>
   </module>
 
+  <module>
+    <name>velocityObserver</name>
+    <node>localhost</node>
+    <parameters>--name /vis_tactile_localization/torsoObserver --lenVel 20 --thrVel 2.0</parameters>
+    <environment>YARP_CLOCK=/clock;YARP_FORWARD_LOG_ENABLE=1</environment>
+  </module>
+
+  <module>
+    <name>velocityObserver</name>
+    <node>localhost</node>
+    <parameters>--name /vis_tactile_localization/leftArmObserver --lenVel 20 --thrVel 2.0</parameters>
+    <environment>YARP_CLOCK=/clock;YARP_FORWARD_LOG_ENABLE=1</environment>
+  </module>
+
+  <module>
+    <name>velocityObserver</name>
+    <node>localhost</node>
+    <parameters>--name /vis_tactile_localization/rightArmObserver --lenVel 20 --thrVel 2.0</parameters>
+    <environment>YARP_CLOCK=/clock;YARP_FORWARD_LOG_ENABLE=1</environment>
+  </module>
+
+  <connection>
+    <from>/icubSim/torso/state:o</from>
+    <to>/vis_tactile_localization/torsoObserver/pos:i</to>
+  </connection>
+
+  <connection>
+    <from>/vis_tactile_localization/torsoObserver/vel:o</from>
+    <to>/upf-localizer/torsoObserver/vel:i</to>
+  </connection>
+
+  <connection>
+    <from>/icubSim/left_arm/state:o</from>
+    <to>/vis_tactile_localization/leftArmObserver/pos:i</to>
+  </connection>
+
+  <connection>
+    <from>/vis_tactile_localization/leftArmObserver/vel:o</from>
+    <to>/upf-localizer/leftArmObserver/vel:i</to>
+  </connection>
+
+  <connection>
+    <from>/icubSim/right_arm/state:o</from>
+    <to>/vis_tactile_localization/rightArmObserver/pos:i</to>
+  </connection>
+
+  <connection>
+    <from>/vis_tactile_localization/rightArmObserver/vel:o</from>
+    <to>/upf-localizer/rightArmObserver/vel:i</to>
+  </connection>
+
   <connection>
     <from>/box_alt/fakepointcloud:o</from>
     <to>/upf-localizer/pc:i</to>
