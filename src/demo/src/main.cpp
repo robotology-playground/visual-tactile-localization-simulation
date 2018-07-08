@@ -193,6 +193,9 @@ protected:
     // whether to use gaze or not
     bool use_gaze;
 
+    // whether to use ground truth tracker or not
+    bool use_tracker;
+
     // status of the module
     Status status;
     Status previous_status;
@@ -1519,6 +1522,11 @@ public:
         if (rf_module.find("useGaze").isNull())
             use_gaze = false;
 
+        // whether to use ground truth tracker or not
+        use_tracker = rf_module.find("useTracker").asBool();
+        if (rf_module.find("useTracker").isNull())
+            use_tracker = false;
+
         // port names
         std::string filter_port_name = rf_module.find("filterPort").asString();
         if (rf_module.find("filterPortName").isNull())
@@ -2323,7 +2331,7 @@ public:
             // disable visual filtering
             ok = sendCommandToFilter("disable");
 
-            if (use_gaze)
+            if (use_tracker)
             {
                 // fixate with eyes
                 ok = ok && sendCommandToTracker("eyes-fixate-and-hold");
@@ -2512,7 +2520,7 @@ public:
             // prepare controller for push
             ok = preparePullObject(seq_act_arm);
 
-            if (use_gaze)
+            if (use_tracker)
             {
                 // enable tracking with eyes
                 ok = ok && sendCommandToTracker("eyes-track");
@@ -2626,7 +2634,7 @@ public:
                 sendCommandToFilter("disable");
 
                 // stop eyes tracking
-                if (use_gaze)
+                if (use_tracker)
                 {
                     // disable tracking with eyes
                     sendCommandToTracker("eyes-stop");
