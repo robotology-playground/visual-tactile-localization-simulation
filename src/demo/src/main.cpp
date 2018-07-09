@@ -2477,6 +2477,9 @@ public:
                 // stop control
                 stopFingers(seq_act_arm);
 
+                // switch to position control
+                switchFingersToPositionControl(seq_act_arm);
+
                 mutex.lock();
 
                 // go to Idle
@@ -2495,6 +2498,12 @@ public:
             {
                 // approach completed
                 yInfo() << "[WAIT FINGERS APPROACH DONE] done";
+
+                // stop control
+                stopFingers(seq_act_arm);
+
+                // switch to position control
+                switchFingersToPositionControl(seq_act_arm);
 
                 // go to Idle
                 mutex.lock();
@@ -2554,13 +2563,8 @@ public:
             sendCommandToFilter("enable", "tactile", seq_act_arm);
 
             // enable fingers following mode
-            if (simulation_mode)
-            {
-                if (use_fingers_following)
-                    enableFingersFollowing(seq_act_arm);
-            }
-            else
-                switchFingersToPositionControl(seq_act_arm);
+            if (use_fingers_following)
+                enableFingersFollowing(seq_act_arm);
 
             // reset flag
             is_timer_started = false;
@@ -2607,6 +2611,11 @@ public:
                 // that was changed in preparePullObject(seq_act_arm)
                 restoreArmControllerContext(seq_act_arm);
 
+                // stop fingers control
+                stopFingers(seq_act_arm);
+                // switch fingers to position control
+                switchFingersToPositionControl(seq_act_arm);
+
                 mutex.lock();
 
                 // go to Idle
@@ -2629,6 +2638,8 @@ public:
 
                 // stop fingers control
                 stopFingers(seq_act_arm);
+                // switch fingers to position control
+                switchFingersToPositionControl(seq_act_arm);
 
                 // disable filtering
                 sendCommandToFilter("disable");
@@ -2748,6 +2759,11 @@ public:
                 // that was changed in preparePullObject(seq_act_arm)
                 restoreArmControllerContext(seq_act_arm);
 
+                // stop fingers control
+                stopFingers(seq_act_arm);
+                // switch fingers to position control
+                switchFingersToPositionControl(seq_act_arm);
+
                 mutex.lock();
 
                 // go to Idle
@@ -2770,6 +2786,8 @@ public:
 
                 // stop fingers control
                 stopFingers(seq_act_arm);
+                // switch fingers to position control
+                switchFingersToPositionControl(seq_act_arm);
 
                 // disable filtering
                 sendCommandToFilter("disable");
