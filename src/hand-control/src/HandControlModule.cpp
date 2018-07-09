@@ -92,6 +92,32 @@ void HandControlModule::getContacts(std::unordered_map<std::string, bool> &finge
     }
 }
 
+void HandControlModule::getContactsSpringy(std::unordered_map<std::string, bool> &fingers_contacts)
+{
+    // get the correct hand
+    yarp::os::Value springy_output;
+    yarp::os::Bottle *list;
+    springy_fingers.getOutput(springy_output);
+    list = springy_output.asList();
+
+    for (size_t i=0; i<5; i++)
+    {
+        if (list->get(i).asDouble() > springy_thres[i])
+        {
+            if (i == 0)
+                fingers_contacts["thumb"] = true;
+            else if (i == 1)
+                fingers_contacts["index"] = true;
+            else if (i == 2)
+                fingers_contacts["middle"] = true;
+            else if (i == 3)
+                fingers_contacts["ring"] = true;
+            else if (i == 4)
+                fingers_contacts["little"] = true;
+        }
+    }
+}
+
 void HandControlModule::processCommand(const HandControlCommand &cmd,
                                        HandControlResponse &response)
 {
@@ -225,7 +251,12 @@ void HandControlModule::performControl()
         if (use_simulated_contacts)
             getContactsSim(fingers_contacts);
         else
-            getContacts(fingers_contacts);
+        {
+            if (use_tactile_contacts)
+                getContacts(fingers_contacts);
+            if (use_springy_contacts)
+                getContactsSpringy(fingers_contacts);
+        }
 
         for (auto it = fingers_contacts.begin();
              it != fingers_contacts.end(); it++)
@@ -386,6 +417,39 @@ void HandControlModule::stopControl()
     hand.stopFingers(commanded_fingers);
 }
 
+bool HandControlModule::loadListDouble(yarp::os::ResourceFinder &rf,
+                                       const std::string &key,
+                                       const int &size,
+                                       yarp::sig::Vector &list)
+{
+    if (rf.find(key).isNull())
+        return false;
+
+    yarp::os::Bottle* b = rf.find(key).asList();
+    if (b == nullptr)
+        return false;
+
+    if (b->size() != size)
+        return false;
+
+    list.resize(size);
+    for (size_t i=0; i<b->size(); i++)
+    {
+        yarp::os::Value item_v = b->get(i);
+        if (item_v.isNull())
+            return false;
+
+        if (!item_v.isDouble())
+        {
+            list.clear();
+            return false;
+        }
+
+        list[i] = item_v.asDouble();
+    }
+    return true;
+}
+
 bool HandControlModule::configure(yarp::os::ResourceFinder &rf)
 {
     // get the name of the hand to be controlled
@@ -441,6 +505,16 @@ bool HandControlModule::configure(yarp::os::ResourceFinder &rf)
     use_springy_contacts = inner_rf.find("useSpringyContacts").asBool();
     if (inner_rf.find("useSpringyContacts").isNull())
         use_springy_contacts = false;
+    if (use_springy_contacts)
+    {
+        if (!loadListDouble(rf, "springyFingersThres",
+                            5, springy_thres))
+        {
+            yError() << "HandControlModule: unable to load threshold for contact detetion"
+                     << "with" << hand_name << "springy fingers";
+            return false;
+        }
+    }
 
     bool ok;
 
@@ -465,6 +539,32 @@ bool HandControlModule::configure(yarp::os::ResourceFinder &rf)
             return false;
         }
 
+    }
+
+    // configure springy fingers
+    if (use_springy_contacts)
+    {
+        std::string springy_calib_path;
+        if (!inner_rf.check("springyFingersCalib"))
+        {
+            yError() << "HandControlModule::configure"
+                     << "Error: cannot load path containing the calibration file"
+                     << "for" << hand_name << "springy fingers";
+            return false;
+        }
+        springy_calib_path = inner_rf.findFile("springyFingersCalib");
+        yarp::os::Property springy_prop;
+        springy_prop.fromConfigFile(springy_calib_path.c_str());
+        springy_prop.put("robot", robot_name.c_str());
+        springy_prop.put("name", "vtl-hand-ctrl/" + hand_name + "/springy");
+        springy_fingers.fromProperty(springy_prop);
+
+        if (!springy_fingers.isCalibrated())
+        {
+            yError() << "HandControlModule::configure"
+                     << "Error: cannot configure" << hand_name << "springy fingers";
+            return false;
+        }
     }
 
     // open the rpc server port

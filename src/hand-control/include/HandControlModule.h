@@ -21,6 +21,7 @@
 
 // icub-main
 #include <iCub/skinDynLib/skinContactList.h>
+#include <iCub/perception/springyFingers.h>
 
 // std
 #include <string>
@@ -74,6 +75,10 @@ private:
     bool use_tactile_contacts;
     bool use_springy_contacts;
 
+    // springy fingers for contact detection
+    iCub::perception::SpringyFingersModel springy_fingers;
+    yarp::sig::Vector springy_thres;
+
     // rpc server
     yarp::os::RpcServer rpc_server;
 
@@ -92,6 +97,8 @@ private:
     */
     void getContactsSim(std::unordered_map<std::string, bool> &fingers_contacts);
     void getContacts(std::unordered_map<std::string, bool> &fingers_contacts);
+    void getContactsSpringy(std::unordered_map<std::string, bool> &fingers_contacts);
+
    /*
     * Process a command
     */
@@ -107,6 +114,10 @@ private:
     */
     void stopControl();
 
+    bool loadListDouble(yarp::os::ResourceFinder &rf,
+                        const std::string &key,
+                        const int &size,
+                        yarp::sig::Vector &list);
 public:
     /*
      * Configure the module.
