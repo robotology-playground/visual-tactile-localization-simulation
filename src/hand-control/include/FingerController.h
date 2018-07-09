@@ -96,6 +96,12 @@ private:
     double prox_max_value;
     double prox_proj_gain;
 
+    // parameters for smooth switch between
+    // directions of movements of the finger
+    bool use_smooth_switch;
+    double smooth_switch_threshold;
+    double smooth_switch_variance;
+
     // damping factor for
     // jacobian pseudoinversion
     double pinv_damping;
@@ -131,6 +137,10 @@ private:
      */
     bool undoThumbParking();
 
+    void jacPsuedoInversion(const yarp::sig::Matrix &jac,
+                            const double &speed,
+                            yarp::sig::Vector &q_dot,
+                            double &singularity);
 public:
     /*
      * Initialize the controller.
@@ -289,7 +299,7 @@ public:
      * @param enforce_joints_limits whether to enforce joints limits or not
      * @return true/false on success/failure
      */
-    bool moveFingerForward(const double &speed,
+    bool moveFingerForward(const double &speed_x, const double &speed_y,
                            const bool &enforce_joints_limits);
 
     /*

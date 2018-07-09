@@ -180,6 +180,9 @@ bool FingerController::init(const std::string &hand_name,
     prox_max_value = 0.0;
     prox_proj_gain = 0.0;
 
+    // set defaults for smooth switching
+    use_smooth_switch = false;
+
     // set default for thumb parking
     thumb_parking_mode = false;
 
@@ -335,6 +338,30 @@ bool FingerController::configure(const yarp::os::ResourceFinder &rf)
             pinv_damping = pinv_damping_v.asDouble();
         else
             pinv_damping = 0.0;
+    }
+
+    if (!rf.find("enableSmoothSwitch").isNull())
+    {
+        use_smooth_switch = rf.find("enableSmoothSwitch").asBool();
+        if (use_smooth_switch)
+        {
+            if (!rf.find("smoothSwitchThreshold").isNull())
+            {
+                auto smooth_switch_thr_v = rf.find("smoothSwitchThreshold");
+                if (smooth_switch_thr_v.isDouble())
+                    smooth_switch_threshold = smooth_switch_thr_v.asDouble();
+                else
+                    smooth_switch_threshold = 0.0;
+            }
+            if (!rf.find("smoothSwitchVariance").isNull())
+            {
+                auto smooth_switch_var_v = rf.find("smoothSwitchVariance");
+                if (smooth_switch_var_v.isDouble())
+                    smooth_switch_variance = smooth_switch_var_v.asDouble();
+                else
+                    smooth_switch_variance = 1.0;
+            }
+        }
     }
 }
 
@@ -768,26 +795,19 @@ bool FingerController::setJointsVelocities(const yarp::sig::Vector &vels,
     return ivel->velocityMove(ctl_joints.size(), ctl_joints.getFirst(), vels_deg.data());
 }
 
-bool FingerController::moveFingerForward(const double &speed,
-                                         const bool &enforce_joints_limits)
+void FingerController::jacPsuedoInversion(const yarp::sig::Matrix &jac,
+                                          const double &speed,
+                                          yarp::sig::Vector &q_dot,
+                                          double &singularity)
 {
-    // get the jacobian in the current configuration
-    yarp::sig::Matrix jac;
-    getJacobianFingerFrame(jac);
-
-    // remove attitude part (i.e. third row)
-    jac.removeRows(2, 1);
-
-    // remove velocity along x part (i.e. first row)
-    jac.removeRows(0, 1);
-
-    // find joint velocities minimizing v_y - J_y * q_dot
-    yarp::sig::Vector q_dot;
     yarp::sig::Vector vel(1, speed);
     yarp::sig::Matrix jac_inv;
 
+    yarp::sig::Matrix jac_jac_tr = jac * jac.transposed();
+    singularity = jac_jac_tr(0, 0);
+
     jac_inv = jac.transposed() *
-        yarp::math::pinv(jac * jac.transposed() + pinv_damping * yarp::math::eye(1));
+        yarp::math::pinv(jac_jac_tr + pinv_damping * yarp::math::eye(1));
     q_dot = jac_inv * vel;
 
     // try to avoid too much displacement for the first
@@ -818,8 +838,53 @@ bool FingerController::moveFingerForward(const double &speed,
 
         q_dot += projector * prox_proj_gain * q_dot_limits;
     }
+}
+
+bool FingerController::moveFingerForward(const double &speed_x, const double &speed_y,
+                                         const bool &enforce_joints_limits)
+{
+    // get the jacobian in the current configuration
+    yarp::sig::Matrix jac;
+    yarp::sig::Matrix jac_x;
+    yarp::sig::Matrix jac_y;
+    getJacobianFingerFrame(jac);
+    jac_y = jac_x = jac;
+
+    // remove attitude part (i.e. third row)
+    jac_x.removeRows(2, 1);
+    jac_y.removeRows(2, 1);
+
+    // remove velocity along x part (i.e. first row)
+    jac_y.removeRows(0, 1);
+
+    // remove velocity along y part (i.e. second row)
+    jac_x.removeRows(1, 1);
+
+    // find joint velocities minimizing v - J * q_dot
+    yarp::sig::Vector q_dot_x;
+    yarp::sig::Vector q_dot_y;
+    double jac_x_singularity;
+    double jac_y_singularity;
+    jacPsuedoInversion(jac_y, speed_y,
+                       q_dot_y, jac_y_singularity);
+    jacPsuedoInversion(jac_x, -speed_x,
+                       q_dot_x, jac_x_singularity);
+
+    // evaluate smooth transition between velocities
+    double mu;
+    if (jac_y_singularity < smooth_switch_threshold)
+        mu = exp(-0.5 * pow((jac_y_singularity - smooth_switch_threshold) /
+                            smooth_switch_variance, 2));
+    else
+        mu = 1.0;
 
     // issue velocity command
+    yarp::sig::Vector q_dot;
+    if (use_smooth_switch)
+        q_dot = (1 - mu) * q_dot_x + mu * q_dot_y;
+    else
+        q_dot = q_dot_y;
+
     bool ok = setJointsVelocities(q_dot, enforce_joints_limits);
     if (!ok)
     {
