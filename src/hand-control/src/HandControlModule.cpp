@@ -507,7 +507,7 @@ bool HandControlModule::configure(yarp::os::ResourceFinder &rf)
         use_springy_contacts = false;
     if (use_springy_contacts)
     {
-        if (!loadListDouble(rf, "springyFingersThres",
+        if (!loadListDouble(inner_rf, "springyFingersThres",
                             5, springy_thres))
         {
             yError() << "HandControlModule: unable to load threshold for contact detetion"
