@@ -2961,9 +2961,9 @@ public:
                 // reset arm name
                 single_action_arm_name.clear();
 
-                // go back to VisualFilteringOn
+                // go back to idle
                 mutex.lock();
-                status = Status::VisualLocalizationOn;
+                status = Status::Idle;
                 mutex.unlock();
             }
 
