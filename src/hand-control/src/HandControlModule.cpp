@@ -16,20 +16,13 @@
 
 typedef std::map<iCub::skinDynLib::SkinPart, iCub::skinDynLib::skinContactList> skinPartMap;
 
-void HandControlModule::getNumberContactsSim(std::unordered_map<std::string, int> &number_contacts)
+void HandControlModule::getContactsSim(std::unordered_map<std::string, bool> &fingers_contacts)
 {
     iCub::skinDynLib::skinContactList* skin_contact_list;
     iCub::skinDynLib::skinContactList empty_list;
     skin_contact_list = port_contacts_sim.read(false);
     if (skin_contact_list == YARP_NULLPTR)
         skin_contact_list = &empty_list;
-
-    // clear number of contacts for each finger
-    int n_thumb = 0;
-    int n_index = 0;
-    int n_middle = 0;
-    int n_ring = 0;
-    int n_little = 0;
 
     if (skin_contact_list->size() != 0)
     {
@@ -55,47 +48,21 @@ void HandControlModule::getNumberContactsSim(std::unordered_map<std::string, int
             unsigned int taxel_id = taxels_ids[0];
             // taxels ids for finger tips are between 0 and 59
             if (taxel_id >= 0 && taxel_id < 12)
-                n_index++;
+                fingers_contacts["index"] = true;
             else if (taxel_id >= 12 && taxel_id < 24)
-                n_middle++;
+                fingers_contacts["middle"] = true;
             else if (taxel_id >= 24 && taxel_id < 36)
-                n_ring++;
+                fingers_contacts["ring"] = true;
             else if (taxel_id >= 36 && taxel_id < 48)
-                n_little++;
+                fingers_contacts["little"] = true;
             else if (taxel_id >= 48 && taxel_id < 60)
-                n_thumb++;
+                fingers_contacts["thumb"] = true;
         }
     }
-
-    // if (n_thumb != 0)
-    //     yInfo() << "thumb:" << n_thumb;
-    // if (n_index != 0)
-    //     yInfo() << "index:" << n_index;
-    // if (n_middle != 0)
-    //     yInfo() << "middle:" << n_middle;
-    // if (n_ring != 0)
-    //     yInfo() << "ring:" << n_ring;
-    // if (n_little != 0)
-    //     yInfo() << "little:" << n_little;
-
-    number_contacts["thumb"] = n_thumb;
-    number_contacts["index"] = n_index;
-    number_contacts["middle"] = n_middle;
-    number_contacts["ring"] = n_ring;
-    number_contacts["little"] = n_little;
 }
 
-void HandControlModule::getNumberContacts(std::unordered_map<std::string, int> &number_contacts)
+void HandControlModule::getContacts(std::unordered_map<std::string, bool> &fingers_contacts)
 {
-    number_contacts.clear();
-
-    // reset finger_contacts
-    number_contacts["thumb"] = 0;
-    number_contacts["index"] = 0;
-    number_contacts["middle"] = 0;
-    number_contacts["ring"] = 0;
-    number_contacts["little"] = 0;
-
     // try to read skin data from the port
     yarp::sig::Vector *skin_data = port_contacts.read(false);
     if (skin_data == NULL)
@@ -107,23 +74,20 @@ void HandControlModule::getNumberContacts(std::unordered_map<std::string, int> &
 
     // finger tips taxels are in the range 0-59
     double thr = 0;
-    std::string finger_name;
     for (size_t i=0; i<60; i++)
     {
 	if ((*skin_data)[i] > thr)
 	{
 	    if (i >=0 && i < 12)
-		finger_name = "index";
+		fingers_contacts["index"] = true;
 	    else if (i >= 12 && i < 24)
-		finger_name = "middle";
+		fingers_contacts["middle"] = true;
 	    else if (i >= 24 && i < 36)
-		finger_name = "ring";
+		fingers_contacts["ring"] = true;
 	    else if (i >= 36 && i < 48)
-		finger_name = "little";
+		fingers_contacts["little"] = true;
 	    else if (i >= 48)
-		finger_name = "thumb";
-
-	    number_contacts[finger_name]++;
+                fingers_contacts["thumb"] = true;
 	}
     }
 }
@@ -251,21 +215,26 @@ void HandControlModule::performControl()
 
     case Command::ProbeContacts:
     {
-        std::unordered_map<std::string, int> number_contacts;
+        std::unordered_map<std::string, bool> fingers_contacts;
+        fingers_contacts["index"] = false;
+        fingers_contacts["middle"] = false;
+        fingers_contacts["ring"] = false;
+        fingers_contacts["little"] = false;
+        fingers_contacts["thumb"] = false;
 
         if (use_simulated_contacts)
-            getNumberContactsSim(number_contacts);
+            getContactsSim(fingers_contacts);
         else
-            getNumberContacts(number_contacts);
+            getContacts(fingers_contacts);
 
-        for (auto it = number_contacts.begin();
-             it != number_contacts.end(); it++)
+        for (auto it = fingers_contacts.begin();
+             it != fingers_contacts.end(); it++)
         {
             const std::string &finger_name = it->first;
-            const int &n_contacts = it->second;
-            if (n_contacts > 0)
+            const bool &is_contact = it->second;
+            if (is_contact)
                 yInfo() << hand_name << finger_name
-                        << ":" << n_contacts << "contacts";
+                        << ": contact detected";
         }
 
         break;
@@ -284,11 +253,16 @@ void HandControlModule::performControl()
     case Command::Follow:
     {
         // extract contact informations
-        std::unordered_map<std::string, int> number_contacts;
+        std::unordered_map<std::string, bool> fingers_contacts;
+        fingers_contacts["index"] = false;
+        fingers_contacts["middle"] = false;
+        fingers_contacts["ring"] = false;
+        fingers_contacts["little"] = false;
+        fingers_contacts["thumb"] = false;
         if (use_simulated_contacts)
-            getNumberContactsSim(number_contacts);
+            getContactsSim(fingers_contacts);
         else
-            getNumberContacts(number_contacts);
+            getContacts(fingers_contacts);
 
         // command fingers
         bool done = false;
@@ -297,14 +271,14 @@ void HandControlModule::performControl()
         {
             ok = hand.moveFingersUntilContact(commanded_fingers,
                                               linear_forward_speed,
-                                              number_contacts,
+                                              fingers_contacts,
                                               done);
         }
         else if (cmd == Command::Follow)
         {
             ok = hand.moveFingersMaintainingContact(commanded_fingers,
                                                     linear_forward_speed,
-                                                    number_contacts);
+                                                    fingers_contacts);
         }
 
         if (!ok)

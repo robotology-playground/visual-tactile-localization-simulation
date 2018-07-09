@@ -215,7 +215,7 @@ void HandController::resetFingersContacts()
 
 bool HandController::moveFingersUntilContact(const std::vector<std::string> names,
                                              const double &speed,
-                                             const std::unordered_map<std::string, int> &number_contacts,
+                                             const std::unordered_map<std::string, bool> &fingers_contacts,
                                              bool &done)
 {
     bool ok;
@@ -244,10 +244,10 @@ bool HandController::moveFingersUntilContact(const std::vector<std::string> name
                 return false;
 
             // check if contact is reached now
-            if (number_contacts.at(finger_name) > 0 ||
+            if ((fingers_contacts.at(finger_name) == true) ||
                 // this is because the ring and the little are coupled
                 // and the little could touch before the ring finger
-                finger_name == "ring" && number_contacts.at("little") > 0)
+                ((finger_name == "ring") && (fingers_contacts.at("little") == true)))
             {
                 yInfo() << finger_name << "reached contact!";
 
@@ -285,7 +285,7 @@ bool HandController::moveFingersUntilContact(const std::vector<std::string> name
 
 bool HandController::moveFingersMaintainingContact(const std::vector<std::string> names,
                                                    const double &speed,
-                                                   const std::unordered_map<std::string, int> &number_contacts)
+                                                   const std::unordered_map<std::string, bool> &fingers_contacts)
 {
     bool ok;
 
@@ -310,10 +310,10 @@ bool HandController::moveFingersMaintainingContact(const std::vector<std::string
             return false;
 
         // check if contact is reached
-        if (number_contacts.at(finger_name) > 0 ||
+        if ((fingers_contacts.at(finger_name) == true) ||
             // this is because the ring and the little are coupled
             // and the little could touch before the ring finger
-            finger_name == "ring" && number_contacts.at("little") > 0)
+            ((finger_name == "ring") && (fingers_contacts.at("little") == true)))
         {
             // stop the finger
             ok = ctl.stop();

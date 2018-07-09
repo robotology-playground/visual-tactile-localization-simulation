@@ -80,8 +80,9 @@ private:
     // mutex required to share data between
     // the RFModule thread and the PortReader callback
     yarp::os::Mutex mutex;
+
    /*
-    * Return the number of contacts detected for each finger tip
+    * Return the status of contacts detected for each finger tip
     * as a std::unorderd_map.
     *
     * This is to be used in simulation.
@@ -89,8 +90,8 @@ private:
     * The key is the name of the finger, i.e. 'thumb', 'index',
     * 'middle', 'ring' or 'little'.
     */
-    void getNumberContactsSim(std::unordered_map<std::string, int> &number_contacts);
-    void getNumberContacts(std::unordered_map<std::string, int> &number_contacts);
+    void getContactsSim(std::unordered_map<std::string, bool> &fingers_contacts);
+    void getContacts(std::unordered_map<std::string, bool> &fingers_contacts);
    /*
     * Process a command
     */
