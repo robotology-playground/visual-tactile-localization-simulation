@@ -773,19 +773,13 @@ bool FingerController::moveFingerForward(const double &speed,
 {
     // get the jacobian in the current configuration
     yarp::sig::Matrix jac;
-    yarp::sig::Matrix tmp;
     getJacobianFingerFrame(jac);
-    tmp = jac;
 
     // remove attitude part (i.e. third row)
     jac.removeRows(2, 1);
 
     // remove velocity along x part (i.e. first row)
     jac.removeRows(0, 1);
-
-    // testing
-    tmp.removeRows(2, 1);
-    tmp.removeRows(1, 1);
 
     // find joint velocities minimizing v_y - J_y * q_dot
     yarp::sig::Vector q_dot;
