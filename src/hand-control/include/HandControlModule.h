@@ -70,13 +70,16 @@ private:
     bool is_approach_done;
     bool is_restore_done;
 
+    // flags
+    bool use_tactile_contacts;
+    bool use_springy_contacts;
+
     // rpc server
     yarp::os::RpcServer rpc_server;
 
     // mutex required to share data between
     // the RFModule thread and the PortReader callback
     yarp::os::Mutex mutex;
-
    /*
     * Return the number of contacts detected for each finger tip
     * as a std::unorderd_map.

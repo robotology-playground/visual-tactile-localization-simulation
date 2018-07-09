@@ -460,6 +460,14 @@ bool HandControlModule::configure(yarp::os::ResourceFinder &rf)
     if(inner_rf.find("useAnalogs").isNull())
         use_analogs = false;
 
+    // load parameters about contact detection
+    use_tactile_contacts = inner_rf.find("useTactileContacts").asBool();
+    if (inner_rf.find("useTactileContacts").isNull())
+        use_tactile_contacts = true;
+    use_springy_contacts = inner_rf.find("useSpringyContacts").asBool();
+    if (inner_rf.find("useSpringyContacts").isNull())
+        use_springy_contacts = false;
+
     bool ok;
 
     // open the contact points port
