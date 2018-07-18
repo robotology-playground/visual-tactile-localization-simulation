@@ -2655,6 +2655,9 @@ public:
                 {
                     // disable tracking with eyes
                     sendCommandToTracker("eyes-stop");
+
+                    // fixate with eyes
+                    sendCommandToTracker("eyes-fixate-and-hold");
                 }
 
                 // restore arm controller context
