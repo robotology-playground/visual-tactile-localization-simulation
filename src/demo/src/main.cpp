@@ -2693,6 +2693,12 @@ public:
             // prepare controller for rotation
             ok = prepareRotateObject(seq_act_arm);
 
+            if (use_tracker)
+            {
+                // enable tracking with eyes
+                ok = ok && sendCommandToTracker("eyes-track");
+            }
+
             if (!ok)
             {
                 yError() << "[PREPARE ROTATION] error while trying to issue rotation phase";
@@ -2800,6 +2806,16 @@ public:
 
                 // disable filtering
                 sendCommandToFilter("disable");
+
+                // stop eyes tracking
+                if (use_tracker)
+                {
+                    // disable tracking with eyes
+                    sendCommandToTracker("eyes-stop");
+
+                    // fixate with eyes
+                    sendCommandToTracker("eyes-fixate-and-hold");
+                }
 
                 // restore arm controller context
                 // that was changed in prepareRotateObject(seq_act_arm)
