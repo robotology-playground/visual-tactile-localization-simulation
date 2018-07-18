@@ -34,4 +34,9 @@
     <to>/hand-control/left/rpc:i</to>
   </connection>
 
+  <connection>
+    <from>/vis_tac_localization/tracker/rpc:o</from>
+    <to>/vtl-gtruth-tracker/rpc</to>
+  </connection>
+
 </application>

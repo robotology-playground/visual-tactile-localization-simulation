@@ -30,4 +30,19 @@
     <to>/hand-control/left/rpc:i</to>
   </connection>
 
+  <connection>
+    <from>/vis_tac_localization/tracker/rpc:o</from>
+    <to>/vtl-gtruth-tracker/rpc</to>
+  </connection>
+
+  <connection>
+    <from>/vis_tac_localization/lbpextract/rpc:o</from>
+    <to>/lbpExtract/rpc:i</to>
+  </connection>
+
+  <connection>
+    <from>/vis_tac_localization/pcr/rpc:o</from>
+    <to>/pointCloudRead/rpc</to>
+  </connection>
+
 </application>
