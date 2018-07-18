@@ -1544,18 +1544,21 @@ public:
         if (rf_module.find("tfClientLocalPort").isNull())
             tfclient_local_port_name = "/vis_tac_localization/transformClient";
 
-        std::string lbpextract_rpc_port_name;
         std::string tracker_rpc_port_name;
+        if (use_tracker)
+        {
+            tracker_rpc_port_name = rf_module.find("trackerRpcPort").asString();
+            if (rf_module.find("trackerRpcPort").isNull())
+                tracker_rpc_port_name = "/vis_tac_localization/tracker/rpc:o";
+        }
+
+        std::string lbpextract_rpc_port_name;
         std::string pcr_rpc_port_name;
         if (!simulation_mode)
         {
             lbpextract_rpc_port_name = rf_module.find("lbpextractRpcPort").asString();
             if (rf_module.find("lbpextractRpcPort").isNull())
                 lbpextract_rpc_port_name = "/vis_tac_localization/lbpextract/rpc:o";
-
-            tracker_rpc_port_name = rf_module.find("trackerRpcPort").asString();
-            if (rf_module.find("trackerRpcPort").isNull())
-                tracker_rpc_port_name = "/vis_tac_localization/tracker/rpc:o";
 
             pcr_rpc_port_name = rf_module.find("pcrRpcPort").asString();
             if (rf_module.find("pcrRpcPort").isNull())
@@ -1906,7 +1909,7 @@ public:
          * Rpc clients
          */
 
-        if (!simulation_mode)
+        if (use_tracker)
         {
             ok = rpc_tracker.open(tracker_rpc_port_name);
             if (!ok)
@@ -1914,7 +1917,10 @@ public:
                 yError() << "VisuoTactileLocalizationDemo: unable to open the tracker rpc client port";
                 return false;
             }
+        }
 
+        if (!simulation_mode)
+        {
             ok = rpc_lbpextract.open(lbpextract_rpc_port_name);
             if (!ok)
             {
