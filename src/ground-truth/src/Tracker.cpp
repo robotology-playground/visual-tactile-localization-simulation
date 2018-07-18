@@ -245,7 +245,7 @@ bool Tracker::getFrame(yarp::sig::ImageOf<yarp::sig::PixelRgb>* &yarp_image)
 bool Tracker::evaluateEstimate(const cv::Mat &pos_wrt_cam, const cv::Mat &att_wrt_cam,
                                const yarp::sig::Vector &camera_pos,
                                const yarp::sig::Vector &camera_att,
-                               yarp::sig::Matrix est_pos)
+                               yarp::sig::Matrix &est_pose)
 {
     // transformation matrix
     // from robot root to camera
