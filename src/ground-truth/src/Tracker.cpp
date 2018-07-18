@@ -54,78 +54,97 @@ bool Tracker::configure(yarp::os::ResourceFinder &rf)
     if (!rf.find("publishImages").isNull())
         publish_images = rf.find("publishImages").asBool();
 
+    // port prefix
+    std::string port_prefix = "/gtruth_tracker/";
+    port_prefix += eye_name + "_eye";
+
     // get board type
     std::string board_type;
     board_type = "aruco";
     if (!rf.find("boardType").isNull())
         board_type = rf.find("boardType").asString();
 
-    // uco board parameters
-    std::string uco_key = board_type + "Board";
-    const yarp::os::ResourceFinder &rf_uco =
-        rf.findNestedResourceFinder(uco_key.c_str());
-    int n_x;
-    int n_y;
-    if (!(rf_uco.find("nX").isNull()))
-        n_x = rf_uco.find("nX").asInt();
-    else
-        return false;
-    if (!(rf_uco.find("nY").isNull()))
-        n_y = rf_uco.find("nY").asInt();
-    else
-        return false;
-    // for aruco boards
-    // size1 := marker side (m)
-    // size2 := marker separtion (m)
-    //
-    // for charuco boards
-    // size1 := chess square side (m)
-    // size2 := marker side (m)
-    //
-    double size1;
-    double size2;
-    if (!(rf_uco.find("size1").isNull()))
-        size1 = rf_uco.find("size1").asDouble();
-    else
-        return false;
-    if (!(rf_uco.find("size2").isNull()))
-        size2 = rf_uco.find("size2").asDouble();
-    else
-        return false;
+    simulation_mode = false;
+    if (!rf.find("simulation").isNull())
+        simulation_mode = rf.find("simulation").asBool();
 
-    // object sizes
-    const yarp::os::ResourceFinder &rf_object_size =
-        rf.findNestedResourceFinder("objectSizes");
-    obj_width = obj_depth = obj_height = 0.0;
-    if (!(rf_object_size.find("width").isNull()))
-        obj_width = rf_object_size.find("width").asDouble();
-    if (!(rf_object_size.find("depth").isNull()))
-        obj_depth = rf_object_size.find("depth").asDouble();
-    if (!(rf_object_size.find("height").isNull()))
-        obj_height = rf_object_size.find("height").asDouble();
-
-    // camera parameters file
-    yarp::os::ResourceFinder rf_eye = rf.findNestedResourceFinder(eye_name.c_str());
-    std::string cam_calib_path = rf_eye.findFile("camCalibPath");
-
-    // port prefix
-    std::string port_prefix = "/gtruth_tracker/";
-    port_prefix += eye_name + "_eye";
-
-    // open port
-    bool port_ok = image_input_port.open(port_prefix + ":i");
-    if (!port_ok)
-        return false;
-    if (publish_images)
+    if (simulation_mode)
     {
-        port_ok = image_output_port.open(port_prefix + ":o");
-        if (!port_ok)
-            return false;
+        sim_tf_source = "/iCub/frame";
+        if (!rf.find("simTfSource").isNull())
+            sim_tf_source = rf.find("simTfSource").asString();
+        sim_tf_target = "/box_alt/frame";
+        if (!rf.find("simTfTarget").isNull())
+            sim_tf_target = rf.find("simTfTarget").asString();
     }
 
-    // head forward kinematics
-    // if (!head_kin.configure(robot_name, port_prefix))
-    //     return false;
+    int n_x;
+    int n_y;
+    double size1;
+    double size2;
+    std::string cam_calib_path;
+    if (!simulation_mode)
+    {
+        // uco board parameters
+        std::string uco_key = board_type + "Board";
+        const yarp::os::ResourceFinder &rf_uco =
+            rf.findNestedResourceFinder(uco_key.c_str());
+        if (!(rf_uco.find("nX").isNull()))
+            n_x = rf_uco.find("nX").asInt();
+        else
+            return false;
+        if (!(rf_uco.find("nY").isNull()))
+            n_y = rf_uco.find("nY").asInt();
+        else
+            return false;
+        // for aruco boards
+        // size1 := marker side (m)
+        // size2 := marker separtion (m)
+        //
+        // for charuco boards
+        // size1 := chess square side (m)
+        // size2 := marker side (m)
+        //
+        if (!(rf_uco.find("size1").isNull()))
+            size1 = rf_uco.find("size1").asDouble();
+        else
+            return false;
+        if (!(rf_uco.find("size2").isNull()))
+            size2 = rf_uco.find("size2").asDouble();
+        else
+            return false;
+
+        // object sizes
+        const yarp::os::ResourceFinder &rf_object_size =
+            rf.findNestedResourceFinder("objectSizes");
+        obj_width = obj_depth = obj_height = 0.0;
+        if (!(rf_object_size.find("width").isNull()))
+            obj_width = rf_object_size.find("width").asDouble();
+        if (!(rf_object_size.find("depth").isNull()))
+            obj_depth = rf_object_size.find("depth").asDouble();
+        if (!(rf_object_size.find("height").isNull()))
+            obj_height = rf_object_size.find("height").asDouble();
+
+        // camera parameters file
+        yarp::os::ResourceFinder rf_eye = rf.findNestedResourceFinder(eye_name.c_str());
+        cam_calib_path = rf_eye.findFile("camCalibPath");
+
+        // open port
+        bool port_ok = image_input_port.open(port_prefix + ":i");
+        if (!port_ok)
+            return false;
+        if (publish_images)
+        {
+            port_ok = image_output_port.open(port_prefix + ":o");
+            if (!port_ok)
+                return false;
+        }
+
+        // head forward kinematics
+        // if (!head_kin.configure(robot_name, port_prefix))
+        //     return false;
+
+    }
 
     // frame transform client
     yarp::os::Property propTfClient;
@@ -158,34 +177,37 @@ bool Tracker::configure(yarp::os::ResourceFinder &rf)
         return false;
     }
 
-    // aruco/charuco board estimator
-    if (board_type == "aruco")
-        uco_estimator = std::unique_ptr<ArucoBoardEstimator>(
-            new ArucoBoardEstimator());
-    else if (board_type == "charuco")
-        uco_estimator = std::unique_ptr<CharucoBoardEstimator>(
-            new CharucoBoardEstimator());
-    else
+    if (!simulation_mode)
     {
-        yError() << "Tracker::configure"
-                 << "error: invalid board type" << board_type;
-        return false;
-    }
+        // aruco/charuco board estimator
+        if (board_type == "aruco")
+            uco_estimator = std::unique_ptr<ArucoBoardEstimator>(
+                new ArucoBoardEstimator());
+        else if (board_type == "charuco")
+            uco_estimator = std::unique_ptr<CharucoBoardEstimator>(
+                new CharucoBoardEstimator());
+        else
+        {
+            yError() << "Tracker::configure"
+                     << "error: invalid board type" << board_type;
+            return false;
+        }
 
-    bool ok;
-    ok = uco_estimator->configure(n_x, n_y, size1, size2, cam_calib_path);
-    if (!ok)
-    {
-        yError() << "Tracker::configure"
-                 << "error: cannot configure the"
-                 << board_type << "board";
-        return false;
+        bool ok;
+        ok = uco_estimator->configure(n_x, n_y, size1, size2, cam_calib_path);
+        if (!ok)
+        {
+            yError() << "Tracker::configure"
+                     << "error: cannot configure the"
+                     << board_type << "board";
+            return false;
+        }
+        // override camera intrinsics using information
+        // from the iKinGazeCtrl
+        double fx, fy, cx, cy;
+        gaze_ctrl.getCameraIntrinsics(eye_name, fx, fy, cx, cy);
+        uco_estimator->setCameraIntrinsics(fx, fy, cx, cy);
     }
-    // override camera intrinsics using information
-    // from the iKinGazeCtrl
-    double fx, fy, cx, cy;
-    gaze_ctrl.getCameraIntrinsics(eye_name, fx, fy, cx, cy);
-    uco_estimator->setCameraIntrinsics(fx, fy, cx, cy);
 
     // resize estimate matrix
     // est_pos.resize(3, 0.0);
@@ -270,6 +292,16 @@ bool Tracker::evaluateEstimate(const cv::Mat &pos_wrt_cam, const cv::Mat &att_wr
     est_pose.setCol(3, est_pos_homog);
 }
 
+bool Tracker::retrieveGroundTruthSim(yarp::sig::Matrix &est_pose)
+{
+    // Get the transform from the robot root frame
+    // to the object frame provided by Gazebo
+    if (!tf_client->getTransform(sim_tf_target, sim_tf_source, est_pose))
+        return false;
+
+    return true;
+}
+
 void Tracker::publishEstimate()
 {
     if (!is_estimate_available)
@@ -307,65 +339,75 @@ bool Tracker::updateModule()
     /*
      * Ground truth estimation
      */
-
-    // get image from camera
-    yarp::sig::ImageOf<yarp::sig::PixelRgb>* img_in;
-    bool is_image = false;
-    is_image = getFrame(img_in);
-
-    cv::Mat frame_out;    
-    if (is_image)
+    if (simulation_mode)
     {
-        // get current pose of eyes
-        // yarp::sig::Vector left_eye_pose;
-        // yarp::sig::Vector right_eye_pose;
-        // yarp::sig::Vector eye_pose;
-        // head_kin.getEyesPose(left_eye_pose, right_eye_pose);
-        // eye_pose = (eye_name == "left") ? left_eye_pose : right_eye_pose;
-        yarp::sig::Vector eye_pos;
-        yarp::sig::Vector eye_att;
-        gaze_ctrl.getCameraPose(eye_name, eye_pos, eye_att);
+        bool ok = retrieveGroundTruthSim(est_pose);
 
-        // prepare input image
-        cv::Mat frame_in;
-        frame_in = cv::cvarrToMat(img_in->getIplImage());
-        cv::cvtColor(frame_in, frame_in, cv::COLOR_RGB2BGR);
-
-        if (publish_images)
-        {
-            // prepare output image
-            yarp::sig::ImageOf<yarp::sig::PixelRgb> &img_out = image_output_port.prepare();
-            img_out = *img_in;
-            frame_out = cv::cvarrToMat(img_out.getIplImage());
-        }
-
-        // aruco board pose estimation
-        cv::Mat pos_wrt_cam;
-        cv::Mat att_wrt_cam;
-        bool ok;
-        ok = uco_estimator->estimateBoardPose(frame_in, frame_out,
-                                              pos_wrt_cam, att_wrt_cam,
-                                              publish_images);
         if (ok)
-        {
             is_estimate_available = true;
-
-            evaluateEstimate(pos_wrt_cam, att_wrt_cam,
-                             eye_pos, eye_att,
-                             est_pose);
-        }
-
-        if (publish_images)
-        {
-            // send image
-            cv::cvtColor(frame_out, frame_out, cv::COLOR_BGR2RGB);
-            image_output_port.write();
-        }
-        
     }
+    else
+    {
+        // get image from camera
+        yarp::sig::ImageOf<yarp::sig::PixelRgb>* img_in;
+        bool is_image = false;
+        is_image = getFrame(img_in);
 
-    // publish the last available estimate
-    publishEstimate();
+        cv::Mat frame_out;
+        if (is_image)
+        {
+            // get current pose of eyes
+            // yarp::sig::Vector left_eye_pose;
+            // yarp::sig::Vector right_eye_pose;
+            // yarp::sig::Vector eye_pose;
+            // head_kin.getEyesPose(left_eye_pose, right_eye_pose);
+            // eye_pose = (eye_name == "left") ? left_eye_pose : right_eye_pose;
+            yarp::sig::Vector eye_pos;
+            yarp::sig::Vector eye_att;
+            gaze_ctrl.getCameraPose(eye_name, eye_pos, eye_att);
+
+            // prepare input image
+            cv::Mat frame_in;
+            frame_in = cv::cvarrToMat(img_in->getIplImage());
+            cv::cvtColor(frame_in, frame_in, cv::COLOR_RGB2BGR);
+
+            if (publish_images)
+            {
+                // prepare output image
+                yarp::sig::ImageOf<yarp::sig::PixelRgb> &img_out = image_output_port.prepare();
+                img_out = *img_in;
+                frame_out = cv::cvarrToMat(img_out.getIplImage());
+            }
+
+            // aruco board pose estimation
+            cv::Mat pos_wrt_cam;
+            cv::Mat att_wrt_cam;
+            bool ok;
+            ok = uco_estimator->estimateBoardPose(frame_in, frame_out,
+                                                  pos_wrt_cam, att_wrt_cam,
+                                                  publish_images);
+            if (ok)
+            {
+                is_estimate_available = true;
+
+                evaluateEstimate(pos_wrt_cam, att_wrt_cam,
+                                 eye_pos, eye_att,
+                                 est_pose);
+            }
+
+            if (publish_images)
+            {
+                // send image
+                cv::cvtColor(frame_out, frame_out, cv::COLOR_BGR2RGB);
+                image_output_port.write();
+            }
+        
+        }
+
+        // publish the last available estimate
+        publishEstimate();
+
+    }
 
     /*
      * Tracking with eyes

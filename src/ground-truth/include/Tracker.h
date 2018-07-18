@@ -56,6 +56,8 @@ private:
     yarp::dev::IFrameTransform* tf_client;
     std::string tf_source;
     std::string tf_target;
+    std::string sim_tf_source;
+    std::string sim_tf_target;
 
     // object sizes
     double obj_width;
@@ -74,6 +76,11 @@ private:
     //  whether to publish images
     // with the superimposed estimated pose or not
     bool publish_images;
+
+    // simulation mode
+    // in simulation mode the tracker take the groun truth
+    // from an external frame transform
+    bool simulation_mode;
 
     // rpc server
     yarp::os::RpcServer rpc_port;
@@ -96,6 +103,7 @@ private:
                           const yarp::sig::Vector &camera_pos,
                           const yarp::sig::Vector &camera_att,
                           yarp::sig::Matrix est_pose);
+    bool retrieveGroundTruthSim(yarp::sig::Matrix &est_pose);
     void publishEstimate();
     void fixateWithEyes();
     void fixateWithEyesAndHold();
