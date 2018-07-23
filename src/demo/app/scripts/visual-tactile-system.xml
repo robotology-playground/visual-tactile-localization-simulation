@@ -67,13 +67,13 @@
   <module>
     <name>yarpview</name>
     <node>localhost</node>
-    <parameters>--name /si_estimate_viewer/viewer:i</parameters>
+    <parameters>--name /si_estimate_viewer/viewer:i --compact</parameters>
   </module>
 
   <module>
     <name>yarpview</name>
     <node>localhost</node>
-    <parameters>--name /gtruth_viewer/viewer:i</parameters>
+    <parameters>--name /gtruth_viewer/viewer:i --compact</parameters>
   </module>
 
   <!-- <module> -->
