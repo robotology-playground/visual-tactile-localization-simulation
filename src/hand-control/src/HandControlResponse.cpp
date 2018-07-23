@@ -71,7 +71,7 @@ bool HandControlResponse::read(yarp::os::ConnectionReader& connection)
     return !connection.isError();
 }
 
-bool HandControlResponse::write(yarp::os::ConnectionWriter& connection)
+bool HandControlResponse::write(yarp::os::ConnectionWriter& connection) const
 {
     connection.appendInt(static_cast<int>(response));
 
