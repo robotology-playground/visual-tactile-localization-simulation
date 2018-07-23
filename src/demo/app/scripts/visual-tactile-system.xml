@@ -25,7 +25,7 @@
     </dependencies>
     <environment>YARP_FORWARD_LOG_ENABLE=1</environment>
   </module>
-  
+
   <module>
     <name>vtl-hand-ctrl</name>
     <node>localhost</node>
@@ -118,11 +118,13 @@
   <connection>
     <from>/pointCloudRead/pointCloud:o</from>
     <to>/view-filtering/pointcloud:i</to>
+    <protocol>mcast</protocol>
   </connection>
 
   <connection>
     <from>/pointCloudRead/pointCloud:o</from>
     <to>/upf-localizer/pc:i</to>
+    <protocol>mcast</protocol>
   </connection>
 
   <!-- <connection> -->
@@ -138,6 +140,7 @@
   <connection>
     <from>/icub/skin/left_hand_comp</from>
     <to>/upf-localizer/contacts:i</to>
+    <protocol>mcast</protocol>
   </connection>
 
   <!-- <connection> -->
@@ -148,11 +151,13 @@
   <connection>
     <from>/icub/skin/left_hand_comp</from>
     <to>/hand-control/left/contacts:i</to>
+    <protocol>mcast</protocol>
   </connection>
 
   <connection>
     <from>/icub/camcalib/left/out</from>
     <to>/si_estimate_viewer/left_eye:i</to>
+    <protocol>mcast</protocol>
   </connection>
 
   <connection>
@@ -162,7 +167,8 @@
 
   <connection>
     <from>/icub/camcalib/left/out</from>
-    <to>/gtruth_tracker/left_eye:i</to>    
+    <to>/gtruth_tracker/left_eye:i</to>
+    <protocol>mcast</protocol>
   </connection>
 
   <connection>
