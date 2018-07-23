@@ -20,7 +20,7 @@ list(APPEND CMAKE_MODULE_PATH
   # ${YARP_MODULE_PATH}
   ${ICUB_MODULE_PATH})
 
-include(YarpInstallationHelpers)
+# include(YarpInstallationHelpers)
 
 # Source and header files
 set(${EXE_TARGET_NAME}_HDR
@@ -45,7 +45,8 @@ add_executable(${EXE_TARGET_NAME} ${${EXE_TARGET_NAME}_HDR} ${${EXE_TARGET_NAME}
 target_include_directories(${EXE_TARGET_NAME} PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/include
   ${IKIN_FWD_EXT_INCLUDE}
-  ${YARP_INCLUDE_DIRS} ${ICUB_INCLUDE_DIRS})
+  # ${YARP_INCLUDE_DIRS}
+  ${ICUB_INCLUDE_DIRS})
 
 target_link_libraries(${EXE_TARGET_NAME} ${YARP_LIBRARIES} ${ICUB_LIBRARIES})
 
