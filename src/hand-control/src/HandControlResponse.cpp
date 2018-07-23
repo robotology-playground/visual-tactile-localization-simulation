@@ -9,6 +9,11 @@
  * @author: Nicola Piga
  */
 
+// yarp
+#include <yarp/os/ConnectionReader.h>
+#include <yarp/os/ConnectionWriter.h>
+
+
 #include "HandControlResponse.h"
 
 HandControlResponse::HandControlResponse() : is_approach_done(false),
