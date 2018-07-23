@@ -232,7 +232,7 @@ bool HandControlCommand::write(yarp::os::ConnectionWriter& connection) const
 
     // commanded fingers
     for (const std::string &finger : available_fingers)
-        connection.appendInt(commanded_fingers[finger]);
+        connection.appendInt(commanded_fingers.at(finger));
 
     // command
     connection.appendInt(static_cast<int>(cmd));
