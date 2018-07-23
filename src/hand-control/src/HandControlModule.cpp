@@ -293,7 +293,12 @@ void HandControlModule::performControl()
         if (use_simulated_contacts)
             getContactsSim(fingers_contacts);
         else
-            getContacts(fingers_contacts);
+        {
+            if (use_tactile_contacts)
+                getContacts(fingers_contacts);
+            if (use_springy_contacts)
+                getContactsSpringy(fingers_contacts);
+        }
 
         // command fingers
         bool done = false;
