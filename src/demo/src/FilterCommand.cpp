@@ -16,44 +16,44 @@
 
 void yarp::sig::FilterCommand::resetFilter()
 {
-    this->cmd_value = VOCAB3('R', 'E', 'S');
+    this->cmd_value = yarp::os::createVocab('R', 'E', 'S');
 }
 
 void yarp::sig::FilterCommand::enableFiltering()
 {
-    this->cmd_value = VOCAB2('O', 'N');
+    this->cmd_value = yarp::os::createVocab('O', 'N');
 }
 
 void yarp::sig::FilterCommand::disableFiltering()
 {
-    this->cmd_value = VOCAB3('O', 'F', 'F');
+    this->cmd_value = yarp::os::createVocab('O', 'F', 'F');
 }
 
 void yarp::sig::FilterCommand::enableVisualFiltering()
 {
-    this->tag_value = VOCAB3('V', 'I', 'S');
+    this->tag_value = yarp::os::createVocab('V', 'I', 'S');
 }
 
 void yarp::sig::FilterCommand::enableTactileFiltering(const std::string &hand_name)
 {
     if (hand_name == "right")
-        this->tag_value = VOCAB4('T', 'A', 'C', 'R');
+        this->tag_value = yarp::os::createVocab('T', 'A', 'C', 'R');
     else if (hand_name == "left")
-        this->tag_value = VOCAB4('T', 'A', 'C', 'L');
+        this->tag_value = yarp::os::createVocab('T', 'A', 'C', 'L');
 }
 
 void yarp::sig::FilterCommand::probeContactsOn(const std::string &hand_name)
 {
-    this->cmd_value = VOCAB4('P', 'R', 'O', 'N');
+    this->cmd_value = yarp::os::createVocab('P', 'R', 'O', 'N');
     if (hand_name == "right")
-        this->tag_value = VOCAB4('R', 'I', 'G', 'H');
+        this->tag_value = yarp::os::createVocab('R', 'I', 'G', 'H');
     else if (hand_name == "left")
-        this->tag_value = VOCAB4('L', 'E', 'F', 'T');
+        this->tag_value = yarp::os::createVocab('L', 'E', 'F', 'T');
 }
 
 void yarp::sig::FilterCommand::probeContactsOff()
 {
-    this->cmd_value = VOCAB4('P', 'R', 'O', 'F');
+    this->cmd_value = yarp::os::createVocab('P', 'R', 'O', 'F');
 }
 
 int yarp::sig::FilterCommand::tag() const
@@ -68,8 +68,8 @@ int yarp::sig::FilterCommand::command() const
 
 void yarp::sig::FilterCommand::clear()
 {
-    tag_value = VOCAB4('E','M','P','T');
-    cmd_value = VOCAB4('E','M','P','T');
+    tag_value = yarp::os::createVocab('E','M','P','T');
+    cmd_value = yarp::os::createVocab('E','M','P','T');
 }
 
 bool yarp::sig::FilterCommand::read(yarp::os::ConnectionReader& connection)
