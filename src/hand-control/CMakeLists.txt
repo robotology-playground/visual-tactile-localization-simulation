@@ -17,7 +17,7 @@ find_package(ICUB REQUIRED)
 find_package(IKIN_FWD_EXT REQUIRED)
 
 list(APPEND CMAKE_MODULE_PATH
-  ${YARP_MODULE_PATH}
+  # ${YARP_MODULE_PATH}
   ${ICUB_MODULE_PATH})
 
 include(YarpInstallationHelpers)
