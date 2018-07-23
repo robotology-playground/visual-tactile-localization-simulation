@@ -186,9 +186,9 @@ bool HandControlCommand::read(yarp::os::ConnectionReader& connection)
 
     // commanded hand
     int vocab_hand = connection.expectInt();
-    if (vocab_hand == VOCAB4('R','I','G','H'))
+    if (vocab_hand == yarp::os::createVocab('R','I','G','H'))
         commanded_hand = "right";
-    else if (vocab_hand == VOCAB4('L','E','F','T'))
+    else if (vocab_hand == yarp::os::createVocab('L','E','F','T'))
         commanded_hand = "left";
     else
         return false;
@@ -221,9 +221,9 @@ bool HandControlCommand::write(yarp::os::ConnectionWriter& connection)
     // commanded hand
     int vocab_hand;
     if (commanded_hand == "right")
-        vocab_hand = VOCAB4('R','I','G','H');
+        vocab_hand = yarp::os::createVocab('R','I','G','H');
     else if(commanded_hand == "left")
-        vocab_hand = VOCAB4('L','E','F','T');
+        vocab_hand = yarp::os::createVocab('L','E','F','T');
     else
         return false;
     connection.appendInt(vocab_hand);
