@@ -192,11 +192,11 @@ public:
     /*
      * Return true iff a HandControlCommand was received succesfully
      */
-    bool read(yarp::os::ConnectionReader& connection) YARP_OVERRIDE;
+    bool read(yarp::os::ConnectionReader& connection) override;
 
     /*
      * Return true iff a HandControlCommand was sent succesfully
      */
-    bool write(yarp::os::ConnectionWriter& connection) YARP_OVERRIDE;
+    bool write(yarp::os::ConnectionWriter& connection) const override;
 };
 #endif

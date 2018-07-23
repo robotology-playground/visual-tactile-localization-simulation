@@ -216,7 +216,7 @@ bool HandControlCommand::read(yarp::os::ConnectionReader& connection)
     return !connection.isError();
 }
 
-bool HandControlCommand::write(yarp::os::ConnectionWriter& connection)
+bool HandControlCommand::write(yarp::os::ConnectionWriter& connection) const
 {
     // commanded hand
     int vocab_hand;
