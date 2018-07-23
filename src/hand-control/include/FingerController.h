@@ -16,10 +16,10 @@
 #include <yarp/sig/Vector.h>
 #include <yarp/sig/Matrix.h>
 #include <yarp/dev/api.h>
-#include <yarp/dev/IPositionControl2.h>
-#include <yarp/dev/IVelocityControl2.h>
-#include <yarp/dev/IControlMode2.h>
-#include <yarp/dev/IControlLimits2.h>
+#include <yarp/dev/IPositionControl.h>
+#include <yarp/dev/IVelocityControl.h>
+#include <yarp/dev/IControlMode.h>
+#include <yarp/dev/IControlLimits.h>
 #include <yarp/math/SVD.h>
 #include <yarp/os/ResourceFinder.h>
 
@@ -73,19 +73,19 @@ private:
 
     // velocity control interface
     // common to all fingers
-    yarp::dev::IVelocityControl2 *ivel;
+    yarp::dev::IVelocityControl *ivel;
 
     // position control interface
     // common to all fingers
-    yarp::dev::IPositionControl2 *ipos;
+    yarp::dev::IPositionControl *ipos;
 
     // control mode interface
     // common to all fingers
-    yarp::dev::IControlMode2 *imod;
+    yarp::dev::IControlMode *imod;
 
     // control limits interface
     // common to all fingers
-    yarp::dev::IControlLimits2 *ilim;
+    yarp::dev::IControlLimits *ilim;
 
     // current control mode
     int control_mode;
@@ -147,18 +147,18 @@ public:
      *
      * @param hand_name the name of the hand
      * @param finger_name the name of the finger
-     * @param imod pointer to a ControlMode2 instance
-     * @param ivel pointer to a ControlLimits2 instance
-     * @param ipos pointer to a PositionControl2 instance
-     * @param ivel pointer to a VelocityControl2 instance
+     * @param imod pointer to a ControlMode instance
+     * @param ivel pointer to a ControlLimits instance
+     * @param ipos pointer to a PositionControl instance
+     * @param ivel pointer to a VelocityControl instance
      * @return true/false on success/failure
      */
     bool init(const std::string &hand_name,
               const std::string &finger_name,
-              yarp::dev::IControlMode2 *imod,
-              yarp::dev::IControlLimits2 *ilim,
-              yarp::dev::IPositionControl2 *ipos,
-              yarp::dev::IVelocityControl2 *ivel);
+              yarp::dev::IControlMode *imod,
+              yarp::dev::IControlLimits *ilim,
+              yarp::dev::IPositionControl *ipos,
+              yarp::dev::IVelocityControl *ivel);
     /*
      * Configure controller taking parameters from ResourceFinder.
      *

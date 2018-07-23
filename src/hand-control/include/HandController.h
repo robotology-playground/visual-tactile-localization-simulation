@@ -17,10 +17,10 @@
 #include <yarp/sig/Matrix.h>
 #include <yarp/dev/PolyDriver.h>
 #include <yarp/dev/api.h>
-#include <yarp/dev/IPositionControl2.h>
-#include <yarp/dev/IVelocityControl2.h>
-#include <yarp/dev/IControlMode2.h>
-#include <yarp/dev/IControlLimits2.h>
+#include <yarp/dev/IPositionControl.h>
+#include <yarp/dev/IVelocityControl.h>
+#include <yarp/dev/IControlMode.h>
+#include <yarp/dev/IControlLimits.h>
 #include <yarp/dev/IAnalogSensor.h>
 
 // icub-main
@@ -46,11 +46,11 @@ private:
     // views
     yarp::dev::IEncoders *ienc_arm;
     yarp::dev::IAnalogSensor *ianalog_arm;
-    yarp::dev::IControlMode2 *imod_arm;
-    yarp::dev::IControlLimits2 *ilimits_arm;
+    yarp::dev::IControlMode *imod_arm;
+    yarp::dev::IControlLimits *ilimits_arm;
 
-    yarp::dev::IPositionControl2 *ipos_arm;
-    yarp::dev::IVelocityControl2 *ivel_arm;
+    yarp::dev::IPositionControl *ipos_arm;
+    yarp::dev::IVelocityControl *ivel_arm;
 
     // fingers
     std::vector<std::string> fingers_names;

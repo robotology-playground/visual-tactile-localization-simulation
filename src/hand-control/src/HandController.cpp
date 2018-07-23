@@ -70,7 +70,7 @@ bool HandController::configure(yarp::os::ResourceFinder &rf,
     if (!ok || ipos_arm == 0)
     {
         yError() << "HandController:configure"
-                 << "Error: unable to retrieve the PositionControl2 view";
+                 << "Error: unable to retrieve the PositionControl view";
         return false;
     }
 
@@ -78,7 +78,7 @@ bool HandController::configure(yarp::os::ResourceFinder &rf,
     if (!ok || ivel_arm == 0)
     {
         yError() << "HandController:configure"
-                 << "Error: unable to retrieve the VelocityControl2 view";
+                 << "Error: unable to retrieve the VelocityControl view";
         return false;
     }
 
@@ -86,7 +86,7 @@ bool HandController::configure(yarp::os::ResourceFinder &rf,
     if (!ok || imod_arm == 0)
     {
         yError() << "HandController:configure"
-                 << "Error: unable to retrieve the ControlMode2 view";
+                 << "Error: unable to retrieve the ControlMode view";
         return false;
     }
 
@@ -105,7 +105,7 @@ bool HandController::configure(yarp::os::ResourceFinder &rf,
     if (!ok || ilimits_arm == 0)
     {
         yError() << "HandController::configure"
-                 << "Error: unable to retrieve the IControlLimits2 view";
+                 << "Error: unable to retrieve the IControlLimits view";
         return false;
     }
 
