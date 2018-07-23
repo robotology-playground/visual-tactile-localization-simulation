@@ -85,7 +85,7 @@ bool yarp::sig::FilterCommand::read(yarp::os::ConnectionReader& connection)
     return true;
 }
 
-bool yarp::sig::FilterCommand::write(yarp::os::ConnectionWriter& connection)
+bool yarp::sig::FilterCommand::write(yarp::os::ConnectionWriter& connection) const
 {
     // append command
     connection.appendInt(cmd_value);
