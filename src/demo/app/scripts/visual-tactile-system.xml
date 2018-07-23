@@ -161,11 +161,6 @@
   </connection>
 
   <connection>
-    <from>/si_estimate_viewer/left_eye:o</from>
-    <to>/si_estimate_viewer/viewer:i</to>
-  </connection>
-
-  <connection>
     <from>/icub/camcalib/left/out</from>
     <to>/gtruth_tracker/left_eye:i</to>    
   </connection>
