@@ -12,21 +12,21 @@
 set(EXE_TARGET_NAME vtl-vtk-viewer)
 
 # Dependencies
-find_package(YARP REQUIRED)
+find_package(YARP REQUIRED COMPONENTS gsl)
 find_package(VTK REQUIRED)
 
 list(APPEND CMAKE_MODULE_PATH
-  ${YARP_MODULE_PATH}
+  # ${YARP_MODULE_PATH}
   ${ICUB_MODULE_PATH})
 
-include(YarpInstallationHelpers)
+# include(YarpInstallationHelpers)
 include(${VTK_USE_FILE})
 
 # Application target calls
 add_executable(${EXE_TARGET_NAME} src/VtkViewer.cpp)
 
 target_include_directories(${EXE_TARGET_NAME} PRIVATE
-  ${YARP_INCLUDE_DIRS}
+  # ${YARP_INCLUDE_DIRS}
   ${ICUB_INCLUDE_DIRS}
   )
 
