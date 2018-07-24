@@ -314,7 +314,7 @@ class Viewer : public RFModule, RateThread
         attach(rpc_server);
 
         yarp::os::Property propTfClient;
-        propTfClient.put("device", "FrameTransformClient");
+        propTfClient.put("device", "transformClient");
         propTfClient.put("local", "/view-filtering/transformClient");
         propTfClient.put("remote", "/transformServer");
         tf_client = nullptr;
