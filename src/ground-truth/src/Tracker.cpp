@@ -148,7 +148,7 @@ bool Tracker::configure(yarp::os::ResourceFinder &rf)
 
     // frame transform client
     yarp::os::Property propTfClient;
-    propTfClient.put("device", "FrameTransformClient");
+    propTfClient.put("device", "transformClient");
     propTfClient.put("local", port_prefix + "/transformClient");
     propTfClient.put("remote", "/transformServer");
     tf_client = nullptr;
