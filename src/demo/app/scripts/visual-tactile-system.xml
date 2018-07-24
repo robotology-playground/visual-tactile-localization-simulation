@@ -11,7 +11,7 @@
     <name>yarpdev</name>
     <description>Frame Transform Server</description>
     <node>localhost</node>
-    <parameters>--device FrameTransformServer --ROS::enable_ros_publisher false --ROS::enable_ros_subscriber false</parameters>
+    <parameters>--device transformServer --ROS::enable_ros_publisher false --ROS::enable_ros_subscriber false</parameters>
   </module>
 
   <module>
