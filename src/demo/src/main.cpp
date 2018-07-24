@@ -1813,7 +1813,7 @@ public:
 
         // prepare properties for the FrameTransformClient
         yarp::os::Property propTfClient;
-        propTfClient.put("device", "FrameTransformClient");
+        propTfClient.put("device", "transformClient");
         propTfClient.put("local", tfclient_local_port_name);
         propTfClient.put("remote", "/transformServer");
 
