@@ -12,7 +12,7 @@
 set(EXE_TARGET_NAME vtl-si-viewer)
 
 # Dependencies
-find_package(YARP REQUIRED)
+find_package(YARP REQUIRED COMPONENTS gsl)
 find_package(ICUB)
 find_package(OpenCV REQUIRED)
 find_package(SuperimposeMesh REQUIRED)
@@ -20,10 +20,10 @@ find_package(HEAD_KIN REQUIRED)
 find_package(GAZE_CTRL)
 
 list(APPEND CMAKE_MODULE_PATH
-  ${YARP_MODULE_PATH}
+  # ${YARP_MODULE_PATH}
   ${ICUB_MODULE_PATH})
 
-include(YarpInstallationHelpers)
+# include(YarpInstallationHelpers)
 
 # Application target calls
 add_executable(${EXE_TARGET_NAME}
@@ -33,7 +33,7 @@ add_executable(${EXE_TARGET_NAME}
   )
 
 target_include_directories(${EXE_TARGET_NAME} PRIVATE
-  ${YARP_INCLUDE_DIRS}
+  # ${YARP_INCLUDE_DIRS}
   ${ICUB_INCLUDE_DIRS}
   ${HEAD_KIN_INCLUDE}
   ${GAZE_CTRL_INCLUDE}
