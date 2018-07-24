@@ -13,6 +13,7 @@ set(EXE_TARGET_NAME vtl-vtk-viewer)
 
 # Dependencies
 find_package(YARP REQUIRED COMPONENTS gsl)
+find_package(ICUB REQUIRED)
 find_package(VTK REQUIRED)
 
 list(APPEND CMAKE_MODULE_PATH
@@ -30,7 +31,7 @@ target_include_directories(${EXE_TARGET_NAME} PRIVATE
   ${ICUB_INCLUDE_DIRS}
   )
 
-target_link_libraries(${EXE_TARGET_NAME} ${YARP_LIBRARIES})
+target_link_libraries(${EXE_TARGET_NAME} ${YARP_LIBRARIES} ${ICUB_LIBRARIES})
 if(VTK_LIBRARIES)
   target_link_libraries(${EXE_TARGET_NAME} ${VTK_LIBRARIES})
 else()
