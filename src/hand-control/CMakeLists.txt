@@ -12,7 +12,7 @@
 set(EXE_TARGET_NAME vtl-hand-ctrl)
 
 # Dependencies
-find_package(YARP REQUIRED)
+find_package(YARP REQUIRED COMPONENTS gsl)
 find_package(ICUB REQUIRED)
 find_package(IKIN_FWD_EXT REQUIRED)
 
