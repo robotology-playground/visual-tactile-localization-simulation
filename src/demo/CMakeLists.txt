@@ -12,17 +12,17 @@
 set(EXE_TARGET_NAME vtl-demo)
 
 # Dependencies
-find_package(YARP REQUIRED)
+find_package(YARP REQUIRED COMPONENTS gsl)
 find_package(ICUB REQUIRED)
 find_package(IKIN_FWD_EXT REQUIRED)
 find_package(HAND_CTRL_CMD REQUIRED)
 find_package(GAZE_CTRL REQUIRED)
 
 list(APPEND CMAKE_MODULE_PATH
-  ${YARP_MODULE_PATH}
+  # ${YARP_MODULE_PATH}
   ${ICUB_MODULE_PATH})
 
-include(YarpInstallationHelpers)
+# include(YarpInstallationHelpers)
 
 # Source and header files
 set(${EXE_TARGET_NAME}_HDR
@@ -74,7 +74,7 @@ target_include_directories(${EXE_TARGET_NAME} PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/include
   ${IKIN_FWD_EXT_INCLUDE}
   ${HAND_CTRL_CMD_INCLUDE}
-  ${YARP_INCLUDE_DIRS}
+  # ${YARP_INCLUDE_DIRS}
   ${ICUB_INCLUDE_DIRS}
   ${${EXE_TARGET_NAME}_THRIFT_INCLUDE}
   ${GAZE_CTRL_INCLUDE}
