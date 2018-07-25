@@ -526,6 +526,16 @@ class Viewer : public RFModule, RateThread
             }
         }
 
+        // hand kinematics
+        if (show_hand)
+        {
+            LockGuard lg(mutex);
+
+            fingersLinks fingers_links;
+            if (hand_kin->getFingersLinks(fingers_links))
+                vtk_hand->set_fingers_links(fingers_links);
+        }
+
         // estimate and ground truth
         updateView();
     }
