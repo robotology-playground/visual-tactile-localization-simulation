@@ -278,6 +278,9 @@ class Viewer : public RFModule, RateThread
     bool show_hand_axes;
     std::string hand_name;
 
+    // flags relative to point cloud visualization
+    bool show_point_cloud;
+
     vtkSmartPointer<vtkRenderer> vtk_renderer;
     vtkSmartPointer<vtkRenderWindow> vtk_renderWindow;
     vtkSmartPointer<vtkRenderWindowInteractor> vtk_renderWindowInteractor;
@@ -325,8 +328,6 @@ class Viewer : public RFModule, RateThread
     bool configure(ResourceFinder &rf) override
     {
 
-        portPointsIn.open("/view-filtering/pointcloud:i");
-
         rpc_server.open("/view-filtering/rpc");
         attach(rpc_server);
 
@@ -340,13 +341,25 @@ class Viewer : public RFModule, RateThread
         if (!ok_drv)
             return false;
 
-        vtk_all_points=unique_ptr<Points>(new Points(all_points,2));
-
         // get robot name
         std::string robot_name;
         robot_name = "icub";
         if (!rf.find("robotName").isNull())
             robot_name = rf.find("robotName").asString();
+
+        // get show point cloud flag
+        show_point_cloud = false;
+        if (!rf.find("showPointCloud").isNull())
+            show_point_cloud = rf.find("showPointCloud").asBool();
+
+        if (show_point_cloud)
+        {
+            // open point cloud port if required
+            portPointsIn.open("/view-filtering/pointcloud:i");
+
+            // instantiate point cloud if required
+            vtk_all_points=unique_ptr<Points>(new Points(all_points,2));
+        }
 
         // get the flags relative to hand visualization
         show_hand = false;
@@ -443,9 +456,12 @@ class Viewer : public RFModule, RateThread
         vtk_renderWindowInteractor=vtkSmartPointer<vtkRenderWindowInteractor>::New();
         vtk_renderWindowInteractor->SetRenderWindow(vtk_renderWindow);
 
-        vtk_renderer->AddActor(vtk_all_points->get_actor());
         vtk_renderer->AddActor(vtk_cube_est->get_actor());
         vtk_renderer->AddActor(vtk_cube_gt->get_actor());
+        if (show_point_cloud)
+        {
+            vtk_renderer->AddActor(vtk_all_points->get_actor());
+        }
         if (show_hand)
         {
             vtk_hand->attach_to_renderer(vtk_renderer);
@@ -500,12 +516,17 @@ class Viewer : public RFModule, RateThread
     /****************************************************************/
     void run() override
     {
-        PointCloudXYZRGBA *new_pc = portPointsIn.read(false);
-        if (new_pc != NULL)
+        // point cloud
+        if (show_point_cloud)
         {
-            process(*new_pc);
+            PointCloudXYZRGBA *new_pc = portPointsIn.read(false);
+            if (new_pc != NULL)
+            {
+                process(*new_pc);
+            }
         }
 
+        // estimate and ground truth
         updateView();
     }
 
