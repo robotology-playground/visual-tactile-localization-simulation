@@ -33,6 +33,8 @@
 #include <vtkCamera.h>
 #include <vtkInteractorStyleSwitch.h>
 #include <vtkCubeSource.h>
+#include <vtkHand.h>
+#include <handKinematics.h>
 
 using namespace std;
 using namespace yarp::os;
@@ -261,6 +263,21 @@ class Viewer : public RFModule, RateThread
     // cube for the ground truth
     unique_ptr<Cube> vtk_cube_gt;
 
+    // hands kinematics
+    std::unique_ptr<handKinematics> hand_kin;
+
+    // vtk hands
+    std::unique_ptr<vtkHand> vtk_hand;
+
+    // use analogs and use analogs bounds flags
+    bool use_analogs;
+    bool use_analogs_bounds;
+
+    // flags relative to visualization of the hand
+    bool show_hand;
+    bool show_hand_axes;
+    std::string hand_name;
+
     vtkSmartPointer<vtkRenderer> vtk_renderer;
     vtkSmartPointer<vtkRenderWindow> vtk_renderWindow;
     vtkSmartPointer<vtkRenderWindowInteractor> vtk_renderWindowInteractor;
@@ -270,7 +287,7 @@ class Viewer : public RFModule, RateThread
     vtkSmartPointer<vtkInteractorStyleSwitch> vtk_style;
     vtkSmartPointer<UpdateCommand> vtk_updateCallback;
 
-    /****************************************************************/    
+    /****************************************************************/
     bool loadListDouble(yarp::os::ResourceFinder &rf,
                         const std::string &key,
                         const int &size,
@@ -324,6 +341,47 @@ class Viewer : public RFModule, RateThread
             return false;
 
         vtk_all_points=unique_ptr<Points>(new Points(all_points,2));
+
+        // get robot name
+        std::string robot_name;
+        robot_name = "icub";
+        if (!rf.find("robotName").isNull())
+            robot_name = rf.find("robotName").asString();
+
+        // get the flags relative to hand visualization
+        show_hand = false;
+        if (!rf.find("showHand").isNull())
+            show_hand = rf.find("showHand").asBool();
+        if (show_hand)
+        {
+            show_hand_axes = false;
+            if (!rf.find("showHandAxes").isNull())
+                show_hand_axes = rf.find("showHandAxes").asBool();
+            if (!rf.find("handName").isNull())
+                hand_name = rf.find("handName").asString();
+            if ((hand_name != "right") && (hand_name != "left"))
+            {
+                yInfo() << "VtkViewer::configure"
+                        << "error: a valid hand name should be specified";
+                return false;
+            }
+
+            // get the flags useAnalogs and useAnalogsBounds
+            use_analogs = false;
+            use_analogs_bounds = false;
+            if (!rf.find("useAnalogs").isNull())
+                use_analogs = rf.find("useAnalogs").asBool();
+            if (!rf.find("useAnalogsBounds").isNull())
+                use_analogs_bounds = rf.find("useAnalogsBounds").asBool();
+
+            hand_kin = std::unique_ptr<handKinematics>(new handKinematics());
+            if (!hand_kin->configure(robot_name, hand_name,
+                                     use_analogs, use_analogs_bounds))
+                return false;
+
+            // vtk hands
+            vtk_hand = std::unique_ptr<vtkHand>(new vtkHand(show_hand_axes));
+        }
 
         // get the size of the object
         if (rf.find("objName").isNull())
@@ -388,6 +446,10 @@ class Viewer : public RFModule, RateThread
         vtk_renderer->AddActor(vtk_all_points->get_actor());
         vtk_renderer->AddActor(vtk_cube_est->get_actor());
         vtk_renderer->AddActor(vtk_cube_gt->get_actor());
+        if (show_hand)
+        {
+            vtk_hand->attach_to_renderer(vtk_renderer);
+        }
         vtk_renderer->SetBackground(0.1,0.2,0.2);
 
         vtk_axes=vtkSmartPointer<vtkAxesActor>::New();
