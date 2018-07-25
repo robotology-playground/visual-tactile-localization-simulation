@@ -48,6 +48,7 @@ public:
     void enableTactileFiltering(const std::string &hand_name);
     void probeContactsOn(const std::string &hand_name);
     void probeContactsOff();
+    void acquireContactConstraints(const std::string &hand_name);
     int tag() const;
     int command() const;
 

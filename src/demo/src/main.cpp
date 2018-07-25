@@ -763,6 +763,8 @@ protected:
             filter_cmd.probeContactsOn(hand_name);
         else if (cmd == "contacts_probe_off")
             filter_cmd.probeContactsOff();
+        else if (cmd == "acquire_constraints")
+            filter_cmd.acquireContactConstraints(hand_name);
 
         // enable the correct type of filtering
         if (cmd == "enable")
@@ -2486,6 +2488,10 @@ public:
                 // switch to position control
                 switchFingersToPositionControl(seq_act_arm);
 
+                // acquire contact constraints required for
+                // constrained filtering
+                sendCommandToFilter("acquire_constraints", "", seq_act_arm);
+
                 mutex.lock();
 
                 // go to Idle
@@ -2510,6 +2516,10 @@ public:
 
                 // switch to position control
                 switchFingersToPositionControl(seq_act_arm);
+
+                // acquire contact constraints required for
+                // constrained filtering
+                sendCommandToFilter("acquire_constraints", "", seq_act_arm);
 
                 // go to Idle
                 mutex.lock();

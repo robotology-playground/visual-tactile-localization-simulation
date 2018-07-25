@@ -58,6 +58,14 @@ void yarp::sig::FilterCommand::probeContactsOff()
     this->cmd_value = yarp::os::createVocab('P', 'R', 'O', 'F');
 }
 
+void yarp::sig::FilterCommand::acquireContactConstraints(const std::string &hand_name)
+{
+    if (hand_name == "right")
+        this->cmd_value = yarp::os::createVocab('C', 'N', 'S', 'R');
+    else if (hand_name == "left")
+        this->cmd_value = yarp::os::createVocab('C', 'N', 'S', 'L');
+}
+
 int yarp::sig::FilterCommand::tag() const
 {
     return tag_value;
