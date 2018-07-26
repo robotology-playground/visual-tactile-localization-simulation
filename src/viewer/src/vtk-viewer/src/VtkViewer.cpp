@@ -592,6 +592,11 @@ class Viewer : public RFModule, RateThread
         }
     }
 
+    void calibrateHand()
+    {
+        hand_kin->calibrate();
+    }
+
     /****************************************************************/
     bool respond(const Bottle &command, Bottle &reply) override
     {
@@ -602,8 +607,15 @@ class Viewer : public RFModule, RateThread
         {
             reply.addVocab(yarp::os::Vocab::encode("many"));
             reply.addString("Available commands:");
+            reply.addString("- calibrate_hand");
             reply.addString("- help");
             reply.addString("- quit");
+        }
+        else if (cmd == "calibrate_hand")
+        {
+            calibrateHand();
+
+            reply.addString("- calibration ok");
         }
         else
             // the father class already handles the "quit" command
