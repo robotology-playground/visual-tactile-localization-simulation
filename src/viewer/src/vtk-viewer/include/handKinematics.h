@@ -65,7 +65,6 @@ protected:
     void getArmDofs(const yarp::sig::Vector &arm_encs,
 		    const yarp::sig::Vector &torso_encs,
 		    yarp::sig::Vector &arm_dofs);
-
     void setupAnalogBounds();
 
     // whether to use analog encoders of proximal/distal joints
@@ -80,6 +79,7 @@ public:
                    const bool &use_analog_bounds = false,
 		   const std::string &port_prefix = "");
     bool getFingersLinks(fingersLinks &links);
+    void calibrate();
     void close();
 };
 

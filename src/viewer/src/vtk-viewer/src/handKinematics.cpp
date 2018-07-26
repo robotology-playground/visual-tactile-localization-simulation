@@ -294,6 +294,24 @@ void handKinematics::close()
     drv_arm.close();
 }
 
+void handKinematics::calibrate()
+{
+    if (use_analog)
+    {
+        yarp::sig::Vector arm_encs;
+        yarp::sig::Vector torso_encs;
+        yarp::sig::Vector fingers_analogs;
+
+        // get readings from analogs
+        getEncoders(arm_encs, torso_encs, fingers_analogs);
+
+        // reset the upper bounds
+        // at this point it is supposed that the hand
+        // is completely open
+        analog_bounds.setCol(0, fingers_analogs);
+    }
+}
+
 void handKinematics::setupAnalogBounds()
 {
     // taken from real robot
