@@ -196,6 +196,9 @@ protected:
     // whether to use ground truth tracker or not
     bool use_tracker;
 
+    // eyes vergence for SFM
+    double sfm_vergence;
+
     // status of the module
     Status status;
     Status previous_status;
@@ -245,7 +248,7 @@ protected:
         {
             // block vergence of eyes
             // as required by SFM
-            gaze_ctrl.blockEyes(5.0);
+            gaze_ctrl.blockEyes(sfm_vergence);
         }
 
         if (!simulation_mode)
@@ -1527,6 +1530,11 @@ public:
         if (rf_module.find("useTracker").isNull())
             use_tracker = false;
 
+        // vergence of eyes to be used for SFM
+        sfm_vergence = rf_module.find("vergenceForSFM").asDouble();
+        if (rf_module.find("vergenceForSFM").isNull())
+            sfm_vergence = 5.0;
+
         // port names
         std::string filter_port_name = rf_module.find("filterPort").asString();
         if (rf_module.find("filterPortName").isNull())
@@ -2023,7 +2031,7 @@ public:
             if (use_gaze)
             {
                 // block eyes vergence
-                gaze_ctrl.blockEyes(5.0);
+                gaze_ctrl.blockEyes(sfm_vergence);
             }
 
             // issue localization
