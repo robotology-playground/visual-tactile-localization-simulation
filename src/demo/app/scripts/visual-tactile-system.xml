@@ -176,4 +176,9 @@
     <to>/gtruth_viewer/viewer:i</to>
   </connection>
 
+  <connection>
+    <from>/upf-localizer/opc/rpc:o</from>
+    <to>/memory/rpc</to>
+  </connection>
+
 </application>
