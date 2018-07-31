@@ -2009,7 +2009,8 @@ public:
         // get current estimate from the filter
         std::string source = est_tf_source;
         std::string target = est_tf_target;
-        is_estimate_available = tf_client->getTransform(target, source, estimate);
+        if (tf_client->getTransform(target, source, estimate))
+            is_estimate_available = true;
 
         // get the current minimum allowed z for approaching phase
         double min_z = min_allowed_z;
