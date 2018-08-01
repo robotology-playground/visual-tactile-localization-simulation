@@ -2669,7 +2669,7 @@ public:
                 if (use_tracker)
                 {
                     // // disable tracking with eyes
-                    // sendCommandToTracker("eyes-stop");
+                    sendCommandToTracker("eyes-stop");
 
                     // // fixate with eyes
                     // sendCommandToTracker("eyes-fixate-and-hold");
@@ -2826,7 +2826,7 @@ public:
                 if (use_tracker)
                 {
                     // // disable tracking with eyes
-                    // sendCommandToTracker("eyes-stop");
+                    sendCommandToTracker("eyes-stop");
 
                     // // fixate with eyes
                     // sendCommandToTracker("eyes-fixate-and-hold");
