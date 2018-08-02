@@ -2402,7 +2402,7 @@ public:
                 stopArm(seq_act_arm);
 
                 // stop eyes
-                sendCommandToTracker("eyes-stop");
+                // sendCommandToTracker("eyes-stop");
 
                 mutex.lock();
 
@@ -2430,7 +2430,7 @@ public:
                 mutex.lock();
 
                 // stop eyes
-                sendCommandToTracker("eyes-stop");
+                // sendCommandToTracker("eyes-stop");
 
                 // go to Idle
                 status = Status::Idle;
