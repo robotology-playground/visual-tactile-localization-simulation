@@ -156,6 +156,10 @@ bool handKinematics::configure(const std::string &robot_name,
             }
         }
 
+        // fix limits for thumb opposition
+        iCub::iKin::iKinChain &thumb = fingers_kin["thumb"];
+        thumb[0].setMin((-15.0) * iCub::ctrl::CTRL_DEG2RAD);
+
         // setup analog bounds
         if (use_analog_bounds)
             setupAnalogBounds();
