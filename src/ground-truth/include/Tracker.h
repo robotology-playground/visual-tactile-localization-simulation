@@ -48,6 +48,12 @@ private:
     // selected eye name
     std::string eye_name;
 
+    // tracking source
+    // i.e. whether to track the object with the eyes
+    // using the estimate from the ground truth
+    // or from the external filter
+    std::string tracking_source;
+
     // period
     double period;
 
@@ -58,6 +64,8 @@ private:
     std::string tf_target;
     std::string sim_tf_source;
     std::string sim_tf_target;
+    std::string filter_tf_source;
+    std::string filter_tf_target;
 
     // object sizes
     double obj_width;
@@ -69,6 +77,10 @@ private:
     /* yarp::sig::Vector est_pos; */
     /* yarp::sig::Vector est_att; */
     bool is_estimate_available;
+
+    // estimate from filter
+    yarp::sig::Matrix filter_pose;
+    bool is_filter_est_available;
 
     // status
     Status status;
@@ -104,6 +116,7 @@ private:
                           const yarp::sig::Vector &camera_att,
                           yarp::sig::Matrix &est_pose);
     bool retrieveGroundTruthSim(yarp::sig::Matrix &est_pose);
+    bool retrieveFilterEstimate(yarp::sig::Matrix &est_pose);
     void publishEstimate();
     void fixateWithEyes();
     void fixateWithEyesAndHold();

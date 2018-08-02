@@ -77,6 +77,16 @@ bool Tracker::configure(yarp::os::ResourceFinder &rf)
         if (!rf.find("simTfTarget").isNull())
             sim_tf_target = rf.find("simTfTarget").asString();
     }
+    filter_tf_source = "/iCub/frame";
+    if (!rf.find("filterTfSource").isNull())
+        filter_tf_source = rf.find("filterTfSource").asString();
+    filter_tf_target = "/estimate/frame";
+    if (!rf.find("filterTfTarget").isNull())
+        filter_tf_target = rf.find("filterTfTarget").asString();
+
+    tracking_source = "ground_truth";
+    if (!rf.find("trackingSource").isNull())
+        tracking_source = rf.find("trackingSource").asString();
 
     int n_x;
     int n_y;
@@ -292,11 +302,19 @@ bool Tracker::evaluateEstimate(const cv::Mat &pos_wrt_cam, const cv::Mat &att_wr
     est_pose.setCol(3, est_pos_homog);
 }
 
-bool Tracker::retrieveGroundTruthSim(yarp::sig::Matrix &est_pose)
+bool Tracker::retrieveGroundTruthSim(yarp::sig::Matrix &pose)
 {
     // Get the transform from the robot root frame
     // to the object frame provided by Gazebo
-    if (!tf_client->getTransform(sim_tf_target, sim_tf_source, est_pose))
+    if (!tf_client->getTransform(sim_tf_target, sim_tf_source, pose))
+        return false;
+
+    return true;
+}
+
+bool Tracker::retrieveFilterEstimate(yarp::sig::Matrix &pose)
+{
+    if (!tf_client->getTransform(filter_tf_target, filter_tf_source, pose))
         return false;
 
     return true;
@@ -315,11 +333,29 @@ void Tracker::fixateWithEyes()
 {
     // this function can be called once
     // or in streaming mode
+    yarp::sig::Matrix *estimate;
+    bool do_fixate = false;
 
-    yarp::sig::Vector fix_point(3);
-    fix_point = est_pose.getCol(3).subVector(0, 2);
+    if ((tracking_source == "ground_truth") &&
+        is_estimate_available)
+    {
+        estimate = &est_pose;
+        do_fixate = true;
+    }
+    else if ((tracking_source == "filter") &&
+             is_filter_est_available)
+    {
+        estimate = &filter_pose;
+        do_fixate = true;
+    }
 
-    gaze_ctrl.setReference(fix_point);
+    if (do_fixate)
+    {
+        yarp::sig::Vector fix_point;
+        fix_point = estimate->getCol(3).subVector(0, 2);
+
+        gaze_ctrl.setReference(fix_point);
+    }
 }
 
 void Tracker::fixateWithEyesAndHold()
@@ -348,6 +384,12 @@ bool Tracker::updateModule()
     }
     else
     {
+        // retrieve estimate from the filter
+        bool ok = retrieveFilterEstimate(filter_pose);
+
+        if (ok)
+            is_filter_est_available = true;
+
         // get image from camera
         yarp::sig::ImageOf<yarp::sig::PixelRgb>* img_in;
         bool is_image = false;
@@ -401,7 +443,7 @@ bool Tracker::updateModule()
                 cv::cvtColor(frame_out, frame_out, cv::COLOR_BGR2RGB);
                 image_output_port.write();
             }
-        
+
         }
 
         // publish the last available estimate
@@ -463,15 +505,15 @@ bool Tracker::respond(const yarp::os::Bottle &command, yarp::os::Bottle &reply)
     else if (cmd == "eyes-track")
     {
         mutex.lock();
-        
+
         // disable tracking mode of iKinGazeCtrl
         gaze_ctrl.disableTrackingMode();
 
         // unblock the eyes in case they were blocked
         gaze_ctrl.clearEyes();
-        
+
         status = Status::Track;
-        
+
         mutex.unlock();
 
         reply.addString("ok");
@@ -484,10 +526,10 @@ bool Tracker::respond(const yarp::os::Bottle &command, yarp::os::Bottle &reply)
         gaze_ctrl.clearEyes();
 
         status = Status::Hold;
-        
+
         mutex.unlock();
 
-        reply.addString("ok");        
+        reply.addString("ok");
     }
     else if (cmd == "eyes-stop")
     {
@@ -500,7 +542,7 @@ bool Tracker::respond(const yarp::os::Bottle &command, yarp::os::Bottle &reply)
 
         mutex.unlock();
 
-        reply.addString("ok");        
+        reply.addString("ok");
     }
     else
         // the father class already handles the "quit" command
