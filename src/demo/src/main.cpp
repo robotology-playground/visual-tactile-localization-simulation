@@ -48,7 +48,7 @@
 using namespace yarp::math;
 
 enum class Status { Idle,
-                    VisualLocalizationOn, LocalizationOff, ResetFilter,
+                    VisualLocalizationOn, VisuoTactileMatching, LocalizationOff, ResetFilter,
                     MoveHeadHome, WaitMoveHeadDone,
                     MoveHandUpward, WaitMoveHandUpwardDone,
                     MoveArmRestPosition, WaitMoveArmRestPositionDone,
@@ -275,6 +275,28 @@ protected:
             // change status
             previous_status = status;
             status = Status::VisualLocalizationOn;
+
+            reply = "[OK] Command issued";
+        }
+
+        mutex.unlock();
+
+        return reply;
+    }
+
+    std::string visuo_tactile_matching()
+    {
+        mutex.lock();
+
+        std::string reply;
+
+        if (status != Status::Idle)
+            reply = "[FAILED] Wait for completion of the current phase";
+        else
+        {
+            // change status
+            previous_status = status;
+            status = Status::VisuoTactileMatching;
 
             reply = "[OK] Command issued";
         }
@@ -2042,6 +2064,24 @@ public:
 
             if (!ok)
                 yError() << "[VISUAL LOCALIZATION ON] error while sending command to the filter";
+
+            // go back to Idle
+            mutex.lock();
+            status = Status::Idle;
+            mutex.unlock();
+
+            break;
+        }
+
+        case Status::VisuoTactileMatching:
+        {
+            bool ok;
+
+            // issue localization
+            ok = sendCommandToFilter("enable", "vis_tac_matching", seq_act_arm);
+
+            if (!ok)
+                yError() << "[VISUO TACTILE MATCHING] error while sending command to the filter";
 
             // go back to Idle
             mutex.lock();
