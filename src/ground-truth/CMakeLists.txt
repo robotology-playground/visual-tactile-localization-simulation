@@ -30,6 +30,7 @@ set(${EXE_TARGET_NAME}_HDR
   include/UcoBoardEstimator.h
   include/ArucoBoardEstimator.h
   include/CharucoBoardEstimator.h
+  include/KalmanFilter.h
   )
 
 set(${EXE_TARGET_NAME}_SRC
@@ -37,6 +38,7 @@ set(${EXE_TARGET_NAME}_SRC
   src/UcoBoardEstimator.cpp
   src/ArucoBoardEstimator.cpp
   src/CharucoBoardEstimator.cpp
+  src/KalmanFilter.cpp
   src/main.cpp
   )
 
