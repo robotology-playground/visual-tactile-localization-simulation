@@ -329,6 +329,17 @@ void Tracker::publishEstimate()
     tf_client->setTransform(tf_target, tf_source, est_pose);
 }
 
+void Tracker::getEstimate(yarp::sig::Vector &estimate)
+{
+    estimate.resize(6);
+
+    // position
+    estimate.setSubvector(0, est_pose.getCol(3).subVector(0, 2));
+
+    // attitude
+    estimate.setSubvector(3, yarp::math::dcm2rpy(est_pose.submatrix(0, 2, 0, 2)));
+}
+
 void Tracker::fixateWithEyes()
 {
     // this function can be called once

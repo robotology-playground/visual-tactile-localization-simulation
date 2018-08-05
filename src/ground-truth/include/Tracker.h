@@ -118,6 +118,7 @@ private:
     bool retrieveGroundTruthSim(yarp::sig::Matrix &est_pose);
     bool retrieveFilterEstimate(yarp::sig::Matrix &est_pose);
     void publishEstimate();
+    void getEstimate(yarp::sig::Vector &estimate);
     void fixateWithEyes();
     void fixateWithEyesAndHold();
 public:
