@@ -101,35 +101,35 @@ void KalmanFilter::setR(const yarp::sig::Matrix &R)
 void KalmanFilter::setInitialConditions(const yarp::sig::Vector &x0,
                                         const yarp::sig::Matrix &P0)
 {
-    x = x0;
+    x = wrapAngles(x0);
     P = P0;
 }
 
 void KalmanFilter::init()
 {
     // nxn eye matrix
-    yarp::sig::Matrix eye(n, n);
+    yarp::sig::Matrix eye(n / 2, n / 2);
     eye.eye();
 
     // A matrix
-    A.resize(2 * n, 2 * n);
+    A.resize(n, n);
     A.zero();
     A.setSubmatrix(eye, 0, 0);
-    A.setSubmatrix(T * eye, 0, n);
-    A.setSubmatrix(eye, n, 0);
+    A.setSubmatrix(T * eye, 0, n / 2);
+    A.setSubmatrix(eye, n / 2, n / 2);
 
     yInfo() << "A matrix is" << A.toString();
 
     // B matrix
-    B.resize(2 * n, n);
+    B.resize(n, n / 2);
     B.zero();
     B.setSubmatrix(eye * pow(T, 2) / 2.0, 0, 0);
-    B.setSubmatrix(eye * T, n, 0);
+    B.setSubmatrix(eye * T, n / 2, 0);
 
     yInfo() << "B matrix is" << B.toString();
 
     // H matrix
-    H.resize(n, 2 * n);
+    H.resize(n / 2, n);
     H.zero();
     H.setSubmatrix(eye, 0, 0);
 
@@ -139,14 +139,14 @@ void KalmanFilter::init()
     Q.resize(n, n);
     Q.zero();
     Q.setSubmatrix(Q_cont * pow(T, 3) / 3.0, 0, 0);
-    Q.setSubmatrix(Q_cont * pow(T, 2) / 2.0, 0, n);
-    Q.setSubmatrix(Q_cont * pow(T, 2) / 2.0, n, 0);
-    Q.setSubmatrix(Q_cont * T, n, n);
+    Q.setSubmatrix(Q_cont * pow(T, 2) / 2.0, 0, n / 2);
+    Q.setSubmatrix(Q_cont * pow(T, 2) / 2.0, n / 2, 0);
+    Q.setSubmatrix(Q_cont * T, n / 2, n / 2);
 
     yInfo() << "Q matrix is" << Q.toString();
 
     // R matrix
-    R.resize(n, n);
+    R.resize(n / 2, n / 2);
     R.zero();
     // R = R_cont / T;
     R = R_cont;
@@ -160,7 +160,7 @@ void KalmanFilter::init()
 yarp::sig::Vector KalmanFilter::step(const yarp::sig::Vector &meas)
 {
     // predict with zero inputs
-    yarp::sig::Vector zero_input(n, 0.0);
+    yarp::sig::Vector zero_input(n / 2, 0.0);
     predict(zero_input);
 
     // wrap angles
