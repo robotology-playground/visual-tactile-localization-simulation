@@ -44,6 +44,14 @@ void yarp::sig::FilterCommand::enableTactileFiltering(const std::string &hand_na
         this->tag_value = yarp::os::createVocab('T', 'A', 'C', 'L');
 }
 
+void yarp::sig::FilterCommand::enableVisuoTactileMatching(const std::string &hand_name)
+{
+    if (hand_name == "right")
+        this->tag_value = yarp::os::createVocab('V', 'T', 'M', 'R');
+    else if (hand_name == "left")
+        this->tag_value = yarp::os::createVocab('V', 'T', 'M', 'L');
+}
+
 void yarp::sig::FilterCommand::probeContactsOn(const std::string &hand_name)
 {
     this->cmd_value = yarp::os::createVocab('P', 'R', 'O', 'N');
