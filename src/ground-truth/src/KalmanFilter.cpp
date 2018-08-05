@@ -36,7 +36,7 @@ double KalmanFilter::wrapAngle(const double& angle)
 yarp::sig::Vector KalmanFilter::wrapAngles(const yarp::sig::Vector &state)
 {
     yarp::sig::Vector wrapped = state;
-    
+
     // wrap angles
     for (size_t i=0; i<euler_indexes.size(); i++)
         wrapped[euler_indexes[i]] = wrapAngle(state[euler_indexes[i]]);
@@ -101,7 +101,7 @@ void KalmanFilter::init()
     // nxn eye matrix
     yarp::sig::Matrix eye(n, n);
     eye.eye();
-    
+
     // A matrix
     A.resize(2 * n, 2 * n);
     A.zero();
