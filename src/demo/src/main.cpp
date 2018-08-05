@@ -774,6 +774,8 @@ protected:
                 filter_cmd.enableVisualFiltering();
             else if (type == "tactile")
                 filter_cmd.enableTactileFiltering(hand_name);
+            else if (type == "vis_tac_matching")
+                filter_cmd.enableVisuoTactileMatching(hand_name);
         }
 
         // send command to the filter
