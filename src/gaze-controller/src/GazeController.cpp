@@ -12,6 +12,7 @@
 // yarp
 #include <yarp/os/LogStream.h>
 #include <yarp/os/Bottle.h>
+#include <yarp/math/Math.h>
 
 //
 #include <GazeController.h>
@@ -123,7 +124,7 @@ bool GazeController::goHome()
 bool GazeController::close()
 {
     bool ok;
-    
+
     // stop any movement for safety
     ok = igaze->stopControl();
     if (!ok)
@@ -132,7 +133,7 @@ bool GazeController::close()
                  << "error: Unable to stop the controller";
         yWarning() << "GazeController::close"
                    << "WARNING: the initial context will not be restored!";
-        
+
         return false;
     }
 
@@ -142,7 +143,7 @@ bool GazeController::close()
     // {
     //     yError() << "GazeController::close"
     //              << "error: unable to restore the initial context";
-        
+
     //     return false;
     // }
 
@@ -174,10 +175,23 @@ bool GazeController::getCameraPose(const std::string &eye_name,
     if ((eye_name != "right") && (eye_name != "left"))
         return false;
 
+    bool ok;
+
     if (eye_name == "right")
-        return igaze->getRightEyePose(pos, att);
+        ok = igaze->getRightEyePose(pos, att);
     else if(eye_name == "left")
-        return igaze->getLeftEyePose(pos, att);
+        ok = igaze->getLeftEyePose(pos, att);
+
+    if (!ok)
+        return false;
+
+    // add transformation due to radius of the eye ball
+    // double diameter = 0.04;
+    // yarp::sig::Vector radius(3, 0.0);
+    // radius[2] = diameter / 2.0;
+    // pos += yarp::math::axis2dcm(att).submatrix(0, 2, 0, 2) * radius;
+
+    return true;
 }
 
 bool GazeController::getCameraIntrinsics(const std::string eye_name,
@@ -206,7 +220,7 @@ bool GazeController::setTrajectoryTimes()
     // set the default trajectory time
     if (!igaze->setEyesTrajTime(eyes_traj_time))
         return false;
-    
+
     if (!igaze->setNeckTrajTime(neck_traj_time))
         return false;
 }
