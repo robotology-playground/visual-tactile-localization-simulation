@@ -26,6 +26,7 @@
 #include <Tracker.h>
 #include <UcoBoardEstimator.h>
 #include <GazeController.h>
+#include <KalmanFilter.h>
 
 enum class Status { Idle, Hold, Track};
 
@@ -57,6 +58,9 @@ private:
     // period
     double period;
 
+    // last time
+    double last_time;
+
     // frame transform client
     yarp::dev::PolyDriver drv_transform_client;
     yarp::dev::IFrameTransform* tf_client;
@@ -66,6 +70,10 @@ private:
     std::string sim_tf_target;
     std::string filter_tf_source;
     std::string filter_tf_target;
+
+    // kalman filter
+    // required to filter aruco estimate
+    KalmanFilter kf;
 
     // object sizes
     double obj_width;
@@ -77,6 +85,7 @@ private:
     /* yarp::sig::Vector est_pos; */
     /* yarp::sig::Vector est_att; */
     bool is_estimate_available;
+    bool is_kf_initialized;
 
     // estimate from external filter
     yarp::sig::Matrix filter_pose;
@@ -119,6 +128,9 @@ private:
     bool retrieveExternalFilterEstimate(yarp::sig::Matrix &est_pose);
     void publishEstimate();
     void getEstimate(yarp::sig::Vector &estimate);
+    void initializeKF();
+    yarp::sig::Matrix eulerZYX2dcm(const yarp::sig::Vector &euler);
+    void filterKF();
     void fixateWithEyes();
     void fixateWithEyesAndHold();
 public:

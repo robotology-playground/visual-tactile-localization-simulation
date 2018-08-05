@@ -227,11 +227,15 @@ bool Tracker::configure(yarp::os::ResourceFinder &rf)
 
     // reset flags
     is_estimate_available = false;
+    is_kf_initialized = false;
     status = Status::Idle;
 
     // start rpc server
     rpc_port.open("/vtl-gtruth-tracker/rpc");
     attach(rpc_port);
+
+    //
+    last_time = yarp::os::Time::now();
 
     return true;
 }
@@ -331,13 +335,115 @@ void Tracker::publishEstimate()
 
 void Tracker::getEstimate(yarp::sig::Vector &estimate)
 {
-    estimate.resize(6);
+    estimate.resize(6, 0.0);
 
     // position
     estimate.setSubvector(0, est_pose.getCol(3).subVector(0, 2));
 
     // attitude
     estimate.setSubvector(3, yarp::math::dcm2rpy(est_pose.submatrix(0, 2, 0, 2)));
+}
+
+void Tracker::initializeKF()
+{
+    // suppose the object is stationary
+
+    // get estimate
+    yarp::sig::Vector last_pose;
+    getEstimate(last_pose);
+
+    // initial state
+    yarp::sig::Vector x0(8);
+    x0.setSubvector(0, last_pose.subVector(0, 2));
+    // the yaw is in the last position
+    x0[3] = last_pose[5];
+    x0[4] = x0[5] = x0[6] = x0[7] = 0.0;
+
+    // initial covariance of estimate
+    yarp::sig::Matrix P0(8, 8);
+    P0.zero();
+    // position
+    P0(0, 0) = P0(1, 1) = P0(2, 2) = pow(0.01, 2);
+    // yaw
+    P0(3, 3) = pow(5.0 / 180 * M_PI, 2);
+    // velocity
+    P0(4, 4) = P0(5, 5) = P0(6, 6) = pow(0.005, 2);
+    // yaw rate
+    P0(7, 7) = pow(0.5 / 180 * M_PI, 2);
+
+    // continous time process noise
+    // this is 4x4 since the noise drive the acceleration
+    yarp::sig::Matrix Q_cont(4,4);
+    Q_cont.zero();
+    Q_cont(0, 0) = Q_cont(1, 1) = pow(0.005, 2) / period;
+    Q_cont(2, 2) = pow(0.0001, 2) / period;
+    Q_cont(3, 3) = pow(0.5 / 180 * M_PI, 2) / period;
+
+    // continouse time measurement noise
+    yarp::sig::Matrix R_cont(4, 4);
+    R_cont.zero();
+    R_cont(0, 0) = R_cont(1, 1) = pow(0.01, 2);
+    R_cont(2, 2) = pow(0.01, 2);
+    R_cont(3, 3) = pow(5.0 / 180 * M_PI, 2);
+
+    // initialize the KF
+    kf.setT(period);
+    kf.setStateSize(8);
+    yarp::sig::VectorOf<int> euler_indexes;
+    euler_indexes.push_back(3);
+    kf.setEulerAngles(euler_indexes);
+    kf.setQ(Q_cont);
+    kf.setR(R_cont);
+    kf.init();
+    kf.setInitialConditions(x0, P0);
+    is_kf_initialized = true;
+}
+
+yarp::sig::Matrix Tracker::eulerZYX2dcm(const yarp::sig::Vector &euler)
+{
+    yarp::sig::Matrix dcm(3, 3);
+
+    double phi = euler[0];
+    double theta = euler[1];
+    double psi = euler[2];
+    dcm(0, 0) = cos(phi) * cos(theta);
+    dcm(0, 1) = cos(phi) * sin(theta) * sin(psi)-sin(phi) * cos(psi);
+    dcm(0, 2) = cos(phi) * sin(theta) * cos(psi)+sin(phi) * sin(psi);
+    dcm(1, 0) = sin(phi) * cos(theta);
+    dcm(1, 1) = sin(phi) * sin(theta) * sin(psi)+cos(phi) * cos(psi);
+    dcm(1, 2) = sin(phi) * sin(theta) * cos(psi)-cos(phi) * sin(psi);
+    dcm(2, 0) = -sin(theta);
+    dcm(2, 1) = cos(theta) * sin(psi);
+    dcm(2, 2) = cos(theta) * cos(psi);
+
+    return dcm;
+}
+
+void Tracker::filterKF()
+{
+    yarp::sig::Vector kf_est;
+    yarp::sig::Vector last_pose;
+    getEstimate(last_pose);
+    yarp::sig::Vector meas(4);
+    meas.setSubvector(0, last_pose.subVector(0, 2));
+    meas[3] = last_pose[5];
+    kf_est = kf.step(meas);
+
+    // update ground truth position
+    est_pose(0, 3) = kf_est[0];
+    est_pose(1, 3) = kf_est[1];
+    est_pose(2, 3) = kf_est[2];
+
+    // update ground truth attitude
+    yarp::sig::Vector euler(3, 0.0);
+    // kf state is x y z yaw ...
+    euler[0] = kf_est[3];
+    // last pose is x y z roll pitch yaw
+    euler[1] = last_pose[4];
+    euler[2] = last_pose[3];
+    est_pose.setSubmatrix(eulerZYX2dcm(euler), 0, 0);
+
+    yInfo() << kf_est.toString();
 }
 
 void Tracker::fixateWithEyes()
@@ -383,6 +489,9 @@ void Tracker::fixateWithEyesAndHold()
 
 bool Tracker::updateModule()
 {
+    // double now = yarp::os::Time::now();
+    // yInfo() << now - last_time;
+    // last_time = now;
     /*
      * Ground truth estimation
      */
@@ -457,10 +566,23 @@ bool Tracker::updateModule()
 
         }
 
-        // publish the last available estimate
-        publishEstimate();
-
     }
+
+    /*
+     * Kalman filtering
+     */
+
+    if ((!is_kf_initialized) && is_estimate_available)
+    {
+        initializeKF();
+    }
+    else if (is_kf_initialized)
+    {
+        filterKF();
+    }
+
+    // publish the last available estimate
+    publishEstimate();
 
     /*
      * Tracking with eyes
