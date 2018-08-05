@@ -78,7 +78,7 @@ private:
     /* yarp::sig::Vector est_att; */
     bool is_estimate_available;
 
-    // estimate from filter
+    // estimate from external filter
     yarp::sig::Matrix filter_pose;
     bool is_filter_est_available;
 
@@ -116,7 +116,7 @@ private:
                           const yarp::sig::Vector &camera_att,
                           yarp::sig::Matrix &est_pose);
     bool retrieveGroundTruthSim(yarp::sig::Matrix &est_pose);
-    bool retrieveFilterEstimate(yarp::sig::Matrix &est_pose);
+    bool retrieveExternalFilterEstimate(yarp::sig::Matrix &est_pose);
     void publishEstimate();
     void getEstimate(yarp::sig::Vector &estimate);
     void fixateWithEyes();

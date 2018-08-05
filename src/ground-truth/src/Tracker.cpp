@@ -312,7 +312,7 @@ bool Tracker::retrieveGroundTruthSim(yarp::sig::Matrix &pose)
     return true;
 }
 
-bool Tracker::retrieveFilterEstimate(yarp::sig::Matrix &pose)
+bool Tracker::retrieveExternalFilterEstimate(yarp::sig::Matrix &pose)
 {
     if (!tf_client->getTransform(filter_tf_target, filter_tf_source, pose))
         return false;
@@ -396,7 +396,7 @@ bool Tracker::updateModule()
     else
     {
         // retrieve estimate from the filter
-        bool ok = retrieveFilterEstimate(filter_pose);
+        bool ok = retrieveExternalFilterEstimate(filter_pose);
 
         if (ok)
             is_filter_est_available = true;
