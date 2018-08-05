@@ -17,6 +17,8 @@
 #include <KalmanFilter.h>
 #include <cmath>
 
+iCub::ctrl::Kalman::Kalman() {};
+
 double KalmanFilter::wrapAngle(const double& angle)
 {
     double wrapped = angle;
@@ -94,6 +96,13 @@ void KalmanFilter::setQ(const yarp::sig::Matrix &Q)
 void KalmanFilter::setR(const yarp::sig::Matrix &R)
 {
     R_cont = R;
+}
+
+void KalmanFilter::setInitialConditions(const yarp::sig::Vector &x0,
+                                        const yarp::sig::Matrix &P0)
+{
+    x = x0;
+    P = P0;
 }
 
 void KalmanFilter::init()

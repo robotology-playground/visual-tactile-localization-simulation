@@ -39,6 +39,8 @@ public:
     void setEulerAngles(const yarp::sig::VectorOf<int> &indexes);
     void setQ(const yarp::sig::Matrix &Q);
     void setR(const yarp::sig::Matrix &R);
+    void setInitialConditions(const yarp::sig::Vector &x0,
+                              const yarp::sig::Matrix &P0);
     void init();
     yarp::sig::Vector step(const yarp::sig::Vector &meas);
 };
