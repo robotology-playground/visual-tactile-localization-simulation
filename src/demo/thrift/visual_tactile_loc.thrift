@@ -2,6 +2,7 @@ service VIS_TAC_IDL
 {
     string init();
     string start_visual_localization();
+    string visuo_tactile_matching();
     string stop_localization();
     string reset_filter();
     string set_min_allowed_z(1:double minZ);
