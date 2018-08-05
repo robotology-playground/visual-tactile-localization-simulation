@@ -54,6 +54,10 @@ bool Tracker::configure(yarp::os::ResourceFinder &rf)
     if (!rf.find("publishImages").isNull())
         publish_images = rf.find("publishImages").asBool();
 
+    use_kf = false;
+    if (!rf.find("useKF").isNull())
+        use_kf = rf.find("useKF").asBool();
+
     // port prefix
     std::string port_prefix = "/gtruth_tracker/";
     port_prefix += eye_name + "_eye";
@@ -572,13 +576,16 @@ bool Tracker::updateModule()
      * Kalman filtering
      */
 
-    if ((!is_kf_initialized) && is_estimate_available)
+    if (use_kf)
     {
-        initializeKF();
-    }
-    else if (is_kf_initialized)
-    {
-        filterKF();
+        if ((!is_kf_initialized) && is_estimate_available)
+        {
+            initializeKF();
+        }
+        else if (is_kf_initialized)
+        {
+            filterKF();
+        }
     }
 
     // publish the last available estimate

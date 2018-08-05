@@ -86,6 +86,7 @@ private:
     /* yarp::sig::Vector est_att; */
     bool is_estimate_available;
     bool is_kf_initialized;
+    bool use_kf;
 
     // estimate from external filter
     yarp::sig::Matrix filter_pose;
