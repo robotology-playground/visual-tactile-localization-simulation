@@ -2595,7 +2595,7 @@ public:
             if (use_tracker)
             {
                 // enable tracking with eyes
-                // ok = ok && sendCommandToTracker("eyes-track");
+                ok = ok && sendCommandToTracker("eyes-track");
             }
 
             if (!ok)
@@ -2679,6 +2679,16 @@ public:
                 // switch fingers to position control
                 switchFingersToPositionControl(seq_act_arm);
 
+                // stop eyes tracking
+                if (use_tracker)
+                {
+                    // // disable tracking with eyes
+                    sendCommandToTracker("eyes-stop");
+
+                    // fixate with eyes
+                    sendCommandToTracker("eyes-fixate-and-hold");
+                }
+
                 mutex.lock();
 
                 // go to Idle
@@ -2713,8 +2723,8 @@ public:
                     // // disable tracking with eyes
                     sendCommandToTracker("eyes-stop");
 
-                    // // fixate with eyes
-                    // sendCommandToTracker("eyes-fixate-and-hold");
+                    // fixate with eyes
+                    sendCommandToTracker("eyes-fixate-and-hold");
                 }
 
                 // restore arm controller context
