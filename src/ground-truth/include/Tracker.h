@@ -58,9 +58,6 @@ private:
     // period
     double period;
 
-    // last time
-    double last_time;
-
     // frame transform client
     yarp::dev::PolyDriver drv_transform_client;
     yarp::dev::IFrameTransform* tf_client;

@@ -239,9 +239,6 @@ bool Tracker::configure(yarp::os::ResourceFinder &rf)
     rpc_port.open("/vtl-gtruth-tracker/rpc");
     attach(rpc_port);
 
-    //
-    last_time = yarp::os::Time::now();
-
     return true;
 }
 
@@ -494,9 +491,6 @@ void Tracker::fixateWithEyesAndHold()
 
 bool Tracker::updateModule()
 {
-    // double now = yarp::os::Time::now();
-    // yInfo() << now - last_time;
-    // last_time = now;
     /*
      * Ground truth estimation
      */
