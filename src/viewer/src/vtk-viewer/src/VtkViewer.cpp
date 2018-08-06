@@ -283,6 +283,11 @@ class Viewer : public RFModule, RateThread
     // flags relative to point cloud visualization
     bool show_point_cloud;
 
+    // flags relative to mesh visualization
+    bool show_estimate;
+    bool show_aux_estimate;
+    bool show_ground_truth;
+
     vtkSmartPointer<vtkRenderer> vtk_renderer;
     vtkSmartPointer<vtkRenderWindow> vtk_renderWindow;
     vtkSmartPointer<vtkRenderWindowInteractor> vtk_renderWindowInteractor;
@@ -397,6 +402,18 @@ class Viewer : public RFModule, RateThread
             // vtk hands
             vtk_hand = std::unique_ptr<vtkHand>(new vtkHand(show_hand_axes));
         }
+
+        // get the flags relative to mesh visualization
+        show_estimate = false;
+        show_aux_estimate = false;
+        show_ground_truth = false;
+
+        if (!rf.find("showEstimate").isNull())
+            show_estimate = rf.find("showEstimate").asBool();
+        if (!rf.find("showAuxEstimate").isNull())
+            show_aux_estimate = rf.find("showAuxEstimate").asBool();
+        if (!rf.find("showGroundTruth").isNull())
+            show_ground_truth = rf.find("showGroundTruth").asBool();
 
         // get the size of the object
         if (rf.find("objName").isNull())
