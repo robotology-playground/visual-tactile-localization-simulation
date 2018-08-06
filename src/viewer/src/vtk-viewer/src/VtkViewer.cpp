@@ -262,6 +262,8 @@ class Viewer : public RFModule, RateThread
     unique_ptr<Points> vtk_all_points;
     // cube for the estimate of the pose
     unique_ptr<Cube> vtk_cube_est;
+    // cube for the auxiliary estimate of the pose
+    unique_ptr<Cube> vtk_cube_aux_est;
     // cube for the ground truth
     unique_ptr<Cube> vtk_cube_gt;
 
@@ -464,12 +466,15 @@ class Viewer : public RFModule, RateThread
             gt_target_name = rf.find("groundTruthTargetFrame").asString();
 
         vtk_cube_est=unique_ptr<Cube>(new Cube());
+        vtk_cube_aux_est=unique_ptr<Cube>(new Cube());
         vtk_cube_gt=unique_ptr<Cube>(new Cube());
 
         vtk_cube_est->set_sizes(obj_size[0], obj_size[1], obj_size[2]);
+        vtk_cube_aux_est->set_sizes(obj_size[0], obj_size[1], obj_size[2]);
         vtk_cube_gt->set_sizes(obj_size[0], obj_size[1], obj_size[2]);
 
         vtk_cube_est->set_color(1.0, 0.0, 0.0);
+        vtk_cube_aux_est->set_color(0.0, 0.0, 1.0);
         vtk_cube_gt->set_color(0.0, 1.0, 0.0);
 
         vtk_renderer=vtkSmartPointer<vtkRenderer>::New();
@@ -479,8 +484,12 @@ class Viewer : public RFModule, RateThread
         vtk_renderWindowInteractor=vtkSmartPointer<vtkRenderWindowInteractor>::New();
         vtk_renderWindowInteractor->SetRenderWindow(vtk_renderWindow);
 
-        vtk_renderer->AddActor(vtk_cube_est->get_actor());
-        vtk_renderer->AddActor(vtk_cube_gt->get_actor());
+        if (show_estimate)
+            vtk_renderer->AddActor(vtk_cube_est->get_actor());
+        if (show_aux_estimate)
+            vtk_renderer->AddActor(vtk_cube_aux_est->get_actor());
+        if (show_ground_truth)
+            vtk_renderer->AddActor(vtk_cube_gt->get_actor());
         if (show_point_cloud)
         {
             vtk_renderer->AddActor(vtk_all_points->get_actor());
