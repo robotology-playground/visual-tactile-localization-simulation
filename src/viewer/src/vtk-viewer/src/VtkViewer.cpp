@@ -254,6 +254,8 @@ class Viewer : public RFModule, RateThread
     PolyDriver drv_transform_client;
     std::string est_source_name;
     std::string est_target_name;
+    std::string aux_est_source_name;
+    std::string aux_est_target_name;
     std::string gt_source_name;
     std::string gt_target_name;
 
@@ -425,14 +427,20 @@ class Viewer : public RFModule, RateThread
         // get names of source and target frames
         // to be used with the FrameTransform client
         est_source_name = "/iCub/frame";
+        aux_est_source_name = "/iCub/frame";
         gt_source_name = "/iCub/frame";
         est_target_name = "/estimate/frame";
+        aux_est_target_name = "/estimate/aux/frame";
         gt_target_name = "/ground_truth/frame";
 
         if (!rf.find("estimateSourceFrame").isNull())
             est_source_name = rf.find("estimateSourceFrame").asString();
         if (!rf.find("estimateTargetFrame").isNull())
             est_target_name = rf.find("estimateTargetFrame").asString();
+        if (!rf.find("auxEstimateSourceFrame").isNull())
+            aux_est_source_name = rf.find("auxEstimateSourceFrame").asString();
+        if (!rf.find("auxEstimateTargetFrame").isNull())
+            aux_est_target_name = rf.find("auxEstimateTargetFrame").asString();
         if (!rf.find("groundTruthSourceFrame").isNull())
             gt_source_name = rf.find("groundTruthSourceFrame").asString();
         if (!rf.find("groundTruthTargetFrame").isNull())
