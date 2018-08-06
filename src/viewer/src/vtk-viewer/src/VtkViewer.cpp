@@ -607,20 +607,37 @@ class Viewer : public RFModule, RateThread
         LockGuard lg(mutex);
 
         yarp::sig::Matrix estimate;
+        yarp::sig::Matrix aux_estimate;
         yarp::sig::Matrix ground_truth;
 
         // try to get the current estimate of the filter
-        if (tf_client->getTransform(est_target_name, est_source_name, estimate))
+        if (show_estimate)
         {
-            vtk_cube_est->set_pose(estimate.getCol(3).subVector(0, 2),
-                                   estimate.submatrix(0, 2, 0, 2));
+            if (tf_client->getTransform(est_target_name, est_source_name, estimate))
+            {
+                vtk_cube_est->set_pose(estimate.getCol(3).subVector(0, 2),
+                                       estimate.submatrix(0, 2, 0, 2));
+            }
+        }
+
+        // try to get the current auxiliary estimate of the filter
+        if (show_aux_estimate)
+        {
+            if (tf_client->getTransform(aux_est_target_name, aux_est_source_name, aux_estimate))
+            {
+                vtk_cube_aux_est->set_pose(aux_estimate.getCol(3).subVector(0, 2),
+                                           aux_estimate.submatrix(0, 2, 0, 2));
+            }
         }
 
         // try to get the current ground truth
-        if (tf_client->getTransform(gt_target_name, gt_source_name, ground_truth))
+        if (show_ground_truth)
         {
-            vtk_cube_gt->set_pose(ground_truth.getCol(3).subVector(0, 2),
-                                  ground_truth.submatrix(0, 2, 0, 2));
+            if (tf_client->getTransform(gt_target_name, gt_source_name, ground_truth))
+            {
+                vtk_cube_gt->set_pose(ground_truth.getCol(3).subVector(0, 2),
+                                      ground_truth.submatrix(0, 2, 0, 2));
+            }
         }
     }
 
