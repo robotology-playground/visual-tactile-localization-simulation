@@ -231,6 +231,7 @@ bool Tracker::configure(yarp::os::ResourceFinder &rf)
 
     // reset flags
     is_estimate_available = false;
+    is_first_estimate = true;
     is_kf_initialized = false;
     status = Status::Idle;
 
@@ -379,16 +380,18 @@ void Tracker::initializeKF()
     // this is 4x4 since the noise drive the acceleration
     yarp::sig::Matrix Q_cont(4,4);
     Q_cont.zero();
-    Q_cont(0, 0) = Q_cont(1, 1) = pow(0.005, 2) / period;
+    Q_cont(0, 0) = pow(0.005, 2) / period;
+    Q_cont(1, 1) = pow(0.005, 2) / period;
     Q_cont(2, 2) = pow(0.0001, 2) / period;
-    Q_cont(3, 3) = pow(0.5 / 180 * M_PI, 2) / period;
+    Q_cont(3, 3) = pow(1.0 / 180 * M_PI, 2) / period;
 
     // continouse time measurement noise
     yarp::sig::Matrix R_cont(4, 4);
     R_cont.zero();
-    R_cont(0, 0) = R_cont(1, 1) = pow(0.01, 2);
+    R_cont(0, 0) = pow(0.01, 2);
+    R_cont(1, 1) = pow(0.01, 2);
     R_cont(2, 2) = pow(0.01, 2);
-    R_cont(3, 3) = pow(5.0 / 180 * M_PI, 2);
+    R_cont(3, 3) = pow(1.0 / 180 * M_PI, 2);
 
     // initialize the KF
     kf.setT(period);
@@ -436,18 +439,16 @@ void Tracker::filterKF()
     // update ground truth position
     est_pose(0, 3) = kf_est[0];
     est_pose(1, 3) = kf_est[1];
-    est_pose(2, 3) = kf_est[2];
+    est_pose(2, 3) = initial_pose[2];
 
     // update ground truth attitude
     yarp::sig::Vector euler(3, 0.0);
     // kf state is x y z yaw ...
     euler[0] = kf_est[3];
     // last pose is x y z roll pitch yaw
-    euler[1] = last_pose[4];
-    euler[2] = last_pose[3];
+    euler[1] = initial_pose[4];
+    euler[2] = initial_pose[5];
     est_pose.setSubmatrix(eulerZYX2dcm(euler), 0, 0);
-
-    yInfo() << kf_est.toString();
 }
 
 void Tracker::fixateWithEyes()
@@ -499,6 +500,7 @@ bool Tracker::updateModule()
     /*
      * Ground truth estimation
      */
+    bool ok_aruco;
     if (simulation_mode)
     {
         bool ok = retrieveGroundTruthSim(est_pose);
@@ -548,11 +550,11 @@ bool Tracker::updateModule()
             // aruco board pose estimation
             cv::Mat pos_wrt_cam;
             cv::Mat att_wrt_cam;
-            bool ok;
-            ok = uco_estimator->estimateBoardPose(frame_in, frame_out,
+
+            ok_aruco = uco_estimator->estimateBoardPose(frame_in, frame_out,
                                                   pos_wrt_cam, att_wrt_cam,
                                                   publish_images);
-            if (ok)
+            if (ok_aruco)
             {
                 is_estimate_available = true;
 
@@ -572,6 +574,22 @@ bool Tracker::updateModule()
 
     }
 
+    // store initial pose
+    if (is_estimate_available && is_first_estimate)
+    {
+        initial_pose.resize(6);
+        initial_pose.setSubvector(0, est_pose.getCol(3).subVector(0, 2));
+
+        // euler angles
+        yarp::sig::Vector euler = yarp::math::dcm2rpy(est_pose.submatrix(0, 2, 0, 2));
+        initial_pose[3] = euler[2];
+        initial_pose[4] = euler[1];
+        initial_pose[5] = euler[0];
+
+        // reset flag
+        is_first_estimate = false;
+    }
+
     /*
      * Kalman filtering
      */
@@ -582,7 +600,7 @@ bool Tracker::updateModule()
         {
             initializeKF();
         }
-        else if (is_kf_initialized)
+        else if (is_kf_initialized && ok_aruco)
         {
             filterKF();
         }

@@ -82,8 +82,10 @@ private:
 
     // estimate
     yarp::sig::Matrix est_pose;
+    yarp::sig::Vector initial_pose;
     /* yarp::sig::Vector est_pos; */
     /* yarp::sig::Vector est_att; */
+    bool is_first_estimate;
     bool is_estimate_available;
     bool is_kf_initialized;
     bool use_kf;
