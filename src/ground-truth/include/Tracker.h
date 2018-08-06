@@ -78,13 +78,10 @@ private:
     double obj_height;
 
     // estimate
-    yarp::sig::Matrix est_pose;
+    yarp::sig::Vector est_pose;
+    yarp::sig::Matrix est_pose_homog;
     yarp::sig::Vector initial_pose;
-    /* yarp::sig::Vector est_pos; */
-    /* yarp::sig::Vector est_att; */
-    bool is_first_estimate;
     bool is_estimate_available;
-    bool is_kf_initialized;
     bool use_kf;
 
     // estimate from external filter
@@ -108,28 +105,18 @@ private:
     yarp::os::Mutex mutex;
 
     bool getFrame(yarp::sig::ImageOf<yarp::sig::PixelRgb>* &yarp_image);
-
-    /*
-     * Evaluate the estimate of the object w.r.t the root frame given
-     * the estimated pose of the object w.r.t the camera and
-     * the pose of the camera w.r.t the root frame
-     *
-     * @param pos_wrt_cam estimated position of the object w.r.t the camera
-     * @param att_wrt_cam estimated attitude of the object w.r.t the camera 
-     * @param camera_pos position of the camera w.r.t the root frame
-     * @param camera_pos attitude of the camera w.r.t the root frame
-     * @param est_pose estimated pose of the object w.r.t root frame
-     */
+    bool retrieveGroundTruthSim(yarp::sig::Matrix &est_pose);
+    bool retrieveExternalFilterEstimate(yarp::sig::Matrix &est_pose);
     bool evaluateEstimate(const cv::Mat &pos_wrt_cam, const cv::Mat &att_wrt_cam,
                           const yarp::sig::Vector &camera_pos,
                           const yarp::sig::Vector &camera_att,
-                          yarp::sig::Matrix &est_pose);
-    bool retrieveGroundTruthSim(yarp::sig::Matrix &est_pose);
-    bool retrieveExternalFilterEstimate(yarp::sig::Matrix &est_pose);
+                          yarp::sig::Vector &est_pose);
+    void transformToCenter();
     void publishEstimate();
-    void getEstimate(yarp::sig::Vector &estimate);
-    void initializeKF();
+    yarp::sig::Vector homogToVector(const yarp::sig::Matrix &homog);
+    yarp::sig::Matrix vectorToHomog(const yarp::sig::Vector &vector);
     yarp::sig::Matrix eulerZYX2dcm(const yarp::sig::Vector &euler);
+    void initializeKF();
     void filterKF();
     void fixateWithEyes();
     void fixateWithEyesAndHold();

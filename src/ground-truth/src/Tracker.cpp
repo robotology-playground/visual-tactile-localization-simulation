@@ -18,7 +18,268 @@
 #include <ArucoBoardEstimator.h>
 #include <CharucoBoardEstimator.h>
 
-using namespace yarp::math;
+bool Tracker::getFrame(yarp::sig::ImageOf<yarp::sig::PixelRgb>* &yarp_image)
+{
+    // try to read image from port
+    yarp_image = image_input_port.read(false);
+
+    if (yarp_image == NULL)
+        return false;
+
+    return true;
+}
+
+bool Tracker::retrieveGroundTruthSim(yarp::sig::Matrix &pose)
+{
+    // Get the transform from the robot root frame
+    // to the object frame provided by Gazebo
+    if (!tf_client->getTransform(sim_tf_target, sim_tf_source, pose))
+        return false;
+
+    return true;
+}
+
+bool Tracker::retrieveExternalFilterEstimate(yarp::sig::Matrix &pose)
+{
+    if (!tf_client->getTransform(filter_tf_target, filter_tf_source, pose))
+        return false;
+
+    return true;
+}
+
+bool Tracker::evaluateEstimate(const cv::Mat &pos_wrt_cam, const cv::Mat &att_wrt_cam,
+                               const yarp::sig::Vector &camera_pos,
+                               const yarp::sig::Vector &camera_att,
+                               yarp::sig::Vector &est_pose)
+{
+    // transformation matrix
+    // from robot root to camera
+    yarp::sig::Matrix root_to_cam(4, 4);
+    root_to_cam.zero();
+    root_to_cam(3, 3) = 1.0;
+
+    root_to_cam(0, 3) = camera_pos[0];
+    root_to_cam(1, 3) = camera_pos[1];
+    root_to_cam(2, 3) = camera_pos[2];
+
+    root_to_cam.setSubmatrix(yarp::math::axis2dcm(camera_att).submatrix(0, 2, 0, 2),
+                             0, 0);
+
+    // transformation matrix
+    // from camera to corner of the object
+    yarp::sig::Matrix cam_to_obj(4,4);
+    cam_to_obj.zero();
+    cam_to_obj(3, 3) = 1.0;
+
+    cam_to_obj(0, 3) = pos_wrt_cam.at<double>(0, 0);
+    cam_to_obj(1, 3) = pos_wrt_cam.at<double>(1, 0);
+    cam_to_obj(2, 3) = pos_wrt_cam.at<double>(2, 0);
+
+    cv::Mat att_wrt_cam_matrix;
+    cv::Rodrigues(att_wrt_cam, att_wrt_cam_matrix);
+    yarp::sig::Matrix att_wrt_cam_yarp(3, 3);
+    for (size_t i=0; i<3; i++)
+        for (size_t j=0; j<3; j++)
+            att_wrt_cam_yarp(i, j) = att_wrt_cam_matrix.at<double>(i, j);
+    cam_to_obj.setSubmatrix(att_wrt_cam_yarp, 0, 0);
+
+    // compose transformations
+    yarp::sig::Matrix homog = root_to_cam * cam_to_obj;
+
+    // convert to a vector
+    est_pose = homogToVector(homog);
+
+    if (is_estimate_available)
+    {
+        // override z using the initial pose
+        est_pose[2] = initial_pose[2];
+
+        // override pitch and roll using the initial pose
+        est_pose.setSubvector(4, initial_pose.subVector(4, 5));
+    }
+}
+
+void Tracker::transformToCenter()
+{
+    // pick the center of the object
+    yarp::sig::Vector corner_to_center(4);
+    corner_to_center[0] = obj_width / 2.0;
+    corner_to_center[1] = obj_depth / 2.0;
+    corner_to_center[2] = -obj_height / 2.0;
+    corner_to_center[3] = 1.0;
+
+    yarp::sig::Vector center = est_pose_homog * corner_to_center;
+    est_pose_homog.setCol(3, center);
+}
+
+void Tracker::publishEstimate()
+{
+    if (!is_estimate_available)
+        return;
+
+    // set a new transform
+    tf_client->setTransform(tf_target, tf_source, est_pose_homog);
+}
+
+yarp::sig::Vector Tracker::homogToVector(const yarp::sig::Matrix &homog)
+{
+    yarp::sig::Vector vector(6, 0.0);
+
+    // position
+    vector.setSubvector(0, homog.getCol(3).subVector(0, 2));
+
+    // attitude
+    yarp::sig::Vector euler = yarp::math::dcm2rpy(homog.submatrix(0, 2, 0, 2));
+    vector[3] = euler[2];
+    vector[4] = euler[1];
+    vector[5] = euler[0];
+
+    return vector;
+}
+
+yarp::sig::Matrix Tracker::vectorToHomog(const yarp::sig::Vector &vector)
+{
+    yarp::sig::Matrix homog(4, 4);
+    homog.zero();
+    homog(3, 3) = 1.0;
+
+    // position
+    homog(0, 3) = vector[0];
+    homog(1, 3) = vector[1];
+    homog(2, 3) = vector[2];
+
+    // attitude
+    homog.setSubmatrix(eulerZYX2dcm(vector.subVector(3, 5)), 0, 0);
+
+    return homog;
+}
+
+yarp::sig::Matrix Tracker::eulerZYX2dcm(const yarp::sig::Vector &euler)
+{
+    yarp::sig::Matrix dcm(3, 3);
+
+    double phi = euler[0];
+    double theta = euler[1];
+    double psi = euler[2];
+    dcm(0, 0) = cos(phi) * cos(theta);
+    dcm(0, 1) = cos(phi) * sin(theta) * sin(psi)-sin(phi) * cos(psi);
+    dcm(0, 2) = cos(phi) * sin(theta) * cos(psi)+sin(phi) * sin(psi);
+    dcm(1, 0) = sin(phi) * cos(theta);
+    dcm(1, 1) = sin(phi) * sin(theta) * sin(psi)+cos(phi) * cos(psi);
+    dcm(1, 2) = sin(phi) * sin(theta) * cos(psi)-cos(phi) * sin(psi);
+    dcm(2, 0) = -sin(theta);
+    dcm(2, 1) = cos(theta) * sin(psi);
+    dcm(2, 2) = cos(theta) * cos(psi);
+
+    return dcm;
+}
+
+void Tracker::initializeKF()
+{
+    // initial state
+    yarp::sig::Vector x0(8);
+    x0.setSubvector(0, initial_pose.subVector(0, 2));
+    x0[3] = initial_pose[3];
+    x0[4] = x0[5] = x0[6] = x0[7] = 0.0;
+
+    // initial covariance of estimate
+    yarp::sig::Matrix P0(8, 8);
+    P0.zero();
+    // position
+    P0(0, 0) = P0(1, 1) = P0(2, 2) = pow(0.01, 2);
+    // yaw
+    P0(3, 3) = pow(5.0 / 180 * M_PI, 2);
+    // velocity
+    P0(4, 4) = P0(5, 5) = P0(6, 6) = pow(0.005, 2);
+    // yaw rate
+    P0(7, 7) = pow(0.5 / 180 * M_PI, 2);
+
+    // continous time process noise
+    // this is 4x4 since the noise drive the acceleration
+    yarp::sig::Matrix Q_cont(4,4);
+    Q_cont.zero();
+    Q_cont(0, 0) = pow(0.005, 2) / period;
+    Q_cont(1, 1) = pow(0.005, 2) / period;
+    Q_cont(2, 2) = pow(0.0001, 2) / period;
+    Q_cont(3, 3) = pow(1.0 / 180 * M_PI, 2) / period;
+
+    // continouse time measurement noise
+    yarp::sig::Matrix R_cont(4, 4);
+    R_cont.zero();
+    R_cont(0, 0) = pow(0.01, 2);
+    R_cont(1, 1) = pow(0.01, 2);
+    R_cont(2, 2) = pow(0.01, 2);
+    R_cont(3, 3) = pow(1.0 / 180 * M_PI, 2);
+
+    // initialize the KF
+    // orders here DO matter
+    kf.setT(period);
+    kf.setStateSize(8);
+    yarp::sig::VectorOf<int> euler_indexes;
+    euler_indexes.push_back(3);
+    kf.setEulerAngles(euler_indexes);
+    kf.setQ(Q_cont);
+    kf.setR(R_cont);
+    kf.init();
+    kf.setInitialConditions(x0, P0);
+}
+
+void Tracker::filterKF()
+{
+    yarp::sig::Vector kf_est;
+    yarp::sig::Vector meas(4);
+    meas.setSubvector(0, est_pose.subVector(0, 2));
+    meas[3] = est_pose[3];
+    kf_est = kf.step(meas);
+
+    // update ground truth position (x, y only)
+    est_pose[0] = kf_est[0];
+    est_pose[1] = kf_est[1];
+
+    // update ground truth (yaw only)
+    est_pose[3] = kf_est[3];
+}
+
+void Tracker::fixateWithEyes()
+{
+    // this function can be called once
+    // or in streaming mode
+    yarp::sig::Matrix *estimate;
+    bool do_fixate = false;
+
+    if ((tracking_source == "ground_truth") &&
+        is_estimate_available)
+    {
+        estimate = &est_pose_homog;
+        do_fixate = true;
+    }
+    else if ((tracking_source == "filter") &&
+             is_filter_est_available)
+    {
+        estimate = &filter_pose;
+        do_fixate = true;
+    }
+
+    if (do_fixate)
+    {
+        yarp::sig::Vector fix_point;
+        fix_point = estimate->getCol(3).subVector(0, 2);
+
+        gaze_ctrl.setReference(fix_point);
+    }
+}
+
+void Tracker::fixateWithEyesAndHold()
+{
+    // this function should be called once
+
+    // set the fixation point
+    // using the current estimate
+    fixateWithEyes();
+
+    // enable tracking mode
+    gaze_ctrl.enableTrackingMode();
+}
 
 bool Tracker::configure(yarp::os::ResourceFinder &rf)
 {
@@ -223,16 +484,11 @@ bool Tracker::configure(yarp::os::ResourceFinder &rf)
         uco_estimator->setCameraIntrinsics(fx, fy, cx, cy);
     }
 
-    // resize estimate matrix
-    // est_pos.resize(3, 0.0);
-    // est_att.resize(4, 0.0);
-    yarp::sig::Matrix est_pose(4, 4);
-    est_pose.zero();
+    // resize estimate
+    est_pose.resize(6, 0);
 
     // reset flags
     is_estimate_available = false;
-    is_first_estimate = true;
-    is_kf_initialized = false;
     status = Status::Idle;
 
     // start rpc server
@@ -247,257 +503,14 @@ double Tracker::getPeriod()
     return period;
 }
 
-bool Tracker::getFrame(yarp::sig::ImageOf<yarp::sig::PixelRgb>* &yarp_image)
-{
-    // try to read image from port
-    yarp_image = image_input_port.read(false);
-
-    if (yarp_image == NULL)
-        return false;
-
-    return true;
-}
-
-bool Tracker::evaluateEstimate(const cv::Mat &pos_wrt_cam, const cv::Mat &att_wrt_cam,
-                               const yarp::sig::Vector &camera_pos,
-                               const yarp::sig::Vector &camera_att,
-                               yarp::sig::Matrix &est_pose)
-{
-    // transformation matrix
-    // from robot root to camera
-    yarp::sig::Matrix root_to_cam(4, 4);
-    root_to_cam.zero();
-    root_to_cam(3, 3) = 1.0;
-
-    root_to_cam(0, 3) = camera_pos[0];
-    root_to_cam(1, 3) = camera_pos[1];
-    root_to_cam(2, 3) = camera_pos[2];
-
-    root_to_cam.setSubmatrix(yarp::math::axis2dcm(camera_att).submatrix(0, 2, 0, 2),
-                             0, 0);
-
-    // transformation matrix
-    // from camera to corner of the object
-    yarp::sig::Matrix cam_to_obj(4,4);
-    cam_to_obj.zero();
-    cam_to_obj(3, 3) = 1.0;
-
-    cam_to_obj(0, 3) = pos_wrt_cam.at<double>(0, 0);
-    cam_to_obj(1, 3) = pos_wrt_cam.at<double>(1, 0);
-    cam_to_obj(2, 3) = pos_wrt_cam.at<double>(2, 0);
-
-    cv::Mat att_wrt_cam_matrix;
-    cv::Rodrigues(att_wrt_cam, att_wrt_cam_matrix);
-    yarp::sig::Matrix att_wrt_cam_yarp(3, 3);
-    for (size_t i=0; i<3; i++)
-        for (size_t j=0; j<3; j++)
-            att_wrt_cam_yarp(i, j) = att_wrt_cam_matrix.at<double>(i, j);
-    cam_to_obj.setSubmatrix(att_wrt_cam_yarp, 0, 0);
-
-    // compose transformations
-    est_pose = root_to_cam * cam_to_obj;
-
-    // pick the center of the object
-    yarp::sig::Vector corner_to_center(4, 0.0);
-    yarp::sig::Vector est_pos_homog(4, 0.0);
-    corner_to_center[0] = obj_width / 2.0;
-    corner_to_center[1] = obj_depth / 2.0;
-    corner_to_center[2] = -obj_height / 2.0;
-    corner_to_center[3] = 1.0;
-    est_pos_homog = est_pose * corner_to_center;
-    est_pose.setCol(3, est_pos_homog);
-}
-
-bool Tracker::retrieveGroundTruthSim(yarp::sig::Matrix &pose)
-{
-    // Get the transform from the robot root frame
-    // to the object frame provided by Gazebo
-    if (!tf_client->getTransform(sim_tf_target, sim_tf_source, pose))
-        return false;
-
-    return true;
-}
-
-bool Tracker::retrieveExternalFilterEstimate(yarp::sig::Matrix &pose)
-{
-    if (!tf_client->getTransform(filter_tf_target, filter_tf_source, pose))
-        return false;
-
-    return true;
-}
-
-void Tracker::publishEstimate()
-{
-    if (!is_estimate_available)
-        return;
-
-    // set a new transform
-    tf_client->setTransform(tf_target, tf_source, est_pose);
-}
-
-void Tracker::getEstimate(yarp::sig::Vector &estimate)
-{
-    estimate.resize(6, 0.0);
-
-    // position
-    estimate.setSubvector(0, est_pose.getCol(3).subVector(0, 2));
-
-    // attitude
-    estimate.setSubvector(3, yarp::math::dcm2rpy(est_pose.submatrix(0, 2, 0, 2)));
-}
-
-void Tracker::initializeKF()
-{
-    // suppose the object is stationary
-
-    // get estimate
-    yarp::sig::Vector last_pose;
-    getEstimate(last_pose);
-
-    // initial state
-    yarp::sig::Vector x0(8);
-    x0.setSubvector(0, last_pose.subVector(0, 2));
-    // the yaw is in the last position
-    x0[3] = last_pose[5];
-    x0[4] = x0[5] = x0[6] = x0[7] = 0.0;
-
-    // initial covariance of estimate
-    yarp::sig::Matrix P0(8, 8);
-    P0.zero();
-    // position
-    P0(0, 0) = P0(1, 1) = P0(2, 2) = pow(0.01, 2);
-    // yaw
-    P0(3, 3) = pow(5.0 / 180 * M_PI, 2);
-    // velocity
-    P0(4, 4) = P0(5, 5) = P0(6, 6) = pow(0.005, 2);
-    // yaw rate
-    P0(7, 7) = pow(0.5 / 180 * M_PI, 2);
-
-    // continous time process noise
-    // this is 4x4 since the noise drive the acceleration
-    yarp::sig::Matrix Q_cont(4,4);
-    Q_cont.zero();
-    Q_cont(0, 0) = pow(0.005, 2) / period;
-    Q_cont(1, 1) = pow(0.005, 2) / period;
-    Q_cont(2, 2) = pow(0.0001, 2) / period;
-    Q_cont(3, 3) = pow(1.0 / 180 * M_PI, 2) / period;
-
-    // continouse time measurement noise
-    yarp::sig::Matrix R_cont(4, 4);
-    R_cont.zero();
-    R_cont(0, 0) = pow(0.01, 2);
-    R_cont(1, 1) = pow(0.01, 2);
-    R_cont(2, 2) = pow(0.01, 2);
-    R_cont(3, 3) = pow(1.0 / 180 * M_PI, 2);
-
-    // initialize the KF
-    kf.setT(period);
-    kf.setStateSize(8);
-    yarp::sig::VectorOf<int> euler_indexes;
-    euler_indexes.push_back(3);
-    kf.setEulerAngles(euler_indexes);
-    kf.setQ(Q_cont);
-    kf.setR(R_cont);
-    kf.init();
-    kf.setInitialConditions(x0, P0);
-    is_kf_initialized = true;
-}
-
-yarp::sig::Matrix Tracker::eulerZYX2dcm(const yarp::sig::Vector &euler)
-{
-    yarp::sig::Matrix dcm(3, 3);
-
-    double phi = euler[0];
-    double theta = euler[1];
-    double psi = euler[2];
-    dcm(0, 0) = cos(phi) * cos(theta);
-    dcm(0, 1) = cos(phi) * sin(theta) * sin(psi)-sin(phi) * cos(psi);
-    dcm(0, 2) = cos(phi) * sin(theta) * cos(psi)+sin(phi) * sin(psi);
-    dcm(1, 0) = sin(phi) * cos(theta);
-    dcm(1, 1) = sin(phi) * sin(theta) * sin(psi)+cos(phi) * cos(psi);
-    dcm(1, 2) = sin(phi) * sin(theta) * cos(psi)-cos(phi) * sin(psi);
-    dcm(2, 0) = -sin(theta);
-    dcm(2, 1) = cos(theta) * sin(psi);
-    dcm(2, 2) = cos(theta) * cos(psi);
-
-    return dcm;
-}
-
-void Tracker::filterKF()
-{
-    yarp::sig::Vector kf_est;
-    yarp::sig::Vector last_pose;
-    getEstimate(last_pose);
-    yarp::sig::Vector meas(4);
-    meas.setSubvector(0, last_pose.subVector(0, 2));
-    meas[3] = last_pose[5];
-    kf_est = kf.step(meas);
-
-    // update ground truth position
-    est_pose(0, 3) = kf_est[0];
-    est_pose(1, 3) = kf_est[1];
-    est_pose(2, 3) = initial_pose[2];
-
-    // update ground truth attitude
-    yarp::sig::Vector euler(3, 0.0);
-    // kf state is x y z yaw ...
-    euler[0] = kf_est[3];
-    // last pose is x y z roll pitch yaw
-    euler[1] = initial_pose[4];
-    euler[2] = initial_pose[5];
-    est_pose.setSubmatrix(eulerZYX2dcm(euler), 0, 0);
-}
-
-void Tracker::fixateWithEyes()
-{
-    // this function can be called once
-    // or in streaming mode
-    yarp::sig::Matrix *estimate;
-    bool do_fixate = false;
-
-    if ((tracking_source == "ground_truth") &&
-        is_estimate_available)
-    {
-        estimate = &est_pose;
-        do_fixate = true;
-    }
-    else if ((tracking_source == "filter") &&
-             is_filter_est_available)
-    {
-        estimate = &filter_pose;
-        do_fixate = true;
-    }
-
-    if (do_fixate)
-    {
-        yarp::sig::Vector fix_point;
-        fix_point = estimate->getCol(3).subVector(0, 2);
-
-        gaze_ctrl.setReference(fix_point);
-    }
-}
-
-void Tracker::fixateWithEyesAndHold()
-{
-    // this function should be called once
-
-    // set the fixation point
-    // using the current estimate
-    fixateWithEyes();
-
-    // enable tracking mode
-    gaze_ctrl.enableTrackingMode();
-}
-
 bool Tracker::updateModule()
 {
     /*
      * Ground truth estimation
      */
-    bool ok_aruco;
     if (simulation_mode)
     {
-        bool ok = retrieveGroundTruthSim(est_pose);
+        bool ok = retrieveGroundTruthSim(est_pose_homog);
 
         if (ok)
             is_estimate_available = true;
@@ -545,16 +558,35 @@ bool Tracker::updateModule()
             cv::Mat pos_wrt_cam;
             cv::Mat att_wrt_cam;
 
-            ok_aruco = uco_estimator->estimateBoardPose(frame_in, frame_out,
+            ok = uco_estimator->estimateBoardPose(frame_in, frame_out,
                                                   pos_wrt_cam, att_wrt_cam,
                                                   publish_images);
-            if (ok_aruco)
+            if (ok)
             {
-                is_estimate_available = true;
-
                 evaluateEstimate(pos_wrt_cam, att_wrt_cam,
                                  eye_pos, eye_att,
                                  est_pose);
+
+                if (!is_estimate_available)
+                {
+                    // store the initial pose
+                    initial_pose = est_pose;
+
+                    // initialize Kalman filter
+                    if (use_kf)
+                        initializeKF();
+
+                    is_estimate_available = true;
+                }
+                else if (use_kf)
+                    filterKF();
+
+                // convert to homogeneous
+                est_pose_homog = vectorToHomog(est_pose);
+
+                // append transformation from aruco corner
+                // to center of object
+                transformToCenter();
             }
 
             if (publish_images)
@@ -563,40 +595,6 @@ bool Tracker::updateModule()
                 cv::cvtColor(frame_out, frame_out, cv::COLOR_BGR2RGB);
                 image_output_port.write();
             }
-
-        }
-
-    }
-
-    // store initial pose
-    if (is_estimate_available && is_first_estimate)
-    {
-        initial_pose.resize(6);
-        initial_pose.setSubvector(0, est_pose.getCol(3).subVector(0, 2));
-
-        // euler angles
-        yarp::sig::Vector euler = yarp::math::dcm2rpy(est_pose.submatrix(0, 2, 0, 2));
-        initial_pose[3] = euler[2];
-        initial_pose[4] = euler[1];
-        initial_pose[5] = euler[0];
-
-        // reset flag
-        is_first_estimate = false;
-    }
-
-    /*
-     * Kalman filtering
-     */
-
-    if (use_kf)
-    {
-        if ((!is_kf_initialized) && is_estimate_available)
-        {
-            initializeKF();
-        }
-        else if (is_kf_initialized && ok_aruco)
-        {
-            filterKF();
         }
     }
 
