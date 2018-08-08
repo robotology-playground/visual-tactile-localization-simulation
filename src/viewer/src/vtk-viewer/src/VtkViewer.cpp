@@ -498,7 +498,7 @@ class Viewer : public RFModule, RateThread
         {
             vtk_hand->attach_to_renderer(vtk_renderer);
         }
-        vtk_renderer->SetBackground(0.1,0.2,0.2);
+        vtk_renderer->SetBackground(0.8,0.8,0.8);
 
         vtk_axes=vtkSmartPointer<vtkAxesActor>::New();
         vtk_widget=vtkSmartPointer<vtkOrientationMarkerWidget>::New();
