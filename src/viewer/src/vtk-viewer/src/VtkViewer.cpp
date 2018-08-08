@@ -185,7 +185,7 @@ protected:
 
 public:
     /****************************************************************/
-    Cube()
+    Cube(const double &opacity)
     {
         // create cube
         vtk_cube_source = vtkSmartPointer<vtkCubeSource>::New();
@@ -199,7 +199,7 @@ public:
         vtk_actor->SetMapper(vtk_mapper);
 
         // set opacity
-        vtk_actor->GetProperty()->SetOpacity(0.25);
+        vtk_actor->GetProperty()->SetOpacity(opacity);
     }
 
     /****************************************************************/
@@ -465,9 +465,9 @@ class Viewer : public RFModule, RateThread
         if (!rf.find("groundTruthTargetFrame").isNull())
             gt_target_name = rf.find("groundTruthTargetFrame").asString();
 
-        vtk_cube_est=unique_ptr<Cube>(new Cube());
-        vtk_cube_aux_est=unique_ptr<Cube>(new Cube());
-        vtk_cube_gt=unique_ptr<Cube>(new Cube());
+        vtk_cube_est=unique_ptr<Cube>(new Cube(0.6));
+        vtk_cube_aux_est=unique_ptr<Cube>(new Cube(0.4));
+        vtk_cube_gt=unique_ptr<Cube>(new Cube(0.2));
 
         vtk_cube_est->set_sizes(obj_size[0], obj_size[1], obj_size[2]);
         vtk_cube_aux_est->set_sizes(obj_size[0], obj_size[1], obj_size[2]);
