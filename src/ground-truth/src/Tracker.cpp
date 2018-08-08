@@ -198,17 +198,17 @@ void Tracker::initializeKF()
     // this is 4x4 since the noise drive the acceleration
     yarp::sig::Matrix Q_cont(4,4);
     Q_cont.zero();
-    Q_cont(0, 0) = pow(0.005, 2) / period;
-    Q_cont(1, 1) = pow(0.005, 2) / period;
+    Q_cont(0, 0) = pow(0.01, 2) / period;
+    Q_cont(1, 1) = pow(0.01, 2) / period;
     Q_cont(2, 2) = pow(0.0001, 2) / period;
-    Q_cont(3, 3) = pow(1.0 / 180 * M_PI, 2) / period;
+    Q_cont(3, 3) = pow(2.0 / 180 * M_PI, 2) / period;
 
     // continouse time measurement noise
     yarp::sig::Matrix R_cont(4, 4);
     R_cont.zero();
-    R_cont(0, 0) = pow(0.01, 2);
-    R_cont(1, 1) = pow(0.01, 2);
-    R_cont(2, 2) = pow(0.01, 2);
+    R_cont(0, 0) = pow(0.001, 2);
+    R_cont(1, 1) = pow(0.001, 2);
+    R_cont(2, 2) = pow(0.1, 2);
     R_cont(3, 3) = pow(1.0 / 180 * M_PI, 2);
 
     // initialize the KF
