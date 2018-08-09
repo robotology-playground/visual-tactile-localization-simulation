@@ -2176,6 +2176,9 @@ public:
             // store current context
             gaze_ctrl.storeContext();
 
+            // clear eyes
+            gaze_ctrl.clearEyes();
+
             // set default trajectory times
             gaze_ctrl.setTrajectoryTimes();
 
