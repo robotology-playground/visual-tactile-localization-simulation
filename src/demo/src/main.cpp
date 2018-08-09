@@ -3167,6 +3167,12 @@ public:
             stopFingers("right");
             stopFingers("left");
 
+            // stop eyes
+            if (use_tracker)
+            {
+                sendCommandToTracker("eyes-stop");
+            }
+
             // disable filtering
             sendCommandToFilter("disable");
 
