@@ -2448,6 +2448,11 @@ public:
 
                 mutex.lock();
 
+                if (use_tracker)
+                {
+                    sendCommandToTracker("eyes-stop");
+                }
+
                 // go to Idle
                 status = Status::Idle;
 
@@ -2485,8 +2490,11 @@ public:
                 // stop control
                 stopArm(seq_act_arm);
 
-                // stop eyes
-                // sendCommandToTracker("eyes-stop");
+                if (use_tracker)
+                {
+                    // stop eyes
+                    sendCommandToTracker("eyes-stop");
+                }
 
                 mutex.lock();
 
@@ -2513,8 +2521,11 @@ public:
 
                 mutex.lock();
 
-                // stop eyes
-                // sendCommandToTracker("eyes-stop");
+                if (use_tracker)
+                {
+                    // stop eyes
+                    sendCommandToTracker("eyes-stop");
+                }
 
                 // go to Idle
                 status = Status::Idle;
@@ -2651,6 +2662,12 @@ public:
                 // that was changed in preparePullObject(seq_act_arm)
                 restoreArmControllerContext(seq_act_arm);
 
+                // stop eyes
+                if (use_tracker)
+                {
+                    sendCommandToTracker("eyes-stop");
+                }
+
                 mutex.lock();
 
                 // go to Idle
@@ -2724,11 +2741,8 @@ public:
                 // stop eyes tracking
                 if (use_tracker)
                 {
-                    // // disable tracking with eyes
+                    // disable tracking with eyes
                     sendCommandToTracker("eyes-stop");
-
-                    // fixate with eyes
-                    sendCommandToTracker("eyes-fixate-and-hold");
                 }
 
                 mutex.lock();
@@ -2764,9 +2778,6 @@ public:
                 {
                     // // disable tracking with eyes
                     sendCommandToTracker("eyes-stop");
-
-                    // fixate with eyes
-                    sendCommandToTracker("eyes-fixate-and-hold");
                 }
 
                 // restore arm controller context
@@ -2921,9 +2932,6 @@ public:
                 {
                     // // disable tracking with eyes
                     sendCommandToTracker("eyes-stop");
-
-                    // // fixate with eyes
-                    // sendCommandToTracker("eyes-fixate-and-hold");
                 }
 
                 // restore arm controller context
@@ -3036,6 +3044,12 @@ public:
 
             is_approach_done = false;
 
+            if (use_tracker)
+            {
+                // fixate with eyes
+                sendCommandToTracker("eyes-fixate-and-hold");
+            }
+
             // issue arm restore
             ok = restoreArm(single_act_arm);
 
@@ -3045,6 +3059,12 @@ public:
 
                 // stop control
                 stopArm(single_act_arm);
+
+                // stop eyes
+                if (use_tracker)
+                {
+                    sendCommandToTracker("eyes-stop");
+                }
 
                 mutex.lock();
 
@@ -3087,6 +3107,12 @@ public:
 
                 restoreArmControllerContext(single_act_arm);
 
+                // stop eyes
+                if (use_tracker)
+                {
+                    sendCommandToTracker("eyes-stop");
+                }
+
                 mutex.lock();
 
                 // go to Idle
@@ -3107,6 +3133,12 @@ public:
 
                 // stop control
                 stopArm(single_act_arm);
+
+                // stop eyes
+                if (use_tracker)
+                {
+                    sendCommandToTracker("eyes-stop");
+                }
 
                 restoreArmControllerContext(single_act_arm);
 
