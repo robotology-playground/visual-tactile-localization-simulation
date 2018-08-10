@@ -118,7 +118,7 @@ private:
     yarp::sig::Matrix eulerZYX2dcm(const yarp::sig::Vector &euler);
     void initializeKF();
     void filterKF();
-    void fixateWithEyes();
+    void fixateWithEyes(const double &sync);
     void fixateWithEyesAndHold();
 public:
     bool configure(yarp::os::ResourceFinder &rf) override;

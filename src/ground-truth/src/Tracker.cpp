@@ -240,7 +240,7 @@ void Tracker::filterKF()
     est_pose[3] = kf_est[3];
 }
 
-void Tracker::fixateWithEyes()
+void Tracker::fixateWithEyes(const double &sync)
 {
     // this function can be called once
     // or in streaming mode
@@ -265,7 +265,7 @@ void Tracker::fixateWithEyes()
         yarp::sig::Vector fix_point;
         fix_point = estimate->getCol(3).subVector(0, 2);
 
-        gaze_ctrl.setReference(fix_point);
+        gaze_ctrl.setReference(fix_point, sync);
     }
 }
 
@@ -275,7 +275,7 @@ void Tracker::fixateWithEyesAndHold()
 
     // set the fixation point
     // using the current estimate
-    fixateWithEyes();
+    fixateWithEyes(true);
 
     // enable tracking mode
     gaze_ctrl.enableTrackingMode();
@@ -632,7 +632,7 @@ bool Tracker::updateModule()
     {
         // the tracker continuously tracks
         // the object using the last estimate available
-        fixateWithEyes();
+        fixateWithEyes(false);
         break;
     }
     }
