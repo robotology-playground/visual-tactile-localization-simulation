@@ -40,7 +40,8 @@ public:
                    const std::string &port_prefix);
     bool goHome();
     bool close();
-    bool setReference(const yarp::sig::Vector &fixation_point);
+    bool setReference(const yarp::sig::Vector &fixation_point,
+                      const bool &sync = false);
     bool enableTrackingMode();
     bool disableTrackingMode();
     bool clearEyes();

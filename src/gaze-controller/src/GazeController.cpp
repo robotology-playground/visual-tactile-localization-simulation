@@ -153,9 +153,12 @@ bool GazeController::close()
     return true;
 }
 
-bool GazeController::setReference(const yarp::sig::Vector &fixation_point)
+bool GazeController::setReference(const yarp::sig::Vector &fixation_point, const bool &sync)
 {
-    return igaze->lookAtFixationPoint(fixation_point);
+    if (sync)
+        return igaze->lookAtFixationPointSync(fixation_point);
+    else
+        return igaze->lookAtFixationPoint(fixation_point);
 }
 
 bool GazeController::enableTrackingMode()
