@@ -2435,8 +2435,11 @@ public:
 
             if (use_tracker)
             {
+                sendCommandToTracker("eyes-stop");
+
                 // fixate with eyes
-                ok = ok && sendCommandToTracker("eyes-fixate-and-hold");
+                //ok = ok && sendCommandToTracker("eyes-fixate-and-hold");
+                ok = ok && sendCommandToTracker("eyes-track");
             }
 
             // issue approach with arm
@@ -2819,7 +2822,7 @@ public:
             if (use_tracker)
             {
                 // enable tracking with eyes
-                // ok = ok && sendCommandToTracker("eyes-track");
+                ok = ok && sendCommandToTracker("eyes-track");
             }
 
             if (!ok)
@@ -2832,6 +2835,12 @@ public:
                 // restore arm controller context
                 // that was changed in preparePullObject(seq_act_arm)
                 restoreArmControllerContext(seq_act_arm);
+
+                // stop eyes
+                if (use_tracker)
+                {
+                    sendCommandToTracker("eyes-stop");
+                }
 
                 mutex.lock();
 
@@ -2901,6 +2910,13 @@ public:
                 stopFingers(seq_act_arm);
                 // switch fingers to position control
                 switchFingersToPositionControl(seq_act_arm);
+
+                // stop eyes tracking
+                if (use_tracker)
+                {
+                    // disable tracking with eyes
+                    sendCommandToTracker("eyes-stop");
+                }
 
                 mutex.lock();
 
@@ -3050,7 +3066,8 @@ public:
             if (use_tracker)
             {
                 // fixate with eyes
-                sendCommandToTracker("eyes-fixate-and-hold");
+                //sendCommandToTracker("eyes-fixate-and-hold");
+                sendCommandToTracker("eyes-track");
             }
 
             // issue arm restore
