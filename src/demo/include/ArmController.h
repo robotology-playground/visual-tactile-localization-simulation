@@ -150,6 +150,13 @@ public:
     bool limitTorsoPitch(const double &max_pitch);
 
     /*
+     * Limit the maximum absolute yaw of the torso.
+     * @param max maximum absolute allowed yaw for the torso
+     * @return true/false on success/failure
+     */
+    bool limitTorsoYaw(const double &max);
+
+    /*
      * This function restore the initial pose of the arm.
      * @return true/false on success/failure
      */

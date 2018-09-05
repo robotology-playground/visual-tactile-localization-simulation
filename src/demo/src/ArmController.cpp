@@ -353,6 +353,40 @@ bool ArmController::limitTorsoPitch(const double &max_pitch)
     return true;
 }
 
+bool ArmController::limitTorsoYaw(const double &max)
+{
+    bool ok;
+
+    if (max < 0)
+        return false;
+
+    // yaw joint axis number
+    int yaw_axis = 2;
+
+    // get current limits
+    // double min, max;
+    // ok = icart->getLimits(pitch_axis, &min, &max);
+    // if (!ok)
+    // {
+    //     yError() << "ArmController::limitTorsoPitch"
+    //              << "Error: unable to get the torso pitch limits for the"
+    //              << arm_name << "arm chain";
+    //     return false;
+    // }
+
+    // set the new limit
+    ok = icart->setLimits(yaw_axis, -1 * max, max);
+    if (!ok)
+    {
+        yError() << "ArmController::limitTorsoYaw"
+                 << "Error: unable to set the limits for the torso yaw for the"
+                 << arm_name << "arm chain";
+        return false;
+    }
+
+    return true;
+}
+
 bool ArmController::goHome()
 {
     bool ok;
