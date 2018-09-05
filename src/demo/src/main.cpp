@@ -1646,6 +1646,18 @@ public:
                 max_torso_pitch = 30.0;
         }
 
+        bool limit_torso_yaw = rf_module.find("limitTorsoYaw").asBool();
+        double max_torso_yaw;
+        if(rf_module.find("limitTorsoYaw").isNull())
+            limit_torso_yaw = true;
+
+        if (limit_torso_yaw)
+        {
+            max_torso_yaw = rf_module.find("maxTorsoYaw").asDouble();
+            if (rf_module.find("maxTorsoYaw").isNull())
+                max_torso_yaw = 30.0;
+        }
+
         // default trajectory times for Cartesian Controller
         default_traj_time = rf_module.find("cartDefaultTrajTime").asDouble();
         if (rf_module.find("cartDefaultTrajTime").isNull())
@@ -1953,12 +1965,16 @@ public:
             right_arm.enableTorso();
             if (limit_torso_pitch)
                 right_arm.limitTorsoPitch(max_torso_pitch);
+            if (limit_torso_yaw)
+                right_arm.limitTorsoYaw(max_torso_yaw);
         }
         else if (arm_with_torso == "left")
         {
             left_arm.enableTorso();
             if (limit_torso_pitch)
                 left_arm.limitTorsoPitch(max_torso_pitch);
+            if (limit_torso_yaw)
+                left_arm.limitTorsoYaw(max_torso_yaw);
         }
 
         /**
