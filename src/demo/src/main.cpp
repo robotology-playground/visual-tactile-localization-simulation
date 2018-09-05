@@ -55,7 +55,7 @@ enum class Status { Idle,
                     ArmApproach, WaitArmApproachDone,
                     FingersApproach, WaitFingersApproachDone,
                     PrepareRotation, PerformRotation,
-                    PreparePull, PerformPull,
+                    PreparePull, PerformPull, WaitAfterPull,
                     ArmRestore, WaitArmRestoreDone,
                     FingersRestore, WaitFingersRestoreDone,
                     Stop };
@@ -2751,6 +2751,9 @@ public:
                     sendCommandToTracker("eyes-stop");
                 }
 
+                // stop filter
+                sendCommandToFilter("disable");
+
                 mutex.lock();
 
                 // go to Idle
@@ -2776,9 +2779,6 @@ public:
                 // switch fingers to position control
                 switchFingersToPositionControl(seq_act_arm);
 
-                // disable filtering
-                sendCommandToFilter("disable");
-
                 // stop eyes tracking
                 if (use_tracker)
                 {
@@ -2790,16 +2790,51 @@ public:
                 // that was changed in preparePullObject(seq_act_arm)
                 restoreArmControllerContext(seq_act_arm);
 
+                // reset timer flag
+                is_timer_started = false;
+
                 mutex.lock();
 
-                // go back to Idle
-                status = Status::Idle;
+                // go to state
+                status = Status::WaitAfterPull;
 
                 // reset arm name
                 seq_action_arm_name.clear();
 
                 mutex.unlock();
             }
+
+            break;
+        }
+
+        case Status::WaitAfterPull:
+        {
+
+            if (!is_timer_started)
+            {
+                is_timer_started = true;
+
+                // reset time
+                last_time = yarp::os::Time::now();
+            }
+
+            // eval elapsed time
+            double elapsed = yarp::os::Time::now() - last_time;
+
+            if (elapsed > 1.0)
+            {
+                sendCommandToFilter("disable");
+            }
+
+            // reset timer flag
+            is_timer_started = false;
+
+            mutex.lock();
+
+            // go to state Idle
+            status = Status::Idle;
+
+            mutex.unlock();
 
             break;
         }
