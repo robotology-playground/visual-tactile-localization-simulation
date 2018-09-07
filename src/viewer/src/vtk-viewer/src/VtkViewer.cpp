@@ -604,8 +604,6 @@ class Viewer : public RFModule, RateThread
     /****************************************************************/
     void updateView()
     {
-        LockGuard lg(mutex);
-
         yarp::sig::Matrix estimate;
         yarp::sig::Matrix aux_estimate;
         yarp::sig::Matrix ground_truth;
@@ -657,6 +655,8 @@ class Viewer : public RFModule, RateThread
             reply.addVocab(yarp::os::Vocab::encode("many"));
             reply.addString("Available commands:");
             reply.addString("- calibrate_hand");
+            reply.addString("- show_point_cloud");
+            reply.addString("- hide_point_cloud");
             reply.addString("- help");
             reply.addString("- quit");
         }
@@ -672,6 +672,8 @@ class Viewer : public RFModule, RateThread
             {
                 vtk_all_points->get_actor()->SetVisibility(true);
             }
+
+            reply.addString("ok");
         }
         else if (cmd == "hide_point_cloud")
         {
@@ -679,6 +681,8 @@ class Viewer : public RFModule, RateThread
             {
                 vtk_all_points->get_actor()->SetVisibility(false);
             }
+
+            reply.addString("ok");
         }
         else
             // the father class already handles the "quit" command
