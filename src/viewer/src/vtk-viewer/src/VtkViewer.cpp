@@ -75,6 +75,7 @@ public:
                  void *vtkNotUsed(callData))
     {
         LockGuard lg(mutex);
+
         vtkRenderWindowInteractor* iren=static_cast<vtkRenderWindowInteractor*>(caller);
         if (closing!=nullptr)
         {
@@ -548,6 +549,8 @@ class Viewer : public RFModule, RateThread
     /****************************************************************/
     void run() override
     {
+        LockGuard lg(mutex);
+
         // point cloud
         if (enable_point_cloud)
         {
@@ -561,8 +564,6 @@ class Viewer : public RFModule, RateThread
         // hand kinematics
         if (enable_hand)
         {
-            LockGuard lg(mutex);
-
             fingersLinks fingers_links;
             if (hand_kin->getFingersLinks(fingers_links))
                 vtk_hand->set_fingers_links(fingers_links);
@@ -577,8 +578,6 @@ class Viewer : public RFModule, RateThread
     {
         if (points.size()>0)
         {
-            LockGuard lg(mutex);
-
             all_points.clear();
             all_colors.clear();
 
