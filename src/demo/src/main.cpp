@@ -242,7 +242,10 @@ protected:
         std::string reply;
 
         // set max area used by module lbpExtract
-        setLbpExtractMaxArea(11000);
+        setLbpExtractMaxArea(17000);
+
+        // set numeber of iteration used by lbpExtract
+        setLbpExtractNumIteration(2);
 
         if (use_gaze)
         {
@@ -851,6 +854,21 @@ protected:
         yarp::os::Bottle reply;
         cmd.addString("setMaxArea");
         cmd.addInt(max_area);
+        rpc_lbpextract.write(cmd, reply);
+
+        if ((reply.size() == 1) &&
+            (reply.get(0).asVocab() == yarp::os::Vocab::encode("ok")))
+            return true;
+
+        return false;
+    }
+
+    bool setLbpExtractNumIteration(const int &num_iteration)
+    {
+        yarp::os::Bottle cmd;
+        yarp::os::Bottle reply;
+        cmd.addString("setNumIteration");
+        cmd.addInt(num_iteration);
         rpc_lbpextract.write(cmd, reply);
 
         if ((reply.size() == 1) &&
