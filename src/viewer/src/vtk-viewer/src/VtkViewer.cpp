@@ -369,6 +369,7 @@ class Viewer : public RFModule, RateThread
 
             // instantiate point cloud if required
             vtk_all_points=unique_ptr<Points>(new Points(all_points,2));
+
         }
 
         // get the flags relative to hand visualization
@@ -664,6 +665,20 @@ class Viewer : public RFModule, RateThread
             calibrateHand();
 
             reply.addString("- calibration ok");
+        }
+        else if (cmd == "show_point_cloud")
+        {
+            if(enable_point_cloud)
+            {
+                vtk_all_points->get_actor()->SetVisibility(true);
+            }
+        }
+        else if (cmd == "hide_point_cloud")
+        {
+            if (enable_point_cloud)
+            {
+                vtk_all_points->get_actor()->SetVisibility(false);
+            }
         }
         else
             // the father class already handles the "quit" command
