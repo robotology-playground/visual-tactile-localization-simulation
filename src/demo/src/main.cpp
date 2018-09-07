@@ -870,6 +870,20 @@ protected:
         return false;
     }
 
+    void enablePointCloudVisualization()
+    {
+        yarp::os::Bottle cmd;
+        cmd.addString("show_point_cloud");
+        rpc_viewer.write(cmd);
+    }
+
+    void disablePointCloudVisualization()
+    {
+        yarp::os::Bottle cmd;
+        cmd.addString("hide_point_cloud");
+        rpc_viewer.write(cmd);
+    }
+
     /*
      * Get an arm controller.
      * @param arm_name the required arm controller
