@@ -48,7 +48,7 @@
 using namespace yarp::math;
 
 enum class Status { Idle,
-                    VisualLocalizationOn, VisuoTactileMatching, ContactConstraintsAcquisition, LocalizationOff, ResetFilter,
+                    VisualLocalizationOn, VisuoTactileMatching, LocalizationOff, ResetFilter,
                     MoveHeadHome, WaitMoveHeadDone,
                     MoveHandUpward, WaitMoveHandUpwardDone,
                     MoveArmRestPosition, WaitMoveArmRestPositionDone,
@@ -300,28 +300,6 @@ protected:
             // change status
             previous_status = status;
             status = Status::VisuoTactileMatching;
-
-            reply = "[OK] Command issued";
-        }
-
-        mutex.unlock();
-
-        return reply;
-    }
-
-    std::string contact_constraints_acquisition()
-    {
-        mutex.lock();
-
-        std::string reply;
-
-        if (status != Status::Idle)
-            reply = "[FAILED] Wait for completion of the current phase";
-        else
-        {
-            // change status
-            previous_status = status;
-            status = Status::ContactConstraintsAcquisition;
 
             reply = "[OK] Command issued";
         }
@@ -813,8 +791,6 @@ protected:
             filter_cmd.probeContactsOn(hand_name);
         else if (cmd == "contacts_probe_off")
             filter_cmd.probeContactsOff();
-        else if (cmd == "contact_constraints_acq")
-            filter_cmd.enableContactConstraintsAcqusition(hand_name);
 
         // enable the correct type of filtering
         if (cmd == "enable")
@@ -2140,24 +2116,6 @@ public:
 
             if (!ok)
                 yError() << "[VISUO TACTILE MATCHING] error while sending command to the filter";
-
-            // go back to Idle
-            mutex.lock();
-            status = Status::Idle;
-            mutex.unlock();
-
-            break;
-        }
-
-        case Status::ContactConstraintsAcquisition:
-        {
-            bool ok;
-
-            // issue localization
-            ok = sendCommandToFilter("contact_constraints_acq", "", seq_act_arm);
-
-            if (!ok)
-                yError() << "[CONTACT CONSTRAINTS ACQUISITION] error while sending command to the filter";
 
             // go back to Idle
             mutex.lock();
