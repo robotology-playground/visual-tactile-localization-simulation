@@ -45,4 +45,9 @@
     <to>/pointCloudRead/rpc</to>
   </connection>
 
+  <connection>
+    <from>/vis_tac_localization/vtk/rpc:o</from>
+    <to>/view-filtering/rpc</to>
+  </connection>
+
 </application>
