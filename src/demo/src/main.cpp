@@ -2490,6 +2490,9 @@ public:
                 break;
             }
 
+            // disable point cloud visualization in vtk viewer
+            disablePointCloudVisualization();
+
             // go to state WaitArmApproachDone
             mutex.lock();
             status = Status::WaitArmApproachDone;
@@ -3188,6 +3191,9 @@ public:
                     sendCommandToTracker("eyes-stop");
                 }
 
+                //enable point cloud visualization in vtk viewer
+                enablePointCloudVisualization();
+
                 mutex.lock();
 
                 // go to Idle
@@ -3219,6 +3225,9 @@ public:
 
                 // reset arm name
                 single_action_arm_name.clear();
+
+                // enable point cloud visualization in vtk viewer
+                enablePointCloudVisualization();
 
                 // go back to idle
                 mutex.lock();
