@@ -356,10 +356,10 @@ class Viewer : public RFModule, RateThread
         if (!rf.find("robotName").isNull())
             robot_name = rf.find("robotName").asString();
 
-        // get show point cloud flag
+        // get enable point cloud flag
         enable_point_cloud = false;
-        if (!rf.find("showPointCloud").isNull())
-            enable_point_cloud = rf.find("showPointCloud").asBool();
+        if (!rf.find("enablePointCloud").isNull())
+            enable_point_cloud = rf.find("enablePointCloud").asBool();
 
         if (enable_point_cloud)
         {
@@ -372,13 +372,13 @@ class Viewer : public RFModule, RateThread
 
         // get the flags relative to hand visualization
         enable_hand = false;
-        if (!rf.find("showHand").isNull())
-            enable_hand = rf.find("showHand").asBool();
+        if (!rf.find("enableHand").isNull())
+            enable_hand = rf.find("enableHand").asBool();
         if (enable_hand)
         {
             enable_hand_axes = false;
-            if (!rf.find("showHandAxes").isNull())
-                enable_hand_axes = rf.find("showHandAxes").asBool();
+            if (!rf.find("enableHandAxes").isNull())
+                enable_hand_axes = rf.find("enableHandAxes").asBool();
             if (!rf.find("handName").isNull())
                 hand_name = rf.find("handName").asString();
             if ((hand_name != "right") && (hand_name != "left"))
@@ -410,12 +410,12 @@ class Viewer : public RFModule, RateThread
         enable_aux_estimate = false;
         enable_ground_truth = false;
 
-        if (!rf.find("showEstimate").isNull())
-            enable_estimate = rf.find("showEstimate").asBool();
-        if (!rf.find("showAuxEstimate").isNull())
-            enable_aux_estimate = rf.find("showAuxEstimate").asBool();
-        if (!rf.find("showGroundTruth").isNull())
-            enable_ground_truth = rf.find("showGroundTruth").asBool();
+        if (!rf.find("enableEstimate").isNull())
+            enable_estimate = rf.find("enableEstimate").asBool();
+        if (!rf.find("enableAuxEstimate").isNull())
+            enable_aux_estimate = rf.find("enableAuxEstimate").asBool();
+        if (!rf.find("enableGroundTruth").isNull())
+            enable_ground_truth = rf.find("enableGroundTruth").asBool();
 
         // get the size of the object
         if (rf.find("objName").isNull())
