@@ -203,6 +203,11 @@
   </connection>
 
   <connection>
+    <from>/box_alt/fakepointcloud:o</from>
+    <to>/view-filtering/pointcloud:i</to>
+  </connection>
+
+  <connection>
     <from>/right_hand/skinManager/skin_events:o</from>
     <to>/hand-control/right/contacts:i</to>
   </connection>
