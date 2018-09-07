@@ -2809,6 +2809,9 @@ public:
                     sendCommandToTracker("eyes-stop");
                 }
 
+                // stop filtering
+                sendCommandToFilter("disable");
+
                 // restore arm controller context
                 // that was changed in preparePullObject(seq_act_arm)
                 restoreArmControllerContext(seq_act_arm);
@@ -2818,8 +2821,8 @@ public:
 
                 mutex.lock();
 
-                // go to state
-                status = Status::WaitAfterPull;
+                // go to state Idle
+                status = Status::Idle;
 
                 // reset arm name
                 seq_action_arm_name.clear();
