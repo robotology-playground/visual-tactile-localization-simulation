@@ -2008,6 +2008,13 @@ public:
             }
         }
 
+        ok = rpc_viewer.open(vtk_viewer_rpc_port_name);
+        if (!ok)
+        {
+            yError() << "VisuoTactileLocalizationDemo: unable to open the vtk viewer rpc client port";
+            return false;
+        }
+
         /**
          * Rpc server
          */
@@ -2042,6 +2049,7 @@ public:
             rpc_lbpextract.close();
             rpc_pcr.close();
         }
+        rpc_viewer.close();
     }
 
     double getPeriod()
