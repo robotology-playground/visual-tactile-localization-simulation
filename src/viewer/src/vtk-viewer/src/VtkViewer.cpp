@@ -278,17 +278,17 @@ class Viewer : public RFModule, RateThread
     bool use_analogs_bounds;
 
     // flags relative to visualization of the hand
-    bool show_hand;
-    bool show_hand_axes;
+    bool enable_hand;
+    bool enable_hand_axes;
     std::string hand_name;
 
     // flags relative to point cloud visualization
-    bool show_point_cloud;
+    bool enable_point_cloud;
 
     // flags relative to mesh visualization
-    bool show_estimate;
-    bool show_aux_estimate;
-    bool show_ground_truth;
+    bool enable_estimate;
+    bool enable_aux_estimate;
+    bool enable_ground_truth;
 
     vtkSmartPointer<vtkRenderer> vtk_renderer;
     vtkSmartPointer<vtkRenderWindow> vtk_renderWindow;
@@ -357,11 +357,11 @@ class Viewer : public RFModule, RateThread
             robot_name = rf.find("robotName").asString();
 
         // get show point cloud flag
-        show_point_cloud = false;
+        enable_point_cloud = false;
         if (!rf.find("showPointCloud").isNull())
-            show_point_cloud = rf.find("showPointCloud").asBool();
+            enable_point_cloud = rf.find("showPointCloud").asBool();
 
-        if (show_point_cloud)
+        if (enable_point_cloud)
         {
             // open point cloud port if required
             portPointsIn.open("/view-filtering/pointcloud:i");
@@ -371,14 +371,14 @@ class Viewer : public RFModule, RateThread
         }
 
         // get the flags relative to hand visualization
-        show_hand = false;
+        enable_hand = false;
         if (!rf.find("showHand").isNull())
-            show_hand = rf.find("showHand").asBool();
-        if (show_hand)
+            enable_hand = rf.find("showHand").asBool();
+        if (enable_hand)
         {
-            show_hand_axes = false;
+            enable_hand_axes = false;
             if (!rf.find("showHandAxes").isNull())
-                show_hand_axes = rf.find("showHandAxes").asBool();
+                enable_hand_axes = rf.find("showHandAxes").asBool();
             if (!rf.find("handName").isNull())
                 hand_name = rf.find("handName").asString();
             if ((hand_name != "right") && (hand_name != "left"))
@@ -402,20 +402,20 @@ class Viewer : public RFModule, RateThread
                 return false;
 
             // vtk hands
-            vtk_hand = std::unique_ptr<vtkHand>(new vtkHand(show_hand_axes));
+            vtk_hand = std::unique_ptr<vtkHand>(new vtkHand(enable_hand_axes));
         }
 
         // get the flags relative to mesh visualization
-        show_estimate = false;
-        show_aux_estimate = false;
-        show_ground_truth = false;
+        enable_estimate = false;
+        enable_aux_estimate = false;
+        enable_ground_truth = false;
 
         if (!rf.find("showEstimate").isNull())
-            show_estimate = rf.find("showEstimate").asBool();
+            enable_estimate = rf.find("showEstimate").asBool();
         if (!rf.find("showAuxEstimate").isNull())
-            show_aux_estimate = rf.find("showAuxEstimate").asBool();
+            enable_aux_estimate = rf.find("showAuxEstimate").asBool();
         if (!rf.find("showGroundTruth").isNull())
-            show_ground_truth = rf.find("showGroundTruth").asBool();
+            enable_ground_truth = rf.find("showGroundTruth").asBool();
 
         // get the size of the object
         if (rf.find("objName").isNull())
@@ -484,17 +484,17 @@ class Viewer : public RFModule, RateThread
         vtk_renderWindowInteractor=vtkSmartPointer<vtkRenderWindowInteractor>::New();
         vtk_renderWindowInteractor->SetRenderWindow(vtk_renderWindow);
 
-        if (show_estimate)
+        if (enable_estimate)
             vtk_renderer->AddActor(vtk_cube_est->get_actor());
-        if (show_aux_estimate)
+        if (enable_aux_estimate)
             vtk_renderer->AddActor(vtk_cube_aux_est->get_actor());
-        if (show_ground_truth)
+        if (enable_ground_truth)
             vtk_renderer->AddActor(vtk_cube_gt->get_actor());
-        if (show_point_cloud)
+        if (enable_point_cloud)
         {
             vtk_renderer->AddActor(vtk_all_points->get_actor());
         }
-        if (show_hand)
+        if (enable_hand)
         {
             vtk_hand->attach_to_renderer(vtk_renderer);
         }
@@ -549,7 +549,7 @@ class Viewer : public RFModule, RateThread
     void run() override
     {
         // point cloud
-        if (show_point_cloud)
+        if (enable_point_cloud)
         {
             PointCloudXYZRGBA *new_pc = portPointsIn.read(false);
             if (new_pc != NULL)
@@ -559,7 +559,7 @@ class Viewer : public RFModule, RateThread
         }
 
         // hand kinematics
-        if (show_hand)
+        if (enable_hand)
         {
             LockGuard lg(mutex);
 
@@ -611,7 +611,7 @@ class Viewer : public RFModule, RateThread
         yarp::sig::Matrix ground_truth;
 
         // try to get the current estimate of the filter
-        if (show_estimate)
+        if (enable_estimate)
         {
             if (tf_client->getTransform(est_target_name, est_source_name, estimate))
             {
@@ -621,7 +621,7 @@ class Viewer : public RFModule, RateThread
         }
 
         // try to get the current auxiliary estimate of the filter
-        if (show_aux_estimate)
+        if (enable_aux_estimate)
         {
             if (tf_client->getTransform(aux_est_target_name, aux_est_source_name, aux_estimate))
             {
@@ -631,7 +631,7 @@ class Viewer : public RFModule, RateThread
         }
 
         // try to get the current ground truth
-        if (show_ground_truth)
+        if (enable_ground_truth)
         {
             if (tf_client->getTransform(gt_target_name, gt_source_name, ground_truth))
             {
