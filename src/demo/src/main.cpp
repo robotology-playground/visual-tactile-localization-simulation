@@ -177,6 +177,7 @@ protected:
     yarp::os::RpcClient rpc_tracker;
     yarp::os::RpcClient rpc_lbpextract;
     yarp::os::RpcClient rpc_pcr;
+    yarp::os::RpcClient rpc_viewer;
     std::string pcr_object_name;
 
     // mutexes required to share data between
@@ -1618,6 +1619,11 @@ public:
             if (rf_module.find("pointCloudReadObjName").isNull())
                 pcr_object_name = "Box";
         }
+
+        std::string vtk_viewer_rpc_port_name;
+        vtk_viewer_rpc_port_name = rf_module.find("vtkRpcPort").asString();
+        if (rf_module.find("vtkRpcPort").isNull())
+            vtk_viewer_rpc_port_name = "/vis_tac_localization/vtk/rpc:o";
 
         // robot name
         std::string robot_name = rf_module.find("robotName").asString();
