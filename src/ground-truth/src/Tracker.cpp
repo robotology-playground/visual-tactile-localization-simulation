@@ -273,12 +273,12 @@ void Tracker::fixateWithEyesAndHold()
 {
     // this function should be called once
 
+    // enable tracking mode
+    gaze_ctrl.enableTrackingMode();
+
     // set the fixation point
     // using the current estimate
     fixateWithEyes(true);
-
-    // enable tracking mode
-    gaze_ctrl.enableTrackingMode();
 }
 
 bool Tracker::configure(yarp::os::ResourceFinder &rf)
