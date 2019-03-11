@@ -3,7 +3,7 @@ Gazebo based simulation scenario for a visual-tactile localization algorithm.
 
 ## Requirements
 - [YARP](http://www.yarp.it/)
-- [gazebo-yarp-plugins (forked)](https://github.com/xEnVrE/gazebo-yarp-plugins/tree/visual_tactile_loc_plugins) including:
+- [gazebo-yarp-plugins (forked)](https://github.com/xEnVrE/gazebo-yarp-plugins/tree/visual_tactile_loc_plugins_yarp3) including:
   - `GazeboYarpModelPosePublisher` (publishing of ground truth position of the object)
   - `FakePointCloud` (fake point cloud generation and visualization on Gazebo)
   - `EstimateViewer` (estimate visualization on Gazebo)
