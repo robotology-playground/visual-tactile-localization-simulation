@@ -11,7 +11,7 @@ Gazebo based simulation scenario for a visual-tactile localization algorithm.
   - `GazeboYarpControlBoard` (joint velocity control reimplemented, [wrong joint limits of fingers](https://github.com/robotology/gazebo-yarp-plugins/issues/348) fixed and wrong implementation of `yarp::dev::RemoteControlBoard::checkMotionDone` fixed)
   - `GazeboYarpModelReset` (allows to reset the initial position of the object, useful to repeat experiments)
 - [Gazebo](http://gazebosim.org/) (Gazebo >= 8 required)
-- [icub-gazebo (forked)](https://github.com/xEnVrE/icub-gazebo)
+- [icub-gazebo (forked)](https://github.com/xEnVrE/icub-gazebo/tree/visual_tactile_loc)
 - [visual-tactile-localization](https://github.com/robotology-playground/visual-tactile-localization)
 
 ### VCG
