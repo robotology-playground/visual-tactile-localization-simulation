@@ -1,6 +1,8 @@
 # visual-tactile-localization-simulation
 Gazebo based simulation scenario for a visual-tactile localization algorithm.
 
+[![Visual Tactile Localization Example](http://img.youtube.com/vi/K3bbX8e4m1U/hqdefault.jpg)](https://youtu.be/K3bbX8e4m1U)
+
 ## Requirements
 - [YARP](http://www.yarp.it/)
 - [gazebo-yarp-plugins (forked)](https://github.com/xEnVrE/gazebo-yarp-plugins/tree/visual_tactile_loc_plugins) including:
